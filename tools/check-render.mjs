@@ -1,0 +1,75 @@
+/* Every page must actually render something. Catches the failure mode where a
+   page loads without errors but a container is empty or full of "[object
+   HTMLDivElement]" because an array reached an API that wanted varargs.
+   Start a static server first, then: node tools/check-render.mjs [baseUrl] */
+
+import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+
+const BASE = process.argv[2] ?? 'http://127.0.0.1:8099';
+
+/* path → selectors that must contain at least one element. */
+const PAGES = [
+  ['index.html',                      ['#grade-cards .card', '#subject-cards .card', '#featured-cards .ex-card', '#trust-stats .stat']],
+  ['grades.html',                     ['#grade-cards .card', '#level-groups .chip']],
+  ['subjects.html',                   ['#subject-cards .card']],
+  ['subjects.html?subject=science',   ['#topic-cards .card', '#subject-exercises .ex-card']],
+  ['library.html',                    ['#results .ex-card', '#filter-groups .chip']],
+  ['library.html?grade=high',         ['#results .ex-card']],
+  ['how-it-works.html',               ['#type-list .row']],
+  ['join.html',                       ['#join-form']],
+  ['signin.html',                     ['#grade option', '#role-choice .chip']],
+  ['exercise.html?id=ancient-rome',   ['#gate-tags .badge', '.mode-choice .mode-option']],
+  ['exercise.html?id=ancient-rome&mode=online', ['#qnav button', '#question-card .question-prompt', '#tips-list li']],
+  ['print.html?id=ancient-rome',      ['.sheet', '.q-print', '.key-item']],
+  ['dashboard.html',                  ['#stats .stat', '#recommended .ex-card', '.side-nav a']],
+  ['progress.html',                   ['#stats .stat', '#day-chart', '.side-nav a']],
+  ['favorites.html',                  ['.side-nav a']],
+  ['achievements.html',               ['#ach-grid .achievement', '#ach-progress .donut']],
+  ['settings.html',                   ['#data-summary .list-item', '#theme-choice .chip']],
+  ['404.html',                        ['#nf-form']],
+  ['teacher/index.html',              ['#t-stats .stat', '#class-list .list-item', '#hardest-list .list-item', '#suggested .ex-card']],
+  ['teacher/create.html',             ['#f-class option', '#match-list button']],
+  ['teacher/analytics.html',          ['#a-stats .stat', '#hardest .list-item', '#question-bars .row', '#student-rows tr']],
+  ['teacher/builder.html',            ['#add-buttons .chip', '#e-level option']]
+];
+
+const browser = await chromium.launch();
+const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
+await ctx.route('**://fonts.googleapis.com/**', r => r.abort());
+await ctx.route('**://fonts.gstatic.com/**', r => r.abort());
+await ctx.addInitScript(() => {
+  try {
+    localStorage.setItem('worksheethub:v1', JSON.stringify({
+      user: { name: 'Ana Ruiz', role: 'student', grade: 'middle', initials: 'AR', since: Date.now() }
+    }));
+  } catch {}
+});
+const page = await ctx.newPage();
+
+let fail = 0;
+for (const [path, selectors] of PAGES) {
+  const problems = [];
+  const errors = [];
+  page.removeAllListeners('pageerror');
+  page.on('pageerror', e => errors.push(e.message));
+
+  await page.goto(`${BASE}/${path}`, { waitUntil: 'domcontentloaded' });
+  await page.waitForTimeout(600);
+
+  for (const sel of selectors) {
+    if (await page.locator(sel).count() === 0) problems.push(`nothing matched ${sel}`);
+  }
+
+  /* The tell-tale of an array where a node was expected. */
+  const body = await page.locator('body').innerText();
+  if (body.includes('[object ')) problems.push('page contains a stringified object');
+  if (body.includes('undefined,') || /\bNaN\b/.test(body)) problems.push('page contains undefined or NaN');
+  for (const e of errors) problems.push(`page error: ${e}`);
+
+  console.log(`${problems.length ? '✗' : '✓'} ${path}`);
+  for (const p of problems) { console.log(`    ${p}`); fail++; }
+}
+
+await browser.close();
+console.log(fail ? `\n${fail} problem(s).` : '\nEvery page rendered its content.');
+process.exit(fail ? 1 : 0);

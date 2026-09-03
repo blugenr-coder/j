@@ -29,13 +29,8 @@ gradeSelect.replaceChildren(...GRADES.map(g =>
   el('option', { value: g.id, text: `${g.emoji}  ${g.name} — ${g.range}` })));
 
 const existing = currentUser();
-if (existing) {
-  $('#name').value = existing.name;
-  gradeSelect.value = existing.grade;
-  setRole(existing.role);
-}
-
 let role = existing?.role ?? 'student';
+
 function setRole(value) {
   role = value;
   for (const btn of $$('#role-choice button')) {
@@ -46,7 +41,13 @@ function setRole(value) {
   /* Teachers pick classes rather than a personal level. */
   $('#grade-field').hidden = value === 'teacher';
 }
+/* Prefill from an existing account, so this doubles as "switch role". */
+if (existing) {
+  $('#name').value = existing.name;
+  gradeSelect.value = existing.grade;
+}
 setRole(role);
+
 for (const btn of $$('#role-choice button')) {
   btn.addEventListener('click', () => setRole(btn.dataset.role));
 }

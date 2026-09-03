@@ -121,13 +121,20 @@ missing explanations.
 ```bash
 npm run check        # module syntax, content integrity, 26 marking tests
 npm start            # then, in another shell:
-npm run test:e2e     # drives a real browser through every question type and
-                     # the teacher flows: analytics, codes, joining, the builder
+npm run test:all     # everything below, in order
+npm run test:render  # asserts every page actually renders its content
 npm run test:links   # crawls every page for broken internal links
+npm run test:e2e     # drives a real browser through every question type, and
+                     # the teacher flows: analytics, codes, joining, the builder
 ```
 
-`tools/check-syntax.sh` exists because `node --check` parses a `.js` file as CommonJS
-and silently misses errors in these modules; it re-checks each one as ESM.
+Two of these exist because of bugs they caught:
+
+- `tools/check-syntax.sh` — `node --check` parses a `.js` file as CommonJS and
+  silently misses syntax errors in these modules, so each is re-checked as ESM.
+- `tools/check-render.mjs` — a page can load with no console errors and still
+  render nothing, because `replaceChildren` takes varargs and quietly stringifies
+  an array it is handed. This asserts the content is really on the page.
 
 ---
 

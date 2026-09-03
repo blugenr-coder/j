@@ -8,6 +8,8 @@
     "start": "npx --yes http-server -p 8099 -c-1 .",
     "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs",
     "test:e2e": "node tools/e2e.mjs && node tools/e2e-teacher.mjs",
-    "test:links": "node tools/check-links.mjs"
+    "test:links": "node tools/check-links.mjs",
+    "test:render": "node tools/check-render.mjs",
+    "test:all": "node tools/check-render.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs"
   }
 }
