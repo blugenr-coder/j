@@ -1,6 +1,8 @@
 /* Assignment creation and sharing — sections 14 and 15. */
 
 import { $, el, toast, plural } from '../core/util.js';
+import { icon } from '../core/icons.js';
+import { subjectIcon } from '../core/cards.js';
 import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, DIFFICULTIES, TOPIC_MAP } from '../data/catalog.js';
 import { searchExercises } from '../core/search.js';
@@ -66,7 +68,7 @@ function refreshMatches() {
       onclick: () => { chosen = ex.id; refreshMatches(); }
     },
       el('span', { class: `tile-icon ${chosen === ex.id ? 'green' : ''}`, style: 'width:30px;height:30px;font-size:14px',
-        'aria-hidden': 'true', text: chosen === ex.id ? '✓' : SUBJECT_MAP[ex.subject]?.emoji ?? '📄' }),
+        }, chosen === ex.id ? icon('check', { size: 15 }) : subjectIcon(ex.subject, { size: 15 })),
       el('span', { class: 'grow' },
         el('span', { class: 'list-title', style: 'display:block', text: ex.title }),
         el('span', { class: 'list-sub', text: `${ex.level} · ${ex.count} questions · ${ex.difficulty}` })),
@@ -124,13 +126,13 @@ function showResult(assignment, ex) {
         el('div', { class: 'row', style: 'gap:8px;flex-wrap:wrap' },
           el('button', { class: 'btn btn-secondary btn-sm', type: 'button', text: 'Copy student link',
             onclick: () => copy(studentLink, 'Link copied') }),
-          el('a', { class: 'btn btn-ghost btn-sm', href: href(`print.html?id=${ex.id}`), text: '🖨️ Print copies' }),
+          el('a', { class: 'btn btn-ghost btn-sm', href: href(`print.html?id=${ex.id}`), text: 'Print copies' }),
           el('a', { class: 'btn btn-ghost btn-sm', href: href(`teacher/analytics.html?class=${assignment.classId}&exercise=${ex.id}`),
-            text: '📊 See analytics' }))
+            text: 'See analytics' }))
       )),
 
     el('div', { class: 'banner', style: 'margin-top:20px' },
-      el('span', { 'aria-hidden': 'true', text: 'ℹ️' }),
+      icon('info', { size: 18 }),
       el('p', { text: 'In this build the code is stored in your browser, so it opens on this device. Wiring it to a server is what makes it work across a class.' }))
   );
   card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

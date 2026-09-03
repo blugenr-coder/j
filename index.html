@@ -22,43 +22,65 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div>
-        <span class="eyebrow">⭐ Built for every grade, from Pre-K to college</span>
+        <span class="eyebrow"><span class="ico" data-icon="sparkle" data-size="15"></span> Built for every grade, from Pre-K to college</span>
         <h1 style="margin-top:20px">Practice anything.<br><span class="accent">Learn everything.</span></h1>
-        <p class="lede">Thousands of exercises across every subject and grade. Work through them
-          online with instant feedback, or print a clean worksheet whenever you want.</p>
+        <p class="lede">Over a thousand worksheets across every subject and grade. Work through
+          them online with instant feedback, or print a clean sheet whenever you want.</p>
         <div class="hero-cta">
-          <a class="btn btn-primary btn-lg" href="library.html">Browse exercises →</a>
+          <a class="btn btn-primary btn-lg" href="library.html">Browse worksheets <span class="ico" data-icon="arrow-right" data-size="17"></span></a>
           <a class="btn btn-secondary btn-lg" href="signin.html?new=1">Create free account</a>
         </div>
         <div class="hero-proof">
-          <span><span class="tick">✓</span> Free exercises</span>
-          <span><span class="tick">✓</span> Online + printable</span>
-          <span><span class="tick">✓</span> All grades</span>
-          <span><span class="tick">✓</span> Every subject</span>
+          <span><span class="tick"><span class="ico" data-icon="check" data-size="14"></span></span> Free to use</span>
+          <span><span class="tick"><span class="ico" data-icon="check" data-size="14"></span></span> Online + printable</span>
+          <span><span class="tick"><span class="ico" data-icon="check" data-size="14"></span></span> Every grade</span>
+          <span><span class="tick"><span class="ico" data-icon="check" data-size="14"></span></span> Every subject</span>
         </div>
       </div>
 
       <div class="hero-art">
         <div class="preview-card">
-          <div class="row-between" style="margin-bottom:16px">
-            <strong style="font-family:var(--font-head)">Linear Equations</strong>
-            <span class="badge badge-primary">Grade 8</span>
+          <div class="row-between" style="margin-bottom:4px">
+            <div>
+              <strong style="font-family:var(--font-head);font-size:var(--step-1)">Linear Equations</strong>
+              <div class="small muted">Grade 8 Mathematics · 12 questions</div>
+            </div>
+            <span class="badge badge-primary">Medium</span>
           </div>
-          <div class="preview-q">
-            <div class="small muted" style="margin-bottom:6px">Question 6 of 12</div>
-            <div class="math">2x <span class="op">+</span> 5 <span class="op">=</span> 15</div>
-          </div>
-          <div class="row" style="gap:8px;margin-bottom:16px">
-            <span class="badge badge-success">✓ Correct</span>
-            <span class="badge">💡 Hint available</span>
-          </div>
-          <div class="bar" aria-hidden="true"><span style="width:50%"></span></div>
+
+          <ol class="hero-sheet">
+            <li>
+              <span class="hero-num">1</span>
+              <span>
+                <span class="hero-q">Solve for x</span>
+                <span class="math">2x <span class="op">+</span> 5 <span class="op">=</span> 15</span>
+                <span class="hero-answered"><span class="ico" data-icon="check" data-size="13"></span> x = 5</span>
+              </span>
+            </li>
+            <li>
+              <span class="hero-num">2</span>
+              <span>
+                <span class="hero-q">Solve for x</span>
+                <span class="math">3x <span class="op">−</span> 7 <span class="op">=</span> 14</span>
+                <span class="hero-answered"><span class="ico" data-icon="check" data-size="13"></span> x = 7</span>
+              </span>
+            </li>
+            <li class="is-current">
+              <span class="hero-num">3</span>
+              <span>
+                <span class="hero-q">Solve for x</span>
+                <span class="math">4(x <span class="op">−</span> 3) <span class="op">=</span> 20</span>
+                <span class="hero-input">Your answer</span>
+              </span>
+            </li>
+          </ol>
+
+          <div class="bar" aria-hidden="true" style="margin-top:20px"><span style="width:50%"></span></div>
           <div class="row-between small muted" style="margin-top:8px">
-            <span>6 of 12 answered</span><span>50%</span>
+            <span>6 of 12 answered</span><span class="mono">50%</span>
           </div>
         </div>
-        <div class="float-card float-a"><span aria-hidden="true">🔥</span> 8 day streak</div>
-        <div class="float-card float-b"><span aria-hidden="true">🖨️</span> Worksheet ready to print</div>
+        
       </div>
     </div>
   </section>
@@ -69,7 +91,7 @@
       <h2 style="font-size:var(--step-2)">What do you want to practise?</h2>
       <form id="home-search-form" role="search">
         <div class="search-box">
-          <span class="search-ico" aria-hidden="true">🔍</span>
+          <span class="search-ico"><span class="ico" data-icon="search" data-size="18"></span></span>
           <label class="sr-only" for="home-search">Search exercises</label>
           <input class="input" id="home-search" name="q" type="search" autocomplete="off"
                  placeholder="Try “fractions grade 6”, “photosynthesis” or “grade 8 algebra”">
@@ -95,7 +117,7 @@
       <p>Every subject breaks down into topics, so you can practise exactly the thing you are stuck on.</p>
     </div>
     <div class="grid grid-3" id="subject-cards"></div>
-    <p style="margin-top:24px"><a href="subjects.html">See all subjects →</a></p>
+    <p style="margin-top:24px"><a href="subjects.html">See all subjects <span class="ico" data-icon="arrow-right" data-size="15"></span></a></p>
   </section>
 
   <!-- ========================= FEATURED WORKSHEETS ========================= -->
@@ -146,8 +168,8 @@
           or print a worksheet with a name and date line, room to show working, and a separate answer
           key so nobody sees the answers by accident.</p>
         <div class="row" style="gap:12px;flex-wrap:wrap">
-          <a class="btn btn-primary" href="exercise.html?id=linear-equations">💻 Try one online</a>
-          <a class="btn btn-secondary" href="print.html?id=linear-equations">🖨️ See a printable</a>
+          <a class="btn btn-primary" href="exercise.html?id=linear-equations"><span class="ico" data-icon="monitor" data-size="17"></span> Try one online</a>
+          <a class="btn btn-secondary" href="print.html?id=linear-equations"><span class="ico" data-icon="printer" data-size="17"></span> See a printable</a>
         </div>
       </div>
       <div class="card card-flat" style="background:var(--surface-2)">
@@ -214,7 +236,7 @@
       <h2>Start practising for free</h2>
       <p>No payment, no trial countdown. Make an account when you want your progress remembered.</p>
       <div class="row" style="justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
-        <a class="btn btn-primary btn-lg" href="library.html">Browse exercises</a>
+        <a class="btn btn-primary btn-lg" href="library.html">Browse worksheets</a>
         <a class="btn btn-ghost btn-lg" href="signin.html?new=1">Create free account</a>
       </div>
     </div>

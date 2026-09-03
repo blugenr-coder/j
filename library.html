@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Browse exercises — WorksheetHub</title>
+<title>Browse worksheets — WorksheetHub</title>
 <meta name="description" content="Search and filter thousands of exercises by grade, subject, topic, difficulty and question type.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,16 +17,16 @@
 <body>
 <main id="main" class="wrap section-tight">
   <div class="section-head" style="max-width:none">
-    <h1>Browse exercises</h1>
+    <h1>Browse worksheets</h1>
     <p>Filter down to exactly what you need, then practise online or print it.</p>
   </div>
 
   <form id="search-form" role="search" style="margin-bottom:24px">
     <div class="search-box">
-      <span class="search-ico" aria-hidden="true">🔍</span>
+      <span class="search-ico"><span class="ico" data-icon="search" data-size="18"></span></span>
       <label class="sr-only" for="q">Search exercises</label>
       <input class="input" id="q" name="q" type="search" autocomplete="off"
-             placeholder="Search exercises — try “fractions grade 6” or “photosynthesis”">
+             placeholder="Search worksheets — try “fractions grade 6” or “photosynthesis”">
     </div>
     <p class="hint" id="parse-note" hidden></p>
   </form>
@@ -59,6 +59,7 @@
         </label>
       </div>
       <div class="grid grid-3" id="results"></div>
+      <div class="load-more" id="load-more" hidden></div>
     </section>
   </div>
 </main>

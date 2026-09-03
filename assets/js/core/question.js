@@ -4,6 +4,7 @@
    answer and hand it to marking.js. */
 
 import { el, esc, shuffle, hashCode, clamp } from './util.js';
+import { iconHtml } from './icons.js';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -55,7 +56,7 @@ function renderChoice(q, value, disabled, onInput, multi) {
         onInput(getValue());
       }
     },
-      el('span', { class: 'opt-key', text: multi ? (selected.includes(i) ? '✓' : LETTERS[i]) : LETTERS[i] }),
+      el('span', { class: 'opt-key', html: multi && selected.includes(i) ? iconHtml('check', { size: 14 }) : esc(LETTERS[i]) }),
       el('span', { text: opt })
     );
     buttons.push(btn);
@@ -66,7 +67,7 @@ function renderChoice(q, value, disabled, onInput, multi) {
     buttons.forEach((b, i) => {
       const on = multi ? selected.includes(i) : selected === i;
       b.setAttribute('aria-pressed', String(on));
-      if (multi) b.querySelector('.opt-key').textContent = on ? '✓' : LETTERS[i];
+      if (multi) b.querySelector('.opt-key').innerHTML = on ? iconHtml('check', { size: 14 }) : esc(LETTERS[i]);
     });
   }
 

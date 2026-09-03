@@ -3,6 +3,7 @@
 import { $, el, qs, fill } from '../core/util.js';
 import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { subjectCard, exerciseCard, emptyState } from '../core/cards.js';
+import { icon } from '../core/icons.js';
 import { SUBJECTS, SUBJECT_MAP } from '../data/catalog.js';
 import { EXERCISES } from '../data/exercises.js';
 
@@ -24,10 +25,10 @@ if (!subject) {
     { label: subject.name }
   ]));
 
-  const emoji = $('#subject-emoji');
-  emoji.textContent = subject.emoji;
-  if (subject.accent === 'green') emoji.classList.add('green');
-  if (subject.accent === 'orange') emoji.classList.add('orange');
+  const badge = $('#subject-emoji');
+  badge.replaceChildren(icon(subject.icon, { size: 24 }));
+  if (subject.accent === 'green') badge.classList.add('green');
+  if (subject.accent === 'orange') badge.classList.add('orange');
 
   $('#subject-title').textContent = subject.name;
   $('#subject-blurb').textContent = subject.blurb;
@@ -43,15 +44,15 @@ if (!subject) {
       style: 'display:grid;gap:4px'
     },
       el('strong', { style: 'font-family:var(--font-head)', text: t.name }),
-      el('span', { class: 'small muted', text: n ? `${n} exercise${n === 1 ? '' : 's'}` : 'Coming soon' })
+      el('span', { class: 'small muted', text: n ? `${n} worksheet${n === 1 ? '' : 's'}` : 'Coming soon' })
     );
   }));
 
   fill($('#subject-exercises'),
     inSubject.length
       ? inSubject.map(ex => exerciseCard(ex, { showProgress: false }))
-      : emptyState('🧭', 'Nothing here yet',
-          'This subject is in the taxonomy but has no exercises written for it yet.',
+      : emptyState('compass', 'Nothing here yet',
+          'This subject is in the taxonomy but has no worksheets written for it yet.',
           el('a', { class: 'btn btn-secondary', href: href('library.html'), text: 'Browse the whole library' }))
   );
 }

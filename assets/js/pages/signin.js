@@ -26,7 +26,7 @@ $('#switch-line').replaceChildren(
 
 const gradeSelect = $('#grade');
 gradeSelect.replaceChildren(...GRADES.map(g =>
-  el('option', { value: g.id, text: `${g.emoji}  ${g.name} — ${g.range}` })));
+  el('option', { value: g.id, text: `${g.name} — ${g.range}` })));
 
 const existing = currentUser();
 let role = existing?.role ?? 'student';

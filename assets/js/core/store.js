@@ -6,7 +6,7 @@
 
 import { todayKey, hashCode } from './util.js';
 import { ACHIEVEMENTS } from '../data/catalog.js';
-import { EXERCISE_MAP } from '../data/exercises.js';
+import { EXERCISE_MAP, getExercise } from '../data/exercises.js';
 import { STORAGE_KEY as KEY } from './storage-key.js';
 
 const BLANK = {
@@ -165,10 +165,24 @@ export function completeRun(exerciseId) {
 /* ------------------------------- scoring ------------------------------- */
 /** Correct / answered / total for one exercise, ignoring self-marked writing. */
 export function scoreFor(exerciseId) {
-  const ex = EXERCISE_MAP[exerciseId];
+  const meta = EXERCISE_MAP[exerciseId];
+  if (!meta) return { correct: 0, answered: 0, total: 0, gradable: 0, percent: 0, done: false };
+
   const run = state.progress[exerciseId];
-  if (!ex) return { correct: 0, answered: 0, total: 0, gradable: 0, percent: 0, done: false };
-  const answers = run?.answers ?? {};
+  /* Nothing has been answered, so metadata is enough. This matters: a library
+     page renders hundreds of cards, and hydrating every worksheet just to say
+     "0 of 12" would build thousands of questions nobody asked to see. */
+  if (!run || !Object.keys(run.answers ?? {}).length) {
+    return {
+      correct: 0, answered: 0, total: meta.count,
+      gradable: meta.autoMarked ?? meta.count, percent: 0,
+      done: Boolean(run?.completedAt), seconds: run?.seconds ?? 0,
+      startedAt: run?.started ?? null
+    };
+  }
+
+  const ex = getExercise(exerciseId);
+  const answers = run.answers ?? {};
   const gradableQs = ex.questions.filter(q => q.type !== 'written');
   const correct = gradableQs.filter(q => answers[q.id]?.correct).length;
   const answered = ex.questions.filter(q => answers[q.id] !== undefined).length;

@@ -5,6 +5,7 @@
 import { $, el, toast, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { emptyState } from '../core/cards.js';
+import { icon, iconHtml } from '../core/icons.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, DIFFICULTIES, TOPIC_MAP } from '../data/catalog.js';
 import { saveCustomExercise, customExercises, deleteCustomExercise } from '../core/store.js';
 
@@ -15,11 +16,11 @@ mountSideNav($('#side-nav-host'), 't-builder');
    content files rather than here — the editing UI they need is a separate
    piece of work, and pretending otherwise would produce broken exercises. */
 const BUILDABLE = [
-  { id: 'math',   label: '🔢 Math input' },
-  { id: 'blank',  label: '✏️ Fill in the blank' },
-  { id: 'choice', label: '🔘 Multiple choice' },
-  { id: 'multi',  label: '☑️ Multiple answers' },
-  { id: 'written',label: '✍️ Written response' }
+  { id: 'math',   label: 'Math input',        icon: 'q-math' },
+  { id: 'blank',  label: 'Fill in the blank', icon: 'q-blank' },
+  { id: 'choice', label: 'Multiple choice',  icon: 'q-choice' },
+  { id: 'multi',  label: 'Multiple answers', icon: 'q-multi' },
+  { id: 'written',label: 'Written response', icon: 'q-written' }
 ];
 
 let questions = [];
@@ -41,7 +42,8 @@ $('#e-subject').addEventListener('change', refreshTopics);
 
 /* ------------------------------ question rows ------------------------------ */
 $('#add-buttons').replaceChildren(...BUILDABLE.map(t =>
-  el('button', { class: 'chip', type: 'button', text: `+ ${t.label}`, onclick: () => addQuestion(t.id) })));
+  el('button', { class: 'chip', type: 'button', onclick: () => addQuestion(t.id) },
+    icon('plus', { size: 13 }), icon(t.icon, { size: 14 }), t.label)));
 
 function addQuestion(type) {
   questions.push({
@@ -57,7 +59,7 @@ function drawQuestions() {
   $('#q-count').textContent = questions.length ? plural(questions.length, 'question') : 'No questions yet';
 
   if (!questions.length) {
-    $('#question-editors').replaceChildren(emptyState('➕', 'Start with one question',
+    $('#question-editors').replaceChildren(emptyState('plus', 'Start with one question',
       'Choose a question type below. You can mix types in a single exercise.'));
     return;
   }
@@ -69,13 +71,13 @@ function drawQuestions() {
     card.append(el('div', { class: 'row-between', style: 'margin-bottom:12px' },
       el('div', { class: 'row', style: 'gap:8px' },
         el('span', { class: 'badge badge-primary', text: `Question ${i + 1}` }),
-        el('span', { class: 'badge', text: meta?.label ?? q.type })),
+        el('span', { class: 'badge' }, icon(meta?.icon ?? 'document', { size: 13 }), meta?.label ?? q.type)),
       el('div', { class: 'row', style: 'gap:4px' },
-        el('button', { class: 'icon-btn', type: 'button', text: '↑', 'aria-label': 'Move up',
+        el('button', { class: 'icon-btn', type: 'button', html: iconHtml('arrow-up', { size: 15 }), 'aria-label': 'Move up',
           disabled: i === 0 || null, onclick: () => { swap(i, i - 1); } }),
-        el('button', { class: 'icon-btn', type: 'button', text: '↓', 'aria-label': 'Move down',
+        el('button', { class: 'icon-btn', type: 'button', html: iconHtml('arrow-down', { size: 15 }), 'aria-label': 'Move down',
           disabled: i === questions.length - 1 || null, onclick: () => { swap(i, i + 1); } }),
-        el('button', { class: 'icon-btn', type: 'button', text: '✕', 'aria-label': 'Delete question',
+        el('button', { class: 'icon-btn', type: 'button', html: iconHtml('close', { size: 15 }), 'aria-label': 'Delete question',
           onclick: () => { questions.splice(i, 1); renumber(); drawQuestions(); } }))
     ));
 
@@ -93,7 +95,7 @@ function drawQuestions() {
           el('button', {
             class: `chip ${isAnswer ? 'is-active' : ''}`, type: 'button',
             style: 'flex:none', 'aria-label': `Mark option ${oi + 1} as correct`,
-            text: isAnswer ? '✓ correct' : 'mark correct',
+            text: isAnswer ? 'correct' : 'mark correct',
             onclick: () => {
               if (q.type === 'multi') {
                 const at = q.answer.indexOf(oi);
@@ -201,7 +203,7 @@ function drawSaved() {
   const saved = customExercises();
   $('#saved-list').replaceChildren(...(saved.length
     ? saved.map(ex => el('div', { class: 'list-item' },
-        el('span', { class: 'tile-icon', style: 'width:30px;height:30px;font-size:14px', 'aria-hidden': 'true', text: '📝' }),
+        el('span', { class: 'tile-icon', style: 'width:30px;height:30px' }, icon('document', { size: 15 })),
         el('span', { class: 'grow' },
           el('span', { class: 'list-title', style: 'display:block', text: ex.title }),
           el('span', { class: 'list-sub', text: `${ex.level} · ${plural(ex.questions.length, 'question')}` })),

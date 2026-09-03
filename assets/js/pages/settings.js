@@ -17,7 +17,7 @@ function render() {
   $('#name').value = user.name;
 
   $('#grade').replaceChildren(...GRADES.map(g =>
-    el('option', { value: g.id, text: `${g.emoji}  ${g.name} — ${g.range}` })));
+    el('option', { value: g.id, text: `${g.name} — ${g.range}` })));
   $('#grade').value = user.grade;
 
   let role = user.role;

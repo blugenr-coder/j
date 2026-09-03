@@ -3,6 +3,7 @@
 import { $, el, donut } from '../core/util.js';
 import { mountShell, mountSideNav, requireUser } from '../core/shell.js';
 import { ACHIEVEMENTS } from '../data/catalog.js';
+import { icon } from '../core/icons.js';
 import { getState, summary } from '../core/store.js';
 
 mountShell({ page: 'achievements', nav: 'app', footer: false });
@@ -36,7 +37,7 @@ function render() {
   $('#ach-grid').replaceChildren(...ACHIEVEMENTS.map(a => {
     const on = unlocked.has(a.id);
     return el('div', { class: `achievement ${on ? '' : 'locked'}` },
-      el('span', { class: 'ach-ico', 'aria-hidden': 'true', text: a.emoji }),
+      el('span', { class: 'ach-ico' }, icon(a.icon, { size: 22 })),
       el('div', { class: 'grow' },
         el('strong', { style: 'font-family:var(--font-head)', text: a.name }),
         el('div', { class: 'small muted', text: a.desc }),

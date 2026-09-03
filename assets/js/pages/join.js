@@ -42,7 +42,7 @@ $('#my-assignments').replaceChildren(mine.length
           el('span', { class: 'grow' },
             el('span', { class: 'list-title', style: 'display:block', text: a.title || ex.title }),
             el('span', { class: 'list-sub', text: `${ex.level} · set ${timeAgo(a.created)}` })),
-          el('span', { class: 'small muted', text: 'Open →' }));
+          el('span', { class: 'small muted', text: 'Open' }));
       })))
   : el('p', { class: 'small muted center' },
       'No assignments have been created on this device yet. ',

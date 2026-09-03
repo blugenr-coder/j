@@ -3,6 +3,7 @@
    so navigation never drifts between pages. Pages call mountShell() once. */
 
 import { el, esc, $ } from './util.js';
+import { icon, iconHtml } from './icons.js';
 import { applyTheme, setTheme, getState, currentUser, signOut, isTeacher } from './store.js';
 
 /* Pages inside /teacher/ set data-base=".." so every link still resolves. */
@@ -11,7 +12,7 @@ export const href = path => base() + path;
 
 const PUBLIC_NAV = [
   { id: 'home',      label: 'Home',         path: 'index.html' },
-  { id: 'library',   label: 'Exercises',    path: 'library.html' },
+  { id: 'library',   label: 'Worksheets',   path: 'library.html' },
   { id: 'subjects',  label: 'Subjects',     path: 'subjects.html' },
   { id: 'grades',    label: 'Grades',       path: 'grades.html' },
   { id: 'how',       label: 'How It Works', path: 'how-it-works.html' },
@@ -20,46 +21,46 @@ const PUBLIC_NAV = [
 
 const STUDENT_SIDE = [
   { group: null,          items: [
-    { id: 'dashboard',    label: 'Dashboard',    icon: '🏠', path: 'dashboard.html' },
-    { id: 'library',      label: 'Exercises',    icon: '📋', path: 'library.html' },
-    { id: 'progress',     label: 'Progress',     icon: '📈', path: 'progress.html' },
-    { id: 'favorites',    label: 'Favourites',   icon: '⭐', path: 'favorites.html' },
-    { id: 'achievements', label: 'Achievements', icon: '🏆', path: 'achievements.html' }
+    { id: 'dashboard',    label: 'Dashboard',    icon: 'home', path: 'dashboard.html' },
+    { id: 'library',      label: 'Worksheets',   icon: 'library', path: 'library.html' },
+    { id: 'progress',     label: 'Progress',     icon: 'progress', path: 'progress.html' },
+    { id: 'favorites',    label: 'Favourites',   icon: 'star', path: 'favorites.html' },
+    { id: 'achievements', label: 'Achievements', icon: 'trophy', path: 'achievements.html' }
   ]},
   { group: 'Browse',      items: [
-    { id: 'subjects',     label: 'Subjects',     icon: '📚', path: 'subjects.html' },
-    { id: 'grades',       label: 'Grades',       icon: '🎓', path: 'grades.html' },
-    { id: 'join',         label: 'Join a class', icon: '🔑', path: 'join.html' }
+    { id: 'subjects',     label: 'Subjects',     icon: 'subjects', path: 'subjects.html' },
+    { id: 'grades',       label: 'Grades',       icon: 'grades', path: 'grades.html' },
+    { id: 'join',         label: 'Join a class', icon: 'key', path: 'join.html' }
   ]},
   { group: 'More',        items: [
-    { id: 'teachers',     label: 'Teacher tools', icon: '👩‍🏫', path: 'teacher/index.html' },
-    { id: 'settings',     label: 'Settings',      icon: '⚙️', path: 'settings.html' }
+    { id: 'teachers',     label: 'Teacher tools', icon: 'teacher', path: 'teacher/index.html' },
+    { id: 'settings',     label: 'Settings',      icon: 'settings', path: 'settings.html' }
   ]}
 ];
 
 const TEACHER_SIDE = [
   { group: null,        items: [
-    { id: 't-home',     label: 'Teacher home', icon: '🏫', path: 'teacher/index.html' },
-    { id: 't-create',   label: 'New assignment', icon: '➕', path: 'teacher/create.html' },
-    { id: 't-analytics',label: 'Class analytics', icon: '📊', path: 'teacher/analytics.html' },
-    { id: 't-builder',  label: 'Exercise builder', icon: '🛠️', path: 'teacher/builder.html' }
+    { id: 't-home',     label: 'Teacher home', icon: 'teacher', path: 'teacher/index.html' },
+    { id: 't-create',   label: 'New assignment', icon: 'plus', path: 'teacher/create.html' },
+    { id: 't-analytics',label: 'Class analytics', icon: 'progress', path: 'teacher/analytics.html' },
+    { id: 't-builder',  label: 'Exercise builder', icon: 'settings', path: 'teacher/builder.html' }
   ]},
   { group: 'Library',   items: [
-    { id: 'library',    label: 'All exercises', icon: '📋', path: 'library.html' },
-    { id: 'subjects',   label: 'Subjects',      icon: '📚', path: 'subjects.html' }
+    { id: 'library',    label: 'All worksheets', icon: 'library', path: 'library.html' },
+    { id: 'subjects',   label: 'Subjects',      icon: 'subjects', path: 'subjects.html' }
   ]},
   { group: 'More',      items: [
-    { id: 'dashboard',  label: 'Student view',  icon: '🎒', path: 'dashboard.html' },
-    { id: 'settings',   label: 'Settings',      icon: '⚙️', path: 'settings.html' }
+    { id: 'dashboard',  label: 'Student view',  icon: 'user', path: 'dashboard.html' },
+    { id: 'settings',   label: 'Settings',      icon: 'settings', path: 'settings.html' }
   ]}
 ];
 
 const BOTTOM_NAV = [
-  { id: 'home',      label: 'Home',     icon: '🏠', path: 'index.html',     authPath: 'dashboard.html' },
-  { id: 'library',   label: 'Exercises',icon: '📋', path: 'library.html' },
-  { id: 'progress',  label: 'Progress', icon: '📈', path: 'progress.html' },
-  { id: 'favorites', label: 'Saved',    icon: '⭐', path: 'favorites.html' },
-  { id: 'profile',   label: 'Profile',  icon: '👤', path: 'settings.html' }
+  { id: 'home',      label: 'Home',     icon: 'home', path: 'index.html',     authPath: 'dashboard.html' },
+  { id: 'library',   label: 'Worksheets', icon: 'library', path: 'library.html' },
+  { id: 'progress',  label: 'Progress', icon: 'progress', path: 'progress.html' },
+  { id: 'favorites', label: 'Saved',    icon: 'star', path: 'favorites.html' },
+  { id: 'profile',   label: 'Profile',  icon: 'user', path: 'settings.html' }
 ];
 
 /**
@@ -72,6 +73,7 @@ const BOTTOM_NAV = [
  */
 export function mountShell({ page = '', nav = 'public', mode = null, footer = null } = {}) {
   applyTheme();
+  hydrateIcons();
   document.documentElement.dataset.mode = mode ?? (isTeacher() ? 'teacher' : 'student');
 
   const header = buildHeader(page, nav);
@@ -86,6 +88,19 @@ export function mountShell({ page = '', nav = 'public', mode = null, footer = nu
   return { header };
 }
 
+/**
+ * Fill in <span class="ico" data-icon="name"> placeholders written in the HTML.
+ * Markup stays readable and the icon set stays in one module.
+ */
+export function hydrateIcons(root = document) {
+  for (const node of root.querySelectorAll('[data-icon]')) {
+    const size = Number(node.dataset.size) || 20;
+    node.innerHTML = iconHtml(node.dataset.icon, { size });
+    node.setAttribute('aria-hidden', 'true');
+    delete node.dataset.icon;
+  }
+}
+
 /** Render the app sidebar into a container element (app-layout pages). */
 export function mountSideNav(container, page) {
   const groups = isTeacher() ? TEACHER_SIDE : STUDENT_SIDE;
@@ -97,7 +112,7 @@ export function mountSideNav(container, page) {
         href: href(item.path),
         'aria-current': item.id === page ? 'page' : null
       },
-        el('span', { class: 'ico', 'aria-hidden': 'true', text: item.icon }),
+        icon(item.icon, { size: 18 }),
         item.label
       ));
     }
@@ -130,7 +145,8 @@ function buildHeader(page, nav) {
   const actions = el('div', { class: 'header-actions' });
 
   actions.append(el('a', {
-    class: 'icon-btn', href: href('library.html'), title: 'Search exercises', 'aria-label': 'Search exercises', html: '🔍'
+    class: 'icon-btn', href: href('library.html'),
+    title: 'Search worksheets', 'aria-label': 'Search worksheets', html: iconHtml('search')
   }));
 
   const themeBtn = el('button', {
@@ -138,10 +154,10 @@ function buildHeader(page, nav) {
     onclick: () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       setTheme(next);
-      themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+      themeBtn.innerHTML = iconHtml(next === 'dark' ? 'sun' : 'moon');
     }
   });
-  themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+  themeBtn.innerHTML = iconHtml(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon');
   actions.append(themeBtn);
 
   if (user) {
@@ -158,7 +174,7 @@ function buildHeader(page, nav) {
 
   const toggle = el('button', {
     class: 'icon-btn nav-toggle', type: 'button', 'aria-expanded': 'false',
-    'aria-controls': 'main-nav', 'aria-label': 'Toggle navigation', html: '☰',
+    'aria-controls': 'main-nav', 'aria-label': 'Toggle navigation', html: iconHtml('menu'),
     onclick: () => {
       const open = toggle.getAttribute('aria-expanded') === 'true';
       toggle.setAttribute('aria-expanded', String(!open));
@@ -184,7 +200,7 @@ function buildHeader(page, nav) {
 function buildFooter() {
   const cols = [
     { title: 'Practise', links: [
-      ['Browse exercises', 'library.html'], ['By subject', 'subjects.html'],
+      ['Browse worksheets', 'library.html'], ['By subject', 'subjects.html'],
       ['By grade', 'grades.html'], ['Join with a code', 'join.html']] },
     { title: 'Teachers', links: [
       ['Teacher home', 'teacher/index.html'], ['Create an assignment', 'teacher/create.html'],
@@ -230,7 +246,7 @@ function buildBottomNav(page) {
       href: href(path),
       'aria-current': item.id === page ? 'page' : null
     },
-      el('span', { class: 'ico', 'aria-hidden': 'true', text: item.icon }),
+      icon(item.icon, { size: 20, cls: 'ico' }),
       el('span', { text: item.label })
     ));
   }

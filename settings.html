@@ -39,8 +39,8 @@
           <fieldset style="border:0;padding:0;margin:0 0 16px">
             <legend class="label" style="padding:0">Account type</legend>
             <div class="row" style="gap:8px" id="role-choice">
-              <button class="chip" type="button" data-role="student" aria-pressed="false">🎒 Student</button>
-              <button class="chip" type="button" data-role="teacher" aria-pressed="false">👩‍🏫 Teacher</button>
+              <button class="chip" type="button" data-role="student" aria-pressed="false"><span class="ico" data-icon="user" data-size="15"></span> Student</button>
+              <button class="chip" type="button" data-role="teacher" aria-pressed="false"><span class="ico" data-icon="teacher" data-size="15"></span> Teacher</button>
             </div>
             <span class="hint">Teacher mode switches the interface to the denser, data-first layout.</span>
           </fieldset>
@@ -58,22 +58,22 @@
         <h3 style="font-size:var(--step-1)">Appearance</h3>
         <p class="small muted">The theme follows your device unless you choose one here.</p>
         <div class="row" style="gap:8px" id="theme-choice">
-          <button class="chip" type="button" data-theme="light" aria-pressed="false">☀️ Light</button>
-          <button class="chip" type="button" data-theme="dark" aria-pressed="false">🌙 Dark</button>
-          <button class="chip" type="button" data-theme="system" aria-pressed="false">💻 Match my device</button>
+          <button class="chip" type="button" data-theme="light" aria-pressed="false"><span class="ico" data-icon="sun" data-size="15"></span> Light</button>
+          <button class="chip" type="button" data-theme="dark" aria-pressed="false"><span class="ico" data-icon="moon" data-size="15"></span> Dark</button>
+          <button class="chip" type="button" data-theme="system" aria-pressed="false"><span class="ico" data-icon="monitor" data-size="15"></span> Match my device</button>
         </div>
       </section>
 
       <section class="card" style="margin-bottom:24px">
         <h3 style="font-size:var(--step-1)">Your data</h3>
         <div class="banner" style="margin-bottom:16px">
-          <span aria-hidden="true">🔒</span>
+          <span class="ico" data-icon="lock" data-size="18"></span>
           <p>Progress, favourites and teacher classes are stored in this browser only.
             Nothing is sent to a server, so clearing site data will erase them.</p>
         </div>
         <div class="list list-divided" id="data-summary"></div>
         <div class="row" style="gap:8px;margin-top:20px;flex-wrap:wrap">
-          <button class="btn btn-ghost" type="button" id="export-btn">⬇️ Export as JSON</button>
+          <button class="btn btn-ghost" type="button" id="export-btn"><span class="ico" data-icon="download" data-size="16"></span> Export as JSON</button>
           <button class="btn btn-ghost" type="button" id="reset-btn" style="color:var(--danger);border-color:var(--danger)">Erase everything</button>
         </div>
       </section>

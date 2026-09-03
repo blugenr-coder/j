@@ -17,9 +17,9 @@ const ex = getExercise(qs('id'));
 if (!ex) {
   $('.paper-toolbar').hidden = true;
   $('#not-found').hidden = false;
-  $('#not-found').append(emptyState('🖨️', 'Nothing to print',
+  $('#not-found').append(emptyState('printer', 'Nothing to print',
     'That link points at an exercise that is not in the library.',
-    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse exercises' })));
+    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse worksheets' })));
 } else {
   document.title = `${ex.title} — printable worksheet`;
   document.body.dataset.band = GRADE_MAP[ex.grade]?.band ?? 'mid';

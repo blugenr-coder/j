@@ -2,8 +2,9 @@
 
 import { $, el, pct, formatMinutes, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
-import { statTile, exerciseRow, exerciseCard, emptyState } from '../core/cards.js';
+import { statTile, exerciseRow, exerciseCard, emptyState, subjectIcon, subjectTone } from '../core/cards.js';
 import { GRADE_MAP, SUBJECT_MAP, ACHIEVEMENTS } from '../data/catalog.js';
+import { icon } from '../core/icons.js';
 import { EXERCISES, getExercise } from '../data/exercises.js';
 import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor } from '../core/store.js';
 
@@ -16,7 +17,7 @@ function render() {
 
   const hour = new Date().getHours();
   const part = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  $('#greeting').textContent = `${part}, ${user.name.split(' ')[0]}! 👋`;
+  $('#greeting').textContent = `${part}, ${user.name.split(' ')[0]}`;
 
   const s = summary();
   $('#greeting-sub').textContent = s.completed
@@ -25,10 +26,10 @@ function render() {
 
   /* --------------------------------- stats --------------------------------- */
   $('#stats').replaceChildren(
-    statTile({ label: 'Exercises completed', value: String(s.completed), foot: 'All time', icon: '📗', tone: 'green' }),
-    statTile({ label: 'Average accuracy',    value: `${s.accuracy}%`,    foot: `${s.correct} correct answers`, icon: '📊' }),
-    statTile({ label: 'Current streak',      value: String(s.streak),    foot: s.streak === 1 ? 'day' : 'days in a row', icon: '🔥', tone: 'orange' }),
-    statTile({ label: 'Practice time',       value: formatMinutes(s.minutes), foot: 'Across all exercises', icon: '⏱️' })
+    statTile({ label: 'Worksheets completed', value: String(s.completed), foot: 'All time', iconName: 'check-circle', tone: 'green' }),
+    statTile({ label: 'Average accuracy',    value: `${s.accuracy}%`,    foot: `${s.correct} correct answers`, iconName: 'target' }),
+    statTile({ label: 'Current streak',      value: String(s.streak),    foot: s.streak === 1 ? 'day' : 'days in a row', iconName: 'flame', tone: 'orange' }),
+    statTile({ label: 'Practice time',       value: formatMinutes(s.minutes), foot: 'Across all worksheets', iconName: 'clock' })
   );
 
   /* ------------------------------ continue card ------------------------------ */
@@ -41,7 +42,7 @@ function render() {
     card.replaceChildren(
       el('p', { class: 'card-title-sm', text: 'Continue working' }),
       el('div', { class: 'row', style: 'gap:16px;align-items:flex-start' },
-        el('span', { class: 'tile-icon lg', 'aria-hidden': 'true', text: SUBJECT_MAP[ex.subject]?.emoji ?? '📘' }),
+        el('span', { class: `tile-icon lg ${subjectTone(ex.subject)}` }, subjectIcon(ex.subject, { size: 24 })),
         el('div', { class: 'grow' },
           el('h3', { style: 'margin:0 0 2px;font-size:var(--step-1)', text: ex.title }),
           el('div', { class: 'small muted', style: 'margin-bottom:12px',
@@ -58,9 +59,9 @@ function render() {
   } else {
     card.replaceChildren(
       el('p', { class: 'card-title-sm', text: 'Continue working' }),
-      emptyState('🚀', 'Nothing in progress',
-        'Start an exercise and it will wait for you here until it is finished.',
-        el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse exercises' }))
+      emptyState('sparkle', 'Nothing in progress',
+        'Start a worksheet and it will wait for you here until it is finished.',
+        el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse worksheets' }))
     );
   }
 
@@ -112,13 +113,13 @@ function render() {
   const nextUp = ACHIEVEMENTS.find(a => !unlocked.includes(a.id));
   $('#achievement-list').replaceChildren(
     ...shown.map(a => el('div', { class: 'list-item' },
-      el('span', { style: 'font-size:22px', 'aria-hidden': 'true', text: a.emoji }),
+      el('span', { class: 'tile-icon orange', style: 'width:32px;height:32px' }, icon(a.icon, { size: 17 })),
       el('span', { class: 'grow' },
         el('span', { class: 'list-title', style: 'display:block', text: a.name }),
         el('span', { class: 'list-sub', text: a.desc })),
       el('span', { class: 'badge badge-success', text: 'Unlocked' }))),
     nextUp ? el('div', { class: 'list-item', style: 'opacity:.65' },
-      el('span', { style: 'font-size:22px;filter:grayscale(1)', 'aria-hidden': 'true', text: nextUp.emoji }),
+      el('span', { class: 'tile-icon', style: 'width:32px;height:32px' }, icon(nextUp.icon, { size: 17 })),
       el('span', { class: 'grow' },
         el('span', { class: 'list-title', style: 'display:block', text: nextUp.name }),
         el('span', { class: 'list-sub', text: nextUp.desc })),

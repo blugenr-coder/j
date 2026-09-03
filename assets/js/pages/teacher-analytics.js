@@ -5,6 +5,7 @@
 import { $, el, qs, setQs, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { statTile } from '../core/cards.js';
+import { icon } from '../core/icons.js';
 import { teacherData, classResults } from '../core/store.js';
 import { getExercise } from '../data/exercises.js';
 
@@ -40,7 +41,7 @@ function render(r) {
 
   $('#sample-note').replaceChildren(r.class.sample
     ? el('div', { class: 'banner warn', style: 'margin-bottom:24px' },
-        el('span', { 'aria-hidden': 'true', text: '⚠️' }),
+        icon('alert', { size: 18 }),
         el('p', {}, el('strong', { text: 'Sample class. ' }),
           'These results are generated so the analytics view is usable before real students exist. ' +
           'They are deterministic — the same every reload — and clearly not live data.'))
@@ -48,10 +49,10 @@ function render(r) {
 
   const passing = r.rows.filter(x => x.percent >= 60).length;
   $('#a-stats').replaceChildren(
-    statTile({ label: 'Class average', value: `${r.average}%`, foot: r.exercise.title, icon: '📊' }),
-    statTile({ label: 'Questions answered', value: String(r.answered), foot: `${plural(r.rows.length, 'student')}`, icon: '✅', tone: 'green' }),
-    statTile({ label: 'At or above 60%', value: `${passing} / ${r.rows.length}`, foot: 'Students', icon: '🎯' }),
-    statTile({ label: 'Hardest question', value: `${r.hardest[0]?.percent ?? 0}%`, foot: `Question ${(r.hardest[0]?.index ?? 0) + 1}`, icon: '⚠️', tone: 'orange' })
+    statTile({ label: 'Class average', value: `${r.average}%`, foot: r.exercise.title, iconName: 'progress' }),
+    statTile({ label: 'Questions answered', value: String(r.answered), foot: `${plural(r.rows.length, 'student')}`, iconName: 'check-circle', tone: 'green' }),
+    statTile({ label: 'At or above 60%', value: `${passing} / ${r.rows.length}`, foot: 'Students', iconName: 'users' }),
+    statTile({ label: 'Hardest question', value: `${r.hardest[0]?.percent ?? 0}%`, foot: `Question ${(r.hardest[0]?.index ?? 0) + 1}`, iconName: 'alert', tone: 'orange' })
   );
 
   /* ---------------------------- hardest questions ---------------------------- */

@@ -85,7 +85,7 @@ ok('saving an empty exercise is refused with a reason',
   (await page.locator('.toast').innerText()).includes('title'));
 
 await page.fill('#e-title', 'Two-step equations');
-await page.click('button:has-text("+ 🔢 Math input")');
+await page.click('#add-buttons button:has-text("Math input")');
 await page.waitForTimeout(150);
 await page.locator('#question-editors input').nth(0).fill('Solve for x');
 await page.locator('#question-editors input').nth(1).fill('5x + 5 = 30');
@@ -96,7 +96,7 @@ ok('a valid custom exercise saves', (await page.locator('#saved-list').innerText
 
 /* A saved exercise must be a real library citizen: searchable, playable, printable. */
 await open('library.html?text=two-step');
-ok('the custom exercise appears in the library',
+ok('the custom worksheet appears in the library',
   (await page.locator('#results').innerText()).includes('Two-step equations'));
 
 await page.locator('#results a:has-text("Start")').first().click();

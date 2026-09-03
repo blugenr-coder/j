@@ -4,6 +4,7 @@
 import { $, el, timeAgo, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { statTile, exerciseCard, emptyState } from '../core/cards.js';
+import { icon } from '../core/icons.js';
 import { EXERCISES, getExercise } from '../data/exercises.js';
 import { currentUser, teacherData, classResults, getState } from '../core/store.js';
 
@@ -17,7 +18,7 @@ if (!user) {
   /* Teacher tools are explorable signed out; only saving needs an account. */
   $('#signed-out').hidden = false;
   $('#signed-out').append(el('div', { class: 'banner', style: 'margin-bottom:24px' },
-    el('span', { 'aria-hidden': 'true', text: '👋' }),
+    icon('info', { size: 18 }),
     el('p', {}, 'You are browsing the teacher tools as a guest. ',
       el('a', { href: href('signin.html?new=1'), text: 'Create a teacher account' }),
       ' to keep your classes and assignments.')));
@@ -32,17 +33,17 @@ const avg = results.length ? Math.round(results.reduce((a, r) => a + r.average, 
 const answered = results.reduce((a, r) => a + r.answered, 0);
 
 $('#t-stats').replaceChildren(
-  statTile({ label: 'Classes', value: String(t.classes.length), foot: `${students} students`, icon: '🏫' }),
-  statTile({ label: 'Class average', value: `${avg}%`, foot: 'Across all set work', icon: '📊', tone: 'green' }),
-  statTile({ label: 'Questions answered', value: String(answered), foot: 'By your students', icon: '✅' }),
-  statTile({ label: 'Assignments', value: String(t.assignments.length), foot: 'Created on this device', icon: '📨', tone: 'orange' })
+  statTile({ label: 'Classes', value: String(t.classes.length), foot: `${students} students`, iconName: 'teacher' }),
+  statTile({ label: 'Class average', value: `${avg}%`, foot: 'Across all set work', iconName: 'progress', tone: 'green' }),
+  statTile({ label: 'Questions answered', value: String(answered), foot: 'By your students', iconName: 'check-circle' }),
+  statTile({ label: 'Assignments', value: String(t.assignments.length), foot: 'Created on this device', iconName: 'send', tone: 'orange' })
 );
 
 /* -------------------------------- classes -------------------------------- */
 $('#class-list').replaceChildren(...t.classes.map(c => {
   const r = classResults(c.id, c.exerciseIds[0]);
   return el('a', { class: 'list-item', href: href(`teacher/analytics.html?class=${c.id}`) },
-    el('span', { class: 'tile-icon', 'aria-hidden': 'true', text: '🏫' }),
+    el('span', { class: 'tile-icon' }, icon('teacher', { size: 18 })),
     el('span', { class: 'grow' },
       el('span', { class: 'list-title', style: 'display:block', text: c.name }),
       el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · ${plural(c.exerciseIds.length, 'exercise')} set` })),

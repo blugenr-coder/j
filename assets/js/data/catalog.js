@@ -3,27 +3,27 @@
 
 export const GRADES = [
   {
-    id: 'early', emoji: '🧸', name: 'Early Learning', range: 'Pre-K • Kindergarten',
+    id: 'early', icon: 'band-early', name: 'Early Learning', range: 'Pre-K • Kindergarten',
     band: 'early', tone: 'Playful and picture-led, with short sets and big targets.',
     levels: ['Pre-K', 'Kindergarten']
   },
   {
-    id: 'elementary', emoji: '📕', name: 'Elementary', range: 'Grades 1–5',
+    id: 'elementary', icon: 'band-elementary', name: 'Elementary', range: 'Grades 1–5',
     band: 'early', tone: 'Friendly and concrete, one idea per question.',
     levels: ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5']
   },
   {
-    id: 'middle', emoji: '📘', name: 'Middle School', range: 'Grades 6–8',
+    id: 'middle', icon: 'band-middle', name: 'Middle School', range: 'Grades 6–8',
     band: 'mid', tone: 'Structured practice with worked explanations.',
     levels: ['Grade 6', 'Grade 7', 'Grade 8']
   },
   {
-    id: 'high', emoji: '📗', name: 'High School', range: 'Grades 9–12',
+    id: 'high', icon: 'band-high', name: 'High School', range: 'Grades 9–12',
     band: 'upper', tone: 'Exam-shaped, with multi-step reasoning.',
     levels: ['Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
   },
   {
-    id: 'advanced', emoji: '🎓', name: 'Advanced', range: 'College / Advanced',
+    id: 'advanced', icon: 'band-advanced', name: 'Advanced', range: 'College / Advanced',
     band: 'upper', tone: 'Dense, no hand-holding, full solutions on demand.',
     levels: ['College', 'Advanced']
   }
@@ -31,7 +31,7 @@ export const GRADES = [
 
 export const SUBJECTS = [
   {
-    id: 'math', name: 'Mathematics', emoji: '🔢', accent: 'primary',
+    id: 'math', name: 'Mathematics', icon: 'math', accent: 'primary',
     blurb: 'From counting to calculus, one step at a time.',
     topics: [
       { id: 'arithmetic',   name: 'Arithmetic' },
@@ -46,7 +46,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'science', name: 'Science', emoji: '🔬', accent: 'green',
+    id: 'science', name: 'Science', icon: 'science', accent: 'green',
     blurb: 'How the world works, tested one question at a time.',
     topics: [
       { id: 'biology',   name: 'Biology' },
@@ -57,7 +57,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'ela', name: 'English / Language Arts', emoji: '📖', accent: 'orange',
+    id: 'ela', name: 'English / Language Arts', icon: 'ela', accent: 'orange',
     blurb: 'Grammar, vocabulary, reading and writing practice.',
     topics: [
       { id: 'grammar',    name: 'Grammar' },
@@ -69,7 +69,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'social', name: 'Social Studies', emoji: '🌍', accent: 'primary',
+    id: 'social', name: 'Social Studies', icon: 'social', accent: 'primary',
     blurb: 'History, geography and how societies are organised.',
     topics: [
       { id: 'history',   name: 'History' },
@@ -79,7 +79,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'languages', name: 'Languages', emoji: '🗣️', accent: 'green',
+    id: 'languages', name: 'Languages', icon: 'languages', accent: 'green',
     blurb: 'Vocabulary and grammar drills in a second language.',
     topics: [
       { id: 'spanish', name: 'Spanish' },
@@ -89,7 +89,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'cs', name: 'Computer Science', emoji: '💻', accent: 'primary',
+    id: 'cs', name: 'Computer Science', icon: 'cs', accent: 'primary',
     blurb: 'Logic, code reading and computational thinking.',
     topics: [
       { id: 'programming', name: 'Programming' },
@@ -98,7 +98,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'study', name: 'Study Skills', emoji: '🧠', accent: 'orange',
+    id: 'study', name: 'Study Skills', icon: 'study', accent: 'orange',
     blurb: 'Note-taking, revision technique and exam strategy.',
     topics: [
       { id: 'notes',    name: 'Note-taking' },
@@ -107,7 +107,7 @@ export const SUBJECTS = [
     ]
   },
   {
-    id: 'arts', name: 'Art & Music', emoji: '🎨', accent: 'orange',
+    id: 'arts', name: 'Art & Music', icon: 'arts', accent: 'orange',
     blurb: 'Theory, history and vocabulary of the arts.',
     topics: [
       { id: 'art-history', name: 'Art History' },
@@ -117,34 +117,34 @@ export const SUBJECTS = [
 ];
 
 export const DIFFICULTIES = [
-  { id: 'easy',   name: 'Easy',   dot: '🟢', badge: 'badge-success' },
-  { id: 'medium', name: 'Medium', dot: '🟡', badge: 'badge-warn' },
-  { id: 'hard',   name: 'Hard',   dot: '🔴', badge: 'badge-danger' }
+  { id: 'easy',   name: 'Easy',   icon: 'level-1', badge: 'badge-success' },
+  { id: 'medium', name: 'Medium', icon: 'level-2', badge: 'badge-warn' },
+  { id: 'hard',   name: 'Hard',   icon: 'level-3', badge: 'badge-danger' }
 ];
 
 export const QUESTION_TYPES = [
-  { id: 'blank',   name: 'Fill in the blank', emoji: '✏️' },
-  { id: 'choice',  name: 'Multiple choice',   emoji: '🔘' },
-  { id: 'multi',   name: 'Multiple answers',  emoji: '☑️' },
-  { id: 'math',    name: 'Math input',        emoji: '🔢' },
-  { id: 'match',   name: 'Matching',          emoji: '🧩' },
-  { id: 'order',   name: 'Ordering',          emoji: '🔀' },
-  { id: 'graph',   name: 'Graph',             emoji: '📊' },
-  { id: 'written', name: 'Written response',  emoji: '✍️' }
+  { id: 'blank',   name: 'Fill in the blank', icon: 'q-blank' },
+  { id: 'choice',  name: 'Multiple choice',   icon: 'q-choice' },
+  { id: 'multi',   name: 'Multiple answers',  icon: 'q-multi' },
+  { id: 'math',    name: 'Math input',        icon: 'q-math' },
+  { id: 'match',   name: 'Matching',          icon: 'q-match' },
+  { id: 'order',   name: 'Ordering',          icon: 'q-order' },
+  { id: 'graph',   name: 'Graph',             icon: 'q-graph' },
+  { id: 'written', name: 'Written response',  icon: 'q-written' }
 ];
 
 /* Achievements are deliberately optional — the plan asks for gamification that
    never makes the product feel childish, so they live on their own page and
    surface as a quiet toast, not a full-screen celebration. */
 export const ACHIEVEMENTS = [
-  { id: 'first-sheet',  emoji: '🏆', name: 'First Worksheet', desc: 'Complete your first exercise.',            test: s => s.completed >= 1 },
-  { id: 'streak-7',     emoji: '🔥', name: '7 Day Streak',    desc: 'Practise seven days in a row.',            test: s => s.streak >= 7 },
-  { id: 'bookworm',     emoji: '📚', name: 'Bookworm',        desc: 'Complete 50 worksheets.',                  test: s => s.completed >= 50 },
-  { id: 'math-master',  emoji: '🧮', name: 'Math Master',     desc: 'Score 90% or higher on 20 maths exercises.', test: s => s.mathHighScores >= 20 },
-  { id: 'perfect',      emoji: '🎯', name: 'Perfect Score',   desc: 'Get every question in an exercise correct.', test: s => s.perfectRuns >= 1 },
-  { id: 'explorer',     emoji: '🧭', name: 'Explorer',        desc: 'Practise in four different subjects.',      test: s => s.subjectsTouched >= 4 },
-  { id: 'century',      emoji: '💯', name: 'Century',         desc: 'Answer 100 questions correctly.',           test: s => s.correct >= 100 },
-  { id: 'early-bird',   emoji: '🌅', name: 'Early Bird',      desc: 'Finish an exercise before 9am.',            test: s => s.earlyBird === true }
+  { id: 'first-sheet',  icon: 'trophy', name: 'First Worksheet', desc: 'Complete your first exercise.',            test: s => s.completed >= 1 },
+  { id: 'streak-7',     icon: 'flame', name: '7 Day Streak',    desc: 'Practise seven days in a row.',            test: s => s.streak >= 7 },
+  { id: 'bookworm',     icon: 'subjects', name: 'Bookworm',        desc: 'Complete 50 worksheets.',                  test: s => s.completed >= 50 },
+  { id: 'math-master',  icon: 'math', name: 'Math Master',     desc: 'Score 90% or higher on 20 maths exercises.', test: s => s.mathHighScores >= 20 },
+  { id: 'perfect',      icon: 'target', name: 'Perfect Score',   desc: 'Get every question in an exercise correct.', test: s => s.perfectRuns >= 1 },
+  { id: 'explorer',     icon: 'compass', name: 'Explorer',        desc: 'Practise in four different subjects.',      test: s => s.subjectsTouched >= 4 },
+  { id: 'century',      icon: 'hash', name: 'Century',         desc: 'Answer 100 questions correctly.',           test: s => s.correct >= 100 },
+  { id: 'early-bird',   icon: 'sunrise', name: 'Early Bird',      desc: 'Finish an exercise before 9am.',            test: s => s.earlyBird === true }
 ];
 
 /* ------------------------------- lookups ------------------------------- */

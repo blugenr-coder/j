@@ -4,6 +4,7 @@
 import { $, el, donut, formatMinutes, todayKey, pct } from '../core/util.js';
 import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
 import { statTile, emptyState } from '../core/cards.js';
+import { icon } from '../core/icons.js';
 import { SUBJECT_MAP, TOPIC_MAP } from '../data/catalog.js';
 import { EXERCISES, getExercise } from '../data/exercises.js';
 import { summary, getState, scoreFor, statusFor } from '../core/store.js';
@@ -22,14 +23,14 @@ function nothingWeak(assessed) {
   const strongest = assessed[assessed.length - 1];
   const next = EXERCISES.find(e => statusFor(e.id) === 'not-started');
   return el('div', { class: 'row', style: 'gap:16px;align-items:flex-start;padding:8px 0' },
-    el('span', { class: 'tile-icon green', 'aria-hidden': 'true', text: '✓' }),
+    el('span', { class: 'tile-icon green' }, icon('check', { size: 18 })),
     el('span', { class: 'grow' },
       el('strong', { class: 'small', style: 'display:block', text: 'No weak topics right now' }),
       el('span', { class: 'small muted', text:
         `Every topic you have practised is at ${WEAK_LABEL}% or above — your best is ` +
         `${TOPIC_MAP[strongest.id]?.name ?? strongest.id} at ${strongest.percent}%. ` +
         'Try something new and this panel will start pointing at the gaps.' })),
-    next ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${next.id}`), text: 'Try one →' }) : null);
+    next ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${next.id}`), text: 'Try one' }) : null);
 }
 const WEAK_LABEL = 85;
 
@@ -39,10 +40,10 @@ function render() {
   const state = getState();
 
   $('#stats').replaceChildren(
-    statTile({ label: 'Average accuracy', value: `${s.accuracy}%`, foot: `${s.correct} of ${s.answered} answers correct`, icon: '🎯' }),
-    statTile({ label: 'Exercises completed', value: String(s.completed), foot: `${Object.keys(state.progress).length} opened in total`, icon: '📗', tone: 'green' }),
-    statTile({ label: 'Practice time', value: formatMinutes(s.minutes), foot: 'Time actually spent answering', icon: '⏱️' }),
-    statTile({ label: 'Current streak', value: `${s.streak}`, foot: s.streak === 1 ? 'day in a row' : 'days in a row', icon: '🔥', tone: 'orange' })
+    statTile({ label: 'Average accuracy', value: `${s.accuracy}%`, foot: `${s.correct} of ${s.answered} answers correct`, iconName: 'target' }),
+    statTile({ label: 'Worksheets completed', value: String(s.completed), foot: `${Object.keys(state.progress).length} opened in total`, iconName: 'check-circle', tone: 'green' }),
+    statTile({ label: 'Practice time', value: formatMinutes(s.minutes), foot: 'Time actually spent answering', iconName: 'clock' }),
+    statTile({ label: 'Current streak', value: `${s.streak}`, foot: s.streak === 1 ? 'day in a row' : 'days in a row', iconName: 'flame', tone: 'orange' })
   );
 
   /* ----------------------------- subject bars ----------------------------- */
@@ -114,7 +115,7 @@ function render() {
           el('span', { class: 'grow' },
             el('span', { class: 'list-title', style: 'display:block', text: TOPIC_MAP[t.id]?.name ?? t.id }),
             el('span', { class: 'list-sub', text: `${t.correct} of ${t.answered} correct` })),
-          fix ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${fix.id}`), text: 'Practise →' }) : null);
+          fix ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${fix.id}`), text: 'Practise' }) : null);
       })
     : [nothingWeak(assessed)]));
 
@@ -125,9 +126,9 @@ function render() {
 
   if (!history.length) {
     $('#history-rows').closest('.table-scroll').hidden = true;
-    $('#history-empty').append(emptyState('📊', 'No history yet',
-      'Once you start an exercise it is listed here with your score.',
-      el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Find an exercise' })));
+    $('#history-empty').append(emptyState('progress', 'No history yet',
+      'Once you start a worksheet it is listed here with your score.',
+      el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Find a worksheet' })));
     return;
   }
 

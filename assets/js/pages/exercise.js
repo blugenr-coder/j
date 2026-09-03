@@ -6,6 +6,7 @@
 import { $, $$, el, qs, setQs, donut, toast, timeAgo, pct, clamp } from '../core/util.js';
 import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { favButton, difficultyBadge, emptyState } from '../core/cards.js';
+import { icon } from '../core/icons.js';
 import { getExercise } from '../data/exercises.js';
 import { SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
 import { renderQuestion, mathNode } from '../core/question.js';
@@ -21,9 +22,9 @@ const ex = getExercise(qs('id'));
 
 if (!ex) {
   $('#not-found').hidden = false;
-  $('#not-found').append(emptyState('🤔', 'Exercise not found',
+  $('#not-found').append(emptyState('help', 'Worksheet not found',
     'That link points at an exercise that is not in the library.',
-    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse exercises' })));
+    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse worksheets' })));
 } else {
   start();
 }
@@ -44,7 +45,7 @@ function start() {
 
   const gate = $('#mode-gate');
   $('#gate-crumb').replaceChildren(breadcrumb([
-    { label: 'Exercises', path: 'library.html' },
+    { label: 'Worksheets', path: 'library.html' },
     { label: SUBJECT_MAP[ex.subject]?.name ?? ex.subject, path: `subjects.html?subject=${ex.subject}` },
     { label: ex.title }
   ]));
@@ -56,13 +57,13 @@ function start() {
     difficultyBadge(ex.difficulty),
     el('span', { class: 'badge', text: `${ex.count} questions` }),
     el('span', { class: 'badge', text: `About ${ex.minutes} min` }),
-    ...ex.types.map(t => el('span', { class: 'badge', text: `${QTYPE_MAP[t].emoji} ${QTYPE_MAP[t].name}` }))
+    ...ex.types.map(t => el('span', { class: 'badge' }, icon(QTYPE_MAP[t].icon, { size: 13 }), QTYPE_MAP[t].name))
   );
   $('#gate-print').href = href(`print.html?id=${ex.id}`);
 
   if (assignment && assignment.exerciseId === ex.id) {
     const banner = () => el('div', { class: 'banner', style: 'margin-bottom:20px;grid-column:1/-1' },
-      el('span', { 'aria-hidden': 'true', text: '📨' }),
+      icon('send', { size: 18 }),
       el('p', {},
         el('strong', { text: `Set as an assignment (${assignment.code}). ` }),
         assignment.due ? `Due ${assignment.due}. ` : '',
@@ -113,7 +114,7 @@ function start() {
 
     card.append(el('div', { class: 'row-between', style: 'margin-bottom:12px' },
       el('span', { class: 'badge badge-primary', text: `Question ${index + 1}` }),
-      el('span', { class: 'badge', text: `${QTYPE_MAP[q.type].emoji} ${QTYPE_MAP[q.type].name}` })
+      el('span', { class: 'badge' }, icon(QTYPE_MAP[q.type].icon, { size: 13 }), QTYPE_MAP[q.type].name)
     ));
     card.append(el('h2', { class: 'question-prompt', text: q.prompt }));
 
@@ -149,7 +150,7 @@ function start() {
 
     actions.append(clearBtn, checked ? nextBtn : checkBtn);
     if (checked && index === ex.count - 1) {
-      nextBtn.textContent = 'See results →';
+      nextBtn.textContent = 'See results';
       nextBtn.onclick = finish;
     }
     card.append(actions);
@@ -205,7 +206,7 @@ function start() {
         onclick: () => { clearAnswer(ex.id, q.id); draw(); } }),
       el('button', {
         class: 'btn btn-primary', type: 'button',
-        text: index === ex.count - 1 ? 'See results →' : 'Next question ›',
+        text: index === ex.count - 1 ? 'See results' : 'Next question',
         onclick: () => index === ex.count - 1 ? finish() : go(index + 1)
       })
     );
@@ -226,7 +227,7 @@ function start() {
     host.replaceChildren();
     if (!isAutoMarked(q)) {
       host.append(el('div', { class: 'feedback info' },
-        el('h4', { text: 'Saved ✍️' }),
+        el('h4', { text: 'Saved' }),
         el('p', { text: 'Written answers are marked by you. Compare yours with the sample below and be honest — it is the comparison that teaches.' }),
         el('div', { class: 'explain' },
           el('strong', { text: 'Sample answer: ' }),
@@ -237,7 +238,7 @@ function start() {
 
     if (stored.correct) {
       host.append(el('div', { class: 'feedback ok' },
-        el('h4', { text: restored ? 'Correct ✓' : 'Correct 🎉' }),
+        el('h4', { text: 'Correct' }),
         el('p', { text: restored ? 'You answered this one correctly.' : 'Nice work — that is right.' }),
         q.explanation ? el('div', { class: 'explain', text: q.explanation }) : null
       ));
@@ -251,9 +252,9 @@ function start() {
     const row = el('div', { class: 'row', style: 'gap:8px;margin-top:12px;flex-wrap:wrap' });
     row.append(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Try again',
       onclick: () => { clearAnswer(ex.id, q.id); draw(); } }));
-    if (q.hint) row.append(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: '💡 Show hint',
+    if (q.hint) row.append(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Show hint',
       onclick: (e) => { e.target.replaceWith(el('span', { class: 'small', text: q.hint })); } }));
-    row.append(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: '📘 See explanation',
+    row.append(el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'See explanation',
       onclick: (e) => {
         e.target.disabled = true;
         panel.append(el('div', { class: 'explain' },
@@ -316,7 +317,7 @@ function start() {
       return el('div', { class: 'list-item', style: 'padding:6px 0' },
         el('span', { class: `tile-icon ${a.correct === false ? 'red' : 'green'}`,
           style: 'width:26px;height:26px;font-size:13px', 'aria-hidden': 'true',
-          text: a.correct === false ? '✕' : '✓' }),
+          }, icon(a.correct === false ? 'close' : 'check', { size: 13 })),
         el('span', { class: 'grow' },
           el('span', { class: 'list-title small', style: 'display:block', text: `Question ${qi + 1}` }),
           el('span', { class: 'list-sub', text: a.correct === false ? 'Incorrect' : a.correct === null ? 'Saved' : 'Correct' })),
@@ -341,7 +342,8 @@ function start() {
       : s.percent >= 50 ? 'A decent start — worth another pass.' : 'This one needs another go.';
 
     host.replaceChildren(el('div', { class: 'card result-hero', style: 'max-width:760px;margin-inline:auto' },
-      el('div', { style: 'font-size:44px', 'aria-hidden': 'true', text: s.percent >= 70 ? '🎉' : '💪' }),
+      el('span', { class: `tile-icon lg ${s.percent >= 70 ? 'green' : 'orange'}`, style: 'margin-inline:auto' },
+        icon(s.percent >= 70 ? 'trophy' : 'target', { size: 26 })),
       el('h1', { style: 'margin:8px 0' }, `${ex.title} complete`),
       el('div', { class: 'result-score', text: `${s.percent}%` }),
       el('p', { style: 'margin-top:8px' },
@@ -351,9 +353,9 @@ function start() {
       unlocked.length ? el('div', { class: 'banner', style: 'margin:16px 0;justify-content:center' },
         el('p', { text: `Unlocked: ${unlocked.map(a => `${a.emoji} ${a.name}`).join(', ')}` })) : null,
       el('div', { class: 'row', style: 'justify-content:center;gap:12px;flex-wrap:wrap;margin-top:24px' },
-        el('button', { class: 'btn btn-secondary', type: 'button', text: '↺ Try again',
+        el('button', { class: 'btn btn-secondary', type: 'button', text: 'Try again',
           onclick: () => { resetRun(ex.id); location.href = href(`exercise.html?id=${ex.id}&mode=online`); } }),
-        el('a', { class: 'btn btn-ghost', href: href(`print.html?id=${ex.id}`), text: '🖨️ Print this worksheet' }),
+        el('a', { class: 'btn btn-ghost', href: href(`print.html?id=${ex.id}`), text: 'Print this worksheet' }),
         el('a', { class: 'btn btn-primary', href: href(currentUser() ? 'dashboard.html' : 'library.html'),
           text: currentUser() ? 'Back to dashboard' : 'Find another exercise' })
       ),
@@ -379,11 +381,11 @@ function start() {
               go(r.i);
             }
           },
-            el('span', { class: 'tile-icon red', style: 'width:30px;height:30px;font-size:14px', text: '✕' }),
+            el('span', { class: 'tile-icon red', style: 'width:30px;height:30px' }, icon('close', { size: 15 })),
             el('span', { class: 'grow' },
               el('span', { class: 'list-title', style: 'display:block', text: `Question ${r.i + 1}` }),
               el('span', { class: 'list-sub', text: r.q.prompt.slice(0, 78) })),
-            el('span', { class: 'small muted', text: 'Review →' })
+            el('span', { class: 'small muted', text: 'Review' })
           ))))
       );
     }
@@ -405,7 +407,7 @@ function start() {
     $('#next-btn').addEventListener('click', () => index === ex.count - 1 ? finish() : go(index + 1));
     $('#hint-btn').addEventListener('click', () => {
       const q = ex.questions[index];
-      if (q.hint) toast(`💡 ${q.hint}`, 6000);
+      if (q.hint) toast(q.hint, 6000);
     });
     $('#explain-btn').addEventListener('click', () => {
       const q = ex.questions[index];

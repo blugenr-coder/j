@@ -17,7 +17,7 @@
 <body>
 <div class="ex-topbar" id="ex-topbar" hidden>
   <div class="wrap wrap-wide">
-    <a class="icon-btn" id="back-link" href="library.html" aria-label="Back to library">←</a>
+    <a class="icon-btn" id="back-link" href="library.html" aria-label="Back to library"><span class="ico" data-icon="arrow-left" data-size="18"></span></a>
     <span class="ex-name" id="ex-name"></span>
     <span class="ex-count" id="ex-count"></span>
     <div class="bar" id="ex-bar" role="progressbar" aria-label="Exercise progress" aria-valuemin="0" aria-valuemax="100"><span style="width:0"></span></div>
@@ -25,7 +25,7 @@
     <div class="row" style="gap:8px;margin-left:auto">
       <button class="btn btn-ghost btn-sm" id="prev-btn" type="button">‹ Previous</button>
       <button class="btn btn-primary btn-sm" id="next-btn" type="button">Next ›</button>
-      <a class="icon-btn" id="print-link" href="#" title="Print this worksheet" aria-label="Print this worksheet">🖨️</a>
+      <a class="icon-btn" id="print-link" href="#" title="Print this worksheet" aria-label="Print this worksheet"><span class="ico" data-icon="printer" data-size="18"></span></a>
     </div>
   </div>
 </div>
@@ -49,12 +49,12 @@
       <h2 style="font-size:var(--step-2)">How do you want to practise?</h2>
       <div class="mode-choice">
         <button class="card card-link mode-option" type="button" id="gate-online">
-          <span class="tile-icon lg" aria-hidden="true">💻</span>
+          <span class="tile-icon lg"><span class="ico" data-icon="monitor" data-size="24"></span></span>
           <h3 style="margin:12px 0 4px">Complete online</h3>
           <p class="small" style="margin:0">Instant marking, hints and worked explanations. Your progress is saved.</p>
         </button>
         <a class="card card-link mode-option" id="gate-print">
-          <span class="tile-icon lg orange" aria-hidden="true">🖨️</span>
+          <span class="tile-icon lg orange"><span class="ico" data-icon="printer" data-size="24"></span></span>
           <h3 style="margin:12px 0 4px">Print worksheet</h3>
           <p class="small" style="margin:0">A clean A4 sheet with room to work, plus a separate answer key.</p>
         </a>
@@ -79,7 +79,7 @@
           <span><span class="dot f"></span>Review later</span>
           <span><span class="dot"></span>Not answered</span>
         </div>
-        <button class="btn btn-ghost btn-block btn-sm" type="button" id="flag-btn" style="margin-top:16px">🔖 Review later</button>
+        <button class="btn btn-ghost btn-block btn-sm" type="button" id="flag-btn" style="margin-top:16px"><span class="ico" data-icon="bookmark" data-size="15"></span> Review later</button>
       </details>
     </aside>
 
@@ -89,19 +89,19 @@
       <div class="grid grid-2" style="margin-top:16px">
         <div class="card card-pad-sm">
           <div class="row" style="gap:16px;align-items:flex-start">
-            <span style="font-size:32px" aria-hidden="true">🤖</span>
+            <span class="tile-icon"><span class="ico" data-icon="help" data-size="20"></span></span>
             <div>
               <h4 style="margin:0 0 4px">Need help?</h4>
               <p class="small" style="margin:0 0 12px">Take a hint first — it is designed to unstick you without giving the answer away.</p>
               <div class="row" style="gap:8px;flex-wrap:wrap">
-                <button class="btn btn-ghost btn-sm" type="button" id="hint-btn">💡 Show hint</button>
-                <button class="btn btn-ghost btn-sm" type="button" id="explain-btn">📘 See explanation</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="hint-btn"><span class="ico" data-icon="lightbulb" data-size="15"></span> Show hint</button>
+                <button class="btn btn-ghost btn-sm" type="button" id="explain-btn"><span class="ico" data-icon="document" data-size="15"></span> See explanation</button>
               </div>
             </div>
           </div>
         </div>
         <div class="card card-pad-sm" style="background:var(--accent-light);border-color:var(--accent)">
-          <h4 style="margin:0 0 8px">💡 Tips</h4>
+          <h4 style="margin:0 0 8px"><span class="ico" data-icon="lightbulb" data-size="16"></span> Tips</h4>
           <ol class="small" style="margin:0;padding-left:18px" id="tips-list"></ol>
         </div>
       </div>
@@ -121,7 +121,7 @@
       <div class="card card-pad-sm">
         <p class="card-title-sm">Score</p>
         <div class="row" style="gap:12px">
-          <span style="font-size:26px" aria-hidden="true">🏆</span>
+          <span class="tile-icon orange"><span class="ico" data-icon="trophy" data-size="18"></span></span>
           <div>
             <strong style="font-family:var(--font-head);font-size:var(--step-2)" id="score-value"></strong>
             <div class="small muted">Correct answers</div>
@@ -135,9 +135,9 @@
       <div class="card card-pad-sm">
         <p class="card-title-sm">This exercise</p>
         <div class="list">
-          <a class="list-item" id="side-print" href="#"><span aria-hidden="true">🖨️</span><span class="grow">Print worksheet</span></a>
+          <a class="list-item" id="side-print" href="#"><span class="ico" data-icon="printer" data-size="17"></span><span class="grow">Print worksheet</span></a>
           <button class="list-item" type="button" id="restart-btn" style="border:0;background:none;cursor:pointer;font:inherit;text-align:left;width:100%">
-            <span aria-hidden="true">↺</span><span class="grow">Start again</span>
+            <span class="ico" data-icon="refresh" data-size="17"></span><span class="grow">Start again</span>
           </button>
         </div>
       </div>

@@ -16,10 +16,10 @@ $('#featured-cards').replaceChildren(...featuredExercises(6).map(ex => exerciseC
 
 const totalQuestions = EXERCISES.reduce((a, e) => a + e.count, 0);
 $('#trust-stats').replaceChildren(
-  statTile({ label: 'Exercises in the library', value: compact(EXERCISES.length), foot: 'Across every grade band', icon: '📋' }),
-  statTile({ label: 'Questions to practise',    value: compact(totalQuestions),   foot: 'With hints and explanations', icon: '❓', tone: 'green' }),
-  statTile({ label: 'Question types',           value: String(QUESTION_TYPES.length), foot: 'From multiple choice to graphs', icon: '🧩', tone: 'orange' }),
-  statTile({ label: 'Printable worksheets',     value: '100%',                    foot: 'Every exercise, with an answer key', icon: '🖨️' })
+  statTile({ label: 'Worksheets in the library', value: compact(EXERCISES.length), foot: 'Across every grade band', iconName: 'library' }),
+  statTile({ label: 'Questions to practise',    value: compact(totalQuestions),   foot: 'With hints and explanations', iconName: 'help', tone: 'green' }),
+  statTile({ label: 'Question types',           value: String(QUESTION_TYPES.length), foot: 'From multiple choice to graphs', iconName: 'q-match', tone: 'orange' }),
+  statTile({ label: 'Printable worksheets',     value: '100%',                    foot: 'Every one, with an answer key', iconName: 'printer' })
 );
 
 /* ------------------------------- search ------------------------------- */

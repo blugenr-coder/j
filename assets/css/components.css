@@ -55,7 +55,7 @@ a.card:hover, .card-link:hover { text-decoration: none; transform: translateY(-2
 
 /* --------------------------- badges & statuses --------------------------- */
 .badge {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 5px; white-space: nowrap;
   padding: 3px 10px; border-radius: var(--r-pill);
   font-size: var(--step--1); font-weight: 600; line-height: 1.5;
   background: var(--surface-2); color: var(--text-2);
@@ -154,7 +154,11 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 
 /* --------------------------------- misc --------------------------------- */
 .empty { text-align: center; padding: var(--s8) var(--s5); color: var(--text-2); }
-.empty .empty-ico { font-size: 40px; margin-bottom: var(--s3); }
+.empty .empty-ico {
+  display: inline-grid; place-items: center; width: 64px; height: 64px;
+  border-radius: 50%; background: var(--surface-2); color: var(--text-3);
+  margin-bottom: var(--s4);
+}
 
 .toast-host { position: fixed; bottom: var(--s5); left: 50%; transform: translateX(-50%); z-index: 200; display: grid; gap: var(--s2); pointer-events: none; }
 .toast {
@@ -164,8 +168,13 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
-.star-btn { background: none; border: 0; cursor: pointer; font-size: 18px; line-height: 1; color: var(--text-3); padding: var(--s1); }
+.star-btn {
+  background: none; border: 0; cursor: pointer; line-height: 0;
+  color: var(--text-3); padding: var(--s1); border-radius: var(--r-sm);
+}
+.star-btn:hover { color: var(--accent); }
 .star-btn[aria-pressed="true"] { color: var(--accent); }
+.star-btn[aria-pressed="true"] .ico-svg { fill: currentColor; }
 
 .divider { height: 1px; background: var(--border); border: 0; margin-block: var(--s5); }
 
@@ -184,3 +193,73 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 .banner.warn { background: var(--accent-light); border-color: var(--accent); color: #92400E; }
 [data-theme="dark"] .banner.warn { color: var(--accent); }
 .banner p { margin: 0; color: inherit; }
+
+/* ============================== worksheet card ==============================
+   The card leads with two real questions from the sheet. A worksheet is its
+   questions; describing one without showing any asks the reader to take it on
+   trust. */
+.ex-card { display: flex; flex-direction: column; gap: var(--s3); height: 100%; }
+
+.ex-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s3); }
+.ex-head-main { min-width: 0; }
+.ex-card .ex-meta {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-2); font-size: var(--step--1); font-weight: 500;
+  letter-spacing: .01em; margin-bottom: 4px;
+}
+.ex-card h3 { font-size: var(--step-1); margin: 0; line-height: 1.3; }
+.ex-card .ex-title-link { color: var(--text); }
+.ex-card .ex-title-link:hover { color: var(--primary); text-decoration: none; }
+.ex-card .ex-summary {
+  margin: 0; font-size: var(--step--1); color: var(--text-2); line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.ex-preview {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: var(--s3) var(--s4) var(--s2);
+}
+.preview-sheet { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s3); }
+.preview-line { display: flex; gap: var(--s2); align-items: baseline; }
+.preview-num {
+  font-family: var(--font-head); font-weight: 700; font-size: var(--step--1);
+  color: var(--text-3); min-width: 14px;
+}
+.preview-body { min-width: 0; display: grid; gap: 3px; }
+.preview-prompt {
+  font-size: var(--step--1); color: var(--text); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.preview-math {
+  font-family: var(--font-math); font-style: italic; font-size: var(--step-0);
+  color: var(--text); letter-spacing: .01em;
+}
+.preview-opts { display: grid; gap: 2px; }
+.preview-opt {
+  font-size: 11.5px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.preview-answer { font-size: 11.5px; color: var(--text-3); }
+.preview-rule { display: block; height: 1px; background: var(--border-strong); max-width: 130px; margin-top: 6px; }
+.ex-preview-more {
+  display: block; margin-top: var(--s3); padding-top: var(--s2);
+  border-top: 1px dashed var(--border-strong);
+  font-size: 11px; color: var(--text-3); font-weight: 600; letter-spacing: .02em;
+}
+
+.ex-card .ex-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.ex-card .ex-progress { margin-top: 2px; }
+.ex-card .ex-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s3);
+  padding-top: var(--s3); border-top: 1px solid var(--border);
+}
+
+.grade-card .grade-count { display: inline-flex; align-items: center; gap: 6px; }
+.subject-card { display: grid; gap: var(--s3); align-content: start; }
+
+.load-more { display: grid; justify-items: center; gap: var(--s3); padding: var(--s6) 0 var(--s3); }
+.preview-opt { display: flex; gap: 7px; align-items: baseline; }
+.preview-key {
+  font-family: var(--font-head); font-weight: 700; font-size: 10px;
+  color: var(--text-3); min-width: 9px; flex: none;
+}

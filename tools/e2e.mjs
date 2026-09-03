@@ -30,12 +30,20 @@ const open = async (path) => {
 /* Cards, not just a count: replaceChildren silently stringifies an array, so
    the count can be right while the page renders nothing usable. */
 await open('library.html');
-ok('the library renders a card per exercise',
-  await page.locator('.ex-card').count() === 26);
+const firstPage = await page.locator('.ex-card').count();
+ok('the library renders a page of worksheet cards', firstPage === 24);
+ok('the result count reports the whole library, not the page',
+  /1,0\d\d worksheets/.test(await page.locator('#result-count').innerText()));
+ok('each card shows real questions from its own worksheet',
+  await page.locator('.ex-card .preview-sheet').count() === firstPage);
+await page.click('#load-more button');
+await page.waitForTimeout(600);
+ok('showing more adds another page', await page.locator('.ex-card').count() === 48);
 await open('library.html?q=fractions%20grade%206');
-ok('a natural-language query filters to the right exercise',
-  await page.locator('.ex-card').count() === 1 &&
-  (await page.locator('.ex-card h3').innerText()).includes('Fractions'));
+const titles = await page.locator('.ex-card h3').allInnerTexts();
+ok('a natural-language query filters to Grade 6 fractions',
+  titles.length > 0 && titles.length < 12 &&
+  (await page.locator('.ex-card .ex-meta').first().innerText()).includes('Grade 6'));
 ok('the query is explained back to the user',
   (await page.locator('#parse-note').innerText()).includes('Grade 6'));
 await open('library.html?text=zzzznope');
@@ -47,10 +55,11 @@ ok('a subject page lists its exercises',
 
 /* ---------------------- math input: right then wrong ---------------------- */
 await open('exercise.html?id=linear-equations&mode=online&q=0');
+await page.waitForSelector('.input-blank');
 await page.fill('.input-blank', 'x = 5');
 await page.click('button:has-text("Check answer")');
 await page.waitForSelector('.feedback.ok');
-ok('math answer "x = 5" marked correct', await page.locator('.feedback.ok h4').innerText() === 'Correct 🎉');
+ok('math answer "x = 5" marked correct', await page.locator('.feedback.ok h4').innerText() === 'Correct');
 ok('score sidebar shows 1 correct', (await page.locator('#score-value').innerText()).startsWith('1 /'));
 await page.click('button:has-text("Next question")');
 ok('question 1 chip turns green once you move on',

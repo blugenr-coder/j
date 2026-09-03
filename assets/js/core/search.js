@@ -113,11 +113,14 @@ export function parseQuery(input) {
   return { ...found, text: q.replace(/\b(worksheet|worksheets|exercise|exercises|practice|for|in|on|the)\b/g, '').replace(/\s+/g, ' ').trim() };
 }
 
-/* Everything an exercise can be matched against, built once. */
+/* Everything a worksheet can be matched against, built once.
+   Only worksheets whose questions are already in memory contribute their
+   question text: forcing a thousand generated sheets to materialise just to
+   build a search index would defeat the point of generating them lazily. */
 const HAYSTACK = new Map(EXERCISES.map(ex => [
   ex.id,
   [ex.title, ex.summary, ex.level, ex.topic, ex.subject,
-   ...ex.questions.map(q => `${q.prompt} ${q.math ?? ''}`)].join(' ').toLowerCase()
+   ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)].join(' ').toLowerCase()
 ]));
 
 /**

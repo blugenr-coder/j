@@ -12,12 +12,12 @@ function draw() {
   const ids = getState().favorites.filter(id => getExercise(id));
   $('#fav-count').textContent = ids.length
     ? `${plural(ids.length, 'exercise')} saved for later.`
-    : 'Star an exercise anywhere in the library and it lands here.';
+    : 'Star a worksheet anywhere in the library and it lands here.';
 
   $('#fav-grid').replaceChildren(...ids.map(id => exerciseCard(getExercise(id))));
-  $('#fav-empty').replaceChildren(...(ids.length ? [] : [emptyState('⭐', 'Nothing saved yet',
-    'Use the star on any exercise card to keep it here — useful for building a revision list.',
-    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse exercises' }))]));
+  $('#fav-empty').replaceChildren(...(ids.length ? [] : [emptyState('star', 'Nothing saved yet',
+    'Use the star on any worksheet to keep it here — useful for building a revision list.',
+    el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse worksheets' }))]));
 }
 
 /* Un-starring a card on this page should drop it from the list straight away. */
