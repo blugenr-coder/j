@@ -19,6 +19,8 @@ const PAGES = [
   ['join.html',                       ['#join-form']],
   ['signin.html',                     ['#grade option', '#role-choice .chip']],
   ['exercise.html?id=ancient-rome',   ['#gate-tags .badge', '.mode-choice .mode-option']],
+  ['exercise.html?id=fractions-grade-6-simplifying&mode=online',
+                                      ['#qnav button', '#question-card .question-prompt']],
   ['exercise.html?id=ancient-rome&mode=online', ['#qnav button', '#question-card .question-prompt', '#tips-list li']],
   ['print.html?id=ancient-rome',      ['.sheet', '.q-print', '.key-item']],
   ['dashboard.html',                  ['#stats .stat', '#recommended .ex-card', '.side-nav a']],
@@ -59,6 +61,14 @@ for (const [path, selectors] of PAGES) {
   for (const sel of selectors) {
     if (await page.locator(sel).count() === 0) problems.push(`nothing matched ${sel}`);
   }
+
+  /* Anything marked hidden must actually be gone: a class that sets `display`
+     outranks the attribute, which once left the whole player on screen
+     underneath a "not found" message. */
+  const leaked = await page.locator('[hidden]').evaluateAll(
+    els => els.filter(e => e.offsetParent !== null || e.getClientRects().length > 0)
+              .map(e => e.id || e.className || e.tagName));
+  for (const l of leaked) problems.push(`element marked hidden is still visible: ${l}`);
 
   /* The tell-tale of an array where a node was expected. */
   const body = await page.locator('body').innerText();

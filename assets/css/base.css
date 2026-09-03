@@ -56,6 +56,10 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .small { font-size: var(--step--1); }
 .mono { font-variant-numeric: tabular-nums; }
 .hidden { display: none !important; }
+/* The `hidden` attribute is only as strong as the UA rule behind it, so any
+   class that sets `display` silently defeats it — which is how the exercise
+   player stayed on screen underneath a "worksheet not found" message. */
+[hidden] { display: none !important; }
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
