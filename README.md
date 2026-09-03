@@ -121,7 +121,8 @@ missing explanations.
 ```bash
 npm run check        # module syntax, content integrity, 26 marking tests
 npm start            # then, in another shell:
-npm run test:e2e     # drives a real browser through every question type
+npm run test:e2e     # drives a real browser through every question type and
+                     # the teacher flows: analytics, codes, joining, the builder
 npm run test:links   # crawls every page for broken internal links
 ```
 
@@ -145,7 +146,8 @@ This is a complete front end with local persistence. Being precise about the gap
   students exist. Every sample class is labelled as such in the interface.
 - **The exercise builder covers five question types**, not all eight. Matching,
   ordering and graph questions need dedicated editing interfaces; shipping a
-  half-working editor for them would produce broken exercises.
+  half-working editor for them would produce broken exercises. What it does save
+  joins the library on that device and plays and prints like anything else.
 - **No AI generation.** Section 18 of the plan puts it deliberately late, and the
   library is the product.
 

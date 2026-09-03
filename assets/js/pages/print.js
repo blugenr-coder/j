@@ -7,7 +7,7 @@ import { $, $$, el, qs, esc, shuffle, hashCode } from '../core/util.js';
 import { mountShell, href } from '../core/shell.js';
 import { emptyState } from '../core/cards.js';
 import { getExercise } from '../data/exercises.js';
-import { SUBJECT_MAP, TOPIC_MAP, DIFF_MAP } from '../data/catalog.js';
+import { SUBJECT_MAP, TOPIC_MAP, DIFF_MAP, GRADE_MAP } from '../data/catalog.js';
 import { answerText } from '../core/marking.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
@@ -22,6 +22,7 @@ if (!ex) {
     el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse exercises' })));
 } else {
   document.title = `${ex.title} — printable worksheet`;
+  document.body.dataset.band = GRADE_MAP[ex.grade]?.band ?? 'mid';
   $('#doc-title').textContent = ex.title;
   $('#doc-meta').textContent = `${ex.level} · ${SUBJECT_MAP[ex.subject]?.name} · ${ex.count} questions`;
   $('#back-link').href = href(`exercise.html?id=${ex.id}`);

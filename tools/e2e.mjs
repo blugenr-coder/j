@@ -26,6 +26,25 @@ const open = async (path) => {
   await page.waitForTimeout(250);
 };
 
+/* ------------------------------ the library ------------------------------ */
+/* Cards, not just a count: replaceChildren silently stringifies an array, so
+   the count can be right while the page renders nothing usable. */
+await open('library.html');
+ok('the library renders a card per exercise',
+  await page.locator('.ex-card').count() === 26);
+await open('library.html?q=fractions%20grade%206');
+ok('a natural-language query filters to the right exercise',
+  await page.locator('.ex-card').count() === 1 &&
+  (await page.locator('.ex-card h3').innerText()).includes('Fractions'));
+ok('the query is explained back to the user',
+  (await page.locator('#parse-note').innerText()).includes('Grade 6'));
+await open('library.html?text=zzzznope');
+ok('no matches shows an empty state, not a blank page',
+  await page.locator('.empty').count() === 1);
+await open('subjects.html?subject=math');
+ok('a subject page lists its exercises',
+  await page.locator('.ex-card').count() > 5);
+
 /* ---------------------- math input: right then wrong ---------------------- */
 await open('exercise.html?id=linear-equations&mode=online&q=0');
 await page.fill('.input-blank', 'x = 5');

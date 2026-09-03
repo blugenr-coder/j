@@ -7,12 +7,12 @@ import { $, $$, el, qs, setQs, donut, toast, timeAgo, pct, clamp } from '../core
 import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { favButton, difficultyBadge, emptyState } from '../core/cards.js';
 import { getExercise } from '../data/exercises.js';
-import { SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP } from '../data/catalog.js';
+import { SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
 import { renderQuestion, mathNode } from '../core/question.js';
 import { mark, answerText, isAutoMarked } from '../core/marking.js';
 import {
   runFor, recordAnswer, clearAnswer, resetRun, completeRun, scoreFor,
-  addPracticeTime, toggleFlag, getState, unlockAchievements, currentUser
+  addPracticeTime, toggleFlag, getState, unlockAchievements, currentUser, findAssignment
 } from '../core/store.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
@@ -30,7 +30,13 @@ if (!ex) {
 
 function start() {
   document.title = `${ex.title} — WorksheetHub`;
+
+  /* Section 1: the interface grows up with the student. The band only nudges
+     type size and corner radius — the brand and palette never change. */
+  document.body.dataset.band = GRADE_MAP[ex.grade]?.band ?? 'mid';
+
   const run = runFor(ex.id);
+  const assignment = findAssignment(qs('code') ?? '');
 
   /* ------------------------------ mode gate ------------------------------ */
   const answered = Object.keys(run.answers ?? {}).length;
@@ -53,6 +59,18 @@ function start() {
     ...ex.types.map(t => el('span', { class: 'badge', text: `${QTYPE_MAP[t].emoji} ${QTYPE_MAP[t].name}` }))
   );
   $('#gate-print').href = href(`print.html?id=${ex.id}`);
+
+  if (assignment && assignment.exerciseId === ex.id) {
+    const banner = () => el('div', { class: 'banner', style: 'margin-bottom:20px;grid-column:1/-1' },
+      el('span', { 'aria-hidden': 'true', text: '📨' }),
+      el('p', {},
+        el('strong', { text: `Set as an assignment (${assignment.code}). ` }),
+        assignment.due ? `Due ${assignment.due}. ` : '',
+        assignment.note ?? ''));
+    $('#gate-summary').before(banner());
+    /* Inside the player grid, so it hides and shows with the player itself. */
+    $('#player').prepend(banner());
+  }
   $('#gate-online').addEventListener('click', () => { setQs({ mode: 'online' }); openPlayer(); });
 
   /* ------------------------------- player ------------------------------- */

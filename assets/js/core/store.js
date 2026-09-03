@@ -7,8 +7,7 @@
 import { todayKey, hashCode } from './util.js';
 import { ACHIEVEMENTS } from '../data/catalog.js';
 import { EXERCISE_MAP } from '../data/exercises.js';
-
-const KEY = 'worksheethub:v1';
+import { STORAGE_KEY as KEY } from './storage-key.js';
 
 const BLANK = {
   user: null,

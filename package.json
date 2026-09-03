@@ -7,7 +7,7 @@
   "scripts": {
     "start": "npx --yes http-server -p 8099 -c-1 .",
     "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs",
-    "test:e2e": "node tools/e2e.mjs",
+    "test:e2e": "node tools/e2e.mjs && node tools/e2e-teacher.mjs",
     "test:links": "node tools/check-links.mjs"
   }
 }

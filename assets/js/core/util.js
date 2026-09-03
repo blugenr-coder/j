@@ -29,6 +29,18 @@ export function el(tag, attrs = {}, ...children) {
   return node;
 }
 
+/**
+ * Replace an element's children, flattening arrays and dropping empties.
+ * `replaceChildren()` takes varargs, so handing it an array stringifies it into
+ * "[object HTMLDivElement]" — silently, with no error. This does what `el()`
+ * already does for its children.
+ */
+export function fill(host, ...children) {
+  host.replaceChildren(...children.flat(Infinity)
+    .filter(c => c !== null && c !== undefined && c !== false));
+  return host;
+}
+
 export const qs = (key, url = location.href) => new URL(url).searchParams.get(key);
 
 export function setQs(params, { replace = true } = {}) {

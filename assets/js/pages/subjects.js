@@ -1,6 +1,6 @@
 /* Subject selection — section 4. One page handles both the index and the
    per-subject view so the URL stays shareable: subjects.html?subject=math */
-import { $, el, qs } from '../core/util.js';
+import { $, el, qs, fill } from '../core/util.js';
 import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { subjectCard, exerciseCard, emptyState } from '../core/cards.js';
 import { SUBJECTS, SUBJECT_MAP } from '../data/catalog.js';
@@ -47,7 +47,7 @@ if (!subject) {
     );
   }));
 
-  $('#subject-exercises').replaceChildren(
+  fill($('#subject-exercises'),
     inSubject.length
       ? inSubject.map(ex => exerciseCard(ex, { showProgress: false }))
       : emptyState('🧭', 'Nothing here yet',

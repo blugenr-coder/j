@@ -2,7 +2,7 @@
    Filter state lives in the URL, so any view is shareable and the back button
    works. The search box parses natural queries into those same filters. */
 
-import { $, el, qs, setQs, plural } from '../core/util.js';
+import { $, el, qs, setQs, plural, fill } from '../core/util.js';
 import { mountShell, href } from '../core/shell.js';
 import { exerciseCard, emptyState } from '../core/cards.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES, GRADE_MAP } from '../data/catalog.js';
@@ -125,6 +125,8 @@ function buildActiveFilters() {
 
 function apply({ pushUrl = true } = {}) {
   if (pushUrl) writeUrl();
+  /* Filtering to a grade band tunes the type scale with it. */
+  document.body.dataset.band = state.grade ? (GRADE_MAP[state.grade]?.band ?? 'mid') : 'mid';
   buildFilters();
   buildActiveFilters();
 
@@ -133,7 +135,7 @@ function apply({ pushUrl = true } = {}) {
     ? `${plural(results.length, 'exercise')} found`
     : 'No exercises match';
 
-  resultsHost.replaceChildren(
+  fill(resultsHost,
     results.length
       ? results.map(ex => exerciseCard(ex))
       : emptyState('🔍', 'Nothing matches those filters',

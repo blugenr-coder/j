@@ -186,7 +186,7 @@ $('#save-btn').addEventListener('click', () => {
   const { exercise, problems } = collect();
   if (problems) { toast(`Not saved — ${problems[0]}`, 4200); return; }
   saveCustomExercise(exercise);
-  toast('Exercise saved');
+  toast('Exercise saved — it is now in the library on this device');
   drawSaved();
 });
 
@@ -205,9 +205,12 @@ function drawSaved() {
         el('span', { class: 'grow' },
           el('span', { class: 'list-title', style: 'display:block', text: ex.title }),
           el('span', { class: 'list-sub', text: `${ex.level} · ${plural(ex.questions.length, 'question')}` })),
+        el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${ex.id}&mode=online`), text: 'Practise' }),
+        el('a', { class: 'btn btn-ghost btn-sm', href: href(`print.html?id=${ex.id}`), text: 'Print' }),
         el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Delete',
           onclick: () => { deleteCustomExercise(ex.id); drawSaved(); } })))
     : [el('p', { class: 'small muted', style: 'margin:0' },
-        'Nothing saved yet. Custom exercises live in this browser; a server would let you share them with a class.')]));
+        'Nothing saved yet. Saved exercises join the library on this device — they search, ' +
+        'play and print like the rest. A server is what would let you share them with a class.')]));
 }
 drawSaved();

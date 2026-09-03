@@ -5,7 +5,8 @@
 import early  from './exercises-early.js';
 import middle from './exercises-middle.js';
 import upper  from './exercises-upper.js';
-import { GRADE_MAP } from './catalog.js';
+import { GRADE_MAP, SUBJECT_MAP, TOPIC_MAP, DIFF_MAP } from './catalog.js';
+import { STORAGE_KEY } from '../core/storage-key.js';
 
 /* Everything an exercise page needs but content authors should not have to
    repeat: question count, the set of question types used, whether it can be
@@ -26,7 +27,28 @@ function decorate(ex) {
   };
 }
 
-export const EXERCISES = [...early, ...middle, ...upper].map(decorate);
+/* Exercises written in the builder live in local storage rather than in a
+   content file. They are read once at load and merged into the library so they
+   search, play and print through exactly the same code as authored content.
+   Anything malformed is skipped rather than allowed to break the library. */
+function loadCustom() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const list = JSON.parse(raw).customExercises ?? [];
+    return list.filter(ex =>
+      ex && typeof ex.id === 'string' &&
+      Array.isArray(ex.questions) && ex.questions.length &&
+      GRADE_MAP[ex.grade] && SUBJECT_MAP[ex.subject] && TOPIC_MAP[ex.topic] && DIFF_MAP[ex.difficulty]
+    );
+  } catch {
+    return [];
+  }
+}
+
+export const AUTHORED = [...early, ...middle, ...upper].map(decorate);
+
+export const EXERCISES = [...AUTHORED, ...loadCustom().map(decorate)];
 
 export const EXERCISE_MAP = Object.fromEntries(EXERCISES.map(e => [e.id, e]));
 
