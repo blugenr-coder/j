@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Join with a code — WorksheetHub</title>
+<meta name="description" content="Enter the code your teacher gave you to open the assignment.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+<main id="main" class="wrap section" style="max-width:640px">
+  <div class="center" style="margin-bottom:32px">
+    <span class="tile-icon lg" aria-hidden="true" style="margin-inline:auto">🔑</span>
+    <h1 style="margin-top:16px">Join with a code</h1>
+    <p>Your teacher gives you a six-character code. Enter it here and the worksheet opens.</p>
+  </div>
+
+  <form class="card" id="join-form">
+    <label class="field">
+      <span class="label">Assignment code</span>
+      <input class="input" id="code" type="text" inputmode="latin" autocomplete="off"
+             placeholder="X7K-42P" maxlength="8"
+             style="text-transform:uppercase;letter-spacing:.24em;text-align:center;font-family:var(--font-head);font-size:var(--step-2);font-weight:700">
+    </label>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Open assignment</button>
+    <p class="hint" id="join-error" style="color:var(--danger)" hidden></p>
+  </form>
+
+  <div id="my-assignments" style="margin-top:32px"></div>
+</main>
+
+<script type="module" src="assets/js/pages/join.js"></script>
+</body>
+</html>

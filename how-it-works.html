@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it works — WorksheetHub</title>
+<meta name="description" content="Find, practise, check, improve — and print the same exercise whenever you want.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+<main id="main">
+  <section class="wrap section">
+    <div class="section-head center">
+      <span class="eyebrow">How it works</span>
+      <h1 style="margin-top:20px">One place to practise, print, track and improve</h1>
+      <p>Most worksheet sites stop at the download. The point of WorksheetHub is that the same
+        exercise carries through the whole loop.</p>
+    </div>
+
+    <div class="grid grid-4 step-grid" style="margin-bottom:64px">
+      <div class="step">
+        <h4>Find</h4>
+        <p class="small">Search in plain language — “fractions grade 6” — or filter by grade, subject,
+          topic, difficulty, question type and length.</p>
+      </div>
+      <div class="step">
+        <h4>Practice</h4>
+        <p class="small">Work online with eight question types, or print a worksheet and use a pencil.
+          Same exercise, same questions, your choice.</p>
+      </div>
+      <div class="step">
+        <h4>Check</h4>
+        <p class="small">Marking is instant and forgiving about formatting. A wrong answer offers another
+          go and a hint before it ever shows you the working.</p>
+      </div>
+      <div class="step">
+        <h4>Improve</h4>
+        <p class="small">Accuracy, streak and per-topic strength are tracked, so the next session can
+          start where you are weakest instead of where you left off.</p>
+      </div>
+    </div>
+
+    <div class="card split" style="padding:var(--s7);margin-bottom:32px">
+      <div>
+        <h2>Every question type, marked properly</h2>
+        <p>Different questions need different interactions. Multiple choice is not enough for maths,
+          and a text box is not enough for a matching task.</p>
+        <div id="type-list" class="stack"></div>
+      </div>
+      <div class="card card-flat" style="background:var(--surface-2)">
+        <h4>What “marked properly” means</h4>
+        <ul class="small">
+          <li><strong>0.5, 1/2 and 50%</strong> all count as the same value.</li>
+          <li><strong>“x = 5”</strong> is accepted where the answer is 5.</li>
+          <li>Case, spacing and currency symbols are ignored; meaning is not.</li>
+          <li>Multiple-answer questions require every correct option and no wrong ones.</li>
+          <li>Written responses are never auto-marked — you compare against a sample answer.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card split" style="padding:var(--s7);margin-bottom:32px">
+      <div class="card card-flat" style="background:var(--surface-2)">
+        <h4>On the printed sheet</h4>
+        <ul class="small">
+          <li>Name, date and score fields at the top.</li>
+          <li>Space to show working on calculation questions.</li>
+          <li>Answer lines, tick boxes or blank grids as the question needs.</li>
+          <li>An answer key with worked explanations — on its own page, so it can be kept back.</li>
+          <li>Up to three copies at once, and hints optional.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>Print it the moment you need paper</h2>
+        <p>A homework sheet, a cover lesson, a revision session with no screens. Every exercise in the
+          library produces a clean A4 worksheet with a separate key.</p>
+        <a class="btn btn-primary" href="print.html?id=linear-equations">See a printable worksheet →</a>
+      </div>
+    </div>
+
+    <div class="teacher-band split" style="margin-bottom:32px">
+      <div>
+        <h2 style="margin-top:0">For teachers</h2>
+        <p>Build an assignment from the library in about a minute, share a six-character code, and get
+          a class view that names the questions that caused trouble — the thing you actually act on.</p>
+        <a class="btn btn-primary" href="teacher/index.html">Open teacher tools</a>
+      </div>
+      <div>
+        <h3 style="margin-top:0">What teachers get</h3>
+        <ul>
+          <li>Assignment codes and shareable links</li>
+          <li>Class average and per-student breakdown</li>
+          <li>Success rate for every individual question</li>
+          <li>A builder for your own questions</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="cta-band">
+      <h2>Start practising for free</h2>
+      <p>Browse the whole library without an account. Make one when you want your progress kept.</p>
+      <div class="row" style="justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a class="btn btn-primary btn-lg" href="library.html">Browse exercises</a>
+        <a class="btn btn-ghost btn-lg" href="signin.html?new=1">Create free account</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="assets/js/pages/how.js"></script>
+</body>
+</html>

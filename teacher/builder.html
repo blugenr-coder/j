@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercise builder — WorksheetHub</title>
+<meta name="description" content="Write your own questions and save them as a printable, practisable exercise.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/pages.css">
+</head>
+<body data-base="..">
+<main id="main" class="wrap wrap-wide">
+  <div class="app-layout">
+    <div id="side-nav-host"></div>
+    <div style="max-width:960px">
+      <div class="welcome">
+        <div>
+          <h1>Exercise builder</h1>
+          <p class="muted" style="margin:0">Write your own questions. They practise and print exactly like the rest of the library.</p>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-ghost" type="button" id="preview-btn">👁️ Preview</button>
+          <button class="btn btn-primary" type="button" id="save-btn">Save exercise</button>
+        </div>
+      </div>
+
+      <section class="card" style="margin-bottom:24px">
+        <h3 style="font-size:var(--step-1)">Details</h3>
+        <div class="grid grid-2">
+          <label class="field">
+            <span class="label">Title</span>
+            <input class="input" id="e-title" type="text" placeholder="e.g. Two-step equations">
+          </label>
+          <label class="field">
+            <span class="label">Level</span>
+            <select class="select" id="e-level"></select>
+          </label>
+          <label class="field">
+            <span class="label">Subject</span>
+            <select class="select" id="e-subject"></select>
+          </label>
+          <label class="field">
+            <span class="label">Topic</span>
+            <select class="select" id="e-topic"></select>
+          </label>
+          <label class="field">
+            <span class="label">Difficulty</span>
+            <select class="select" id="e-difficulty"></select>
+          </label>
+          <label class="field">
+            <span class="label">Estimated minutes</span>
+            <input class="input" id="e-minutes" type="number" min="1" max="120" value="15">
+          </label>
+        </div>
+        <label class="field" style="margin:0">
+          <span class="label">Summary</span>
+          <input class="input" id="e-summary" type="text" placeholder="One line describing what this practises.">
+        </label>
+      </section>
+
+      <section style="margin-bottom:24px">
+        <div class="row-between" style="margin-bottom:16px">
+          <h3 style="font-size:var(--step-1);margin:0">Questions</h3>
+          <span class="small muted" id="q-count"></span>
+        </div>
+        <div id="question-editors" class="stack"></div>
+        <div class="row" style="gap:8px;margin-top:16px;flex-wrap:wrap" id="add-buttons"></div>
+      </section>
+
+      <section class="card" id="saved-card">
+        <h3 style="font-size:var(--step-1)">Your saved exercises</h3>
+        <div class="list list-divided" id="saved-list"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="../assets/js/pages/teacher-builder.js"></script>
+</body>
+</html>

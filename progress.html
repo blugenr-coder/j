@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your progress — WorksheetHub</title>
+<meta name="description" content="Accuracy, streak, practice time and where your weak topics are.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+<main id="main" class="wrap wrap-wide">
+  <div class="app-layout">
+    <div id="side-nav-host"></div>
+    <div>
+      <div class="welcome">
+        <div>
+          <h1>Your progress</h1>
+          <p class="muted" style="margin:0">Everything you have practised, and what it says about where to go next.</p>
+        </div>
+        <a class="btn btn-primary" href="library.html">Practise something</a>
+      </div>
+
+      <div class="stat-grid" id="stats" style="margin-bottom:24px"></div>
+
+      <div class="grid" style="grid-template-columns:1.2fr .8fr;gap:24px;margin-bottom:24px" id="row-2">
+        <section class="card">
+          <h3 style="font-size:var(--step-1)">Subject progress</h3>
+          <div id="subject-progress"></div>
+        </section>
+        <section class="card">
+          <h3 style="font-size:var(--step-1)">This fortnight</h3>
+          <p class="small muted">Minutes practised per day.</p>
+          <div id="day-chart"></div>
+        </section>
+      </div>
+
+      <section class="card" style="margin-bottom:24px">
+        <div class="card-head">
+          <h3 style="font-size:var(--step-1)">Focus on these</h3>
+          <a class="small" href="library.html">Browse the library</a>
+        </div>
+        <p class="small muted">Topics where your accuracy is lowest, with an exercise to fix each one.</p>
+        <div class="list list-divided" id="weak-topics"></div>
+      </section>
+
+      <section class="card">
+        <h3 style="font-size:var(--step-1)">Every exercise you have opened</h3>
+        <div class="table-scroll">
+          <table class="table">
+            <thead>
+              <tr><th>Exercise</th><th>Level</th><th>Status</th><th>Answered</th><th>Score</th><th></th></tr>
+            </thead>
+            <tbody id="history-rows"></tbody>
+          </table>
+        </div>
+        <div id="history-empty"></div>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="assets/js/pages/progress.js"></script>
+</body>
+</html>
