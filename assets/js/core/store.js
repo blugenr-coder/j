@@ -241,7 +241,8 @@ export function summary() {
   return {
     completed, correct, answered,
     accuracy: answered ? Math.round((correct / Math.max(1, answered)) * 100) : 0,
-    minutes: Math.round(Math.max(minutes, dayMinutes)),
+    /* Left unrounded — the formatter decides whether to show seconds. */
+    minutes: Math.max(minutes, dayMinutes),
     streak: streak(),
     perfectRuns, mathHighScores,
     subjects,

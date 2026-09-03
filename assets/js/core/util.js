@@ -57,9 +57,14 @@ export const pct = (part, whole) => whole > 0 ? Math.round((part / whole) * 100)
 
 export function plural(n, one, many = one + 's') { return `${n} ${n === 1 ? one : many}`; }
 
+/* Practice time is held as fractional minutes. Rounding straight to whole
+   minutes made a real 40-second session read as "0m", which looks like the
+   tracking is broken rather than like a short session. */
 export function formatMinutes(mins) {
-  if (!mins) return '0m';
-  const h = Math.floor(mins / 60), m = Math.round(mins % 60);
+  if (!mins || mins < 1 / 60) return '0m';
+  if (mins < 1) return `${Math.max(1, Math.round(mins * 60))}s`;
+  const total = Math.round(mins);
+  const h = Math.floor(total / 60), m = total % 60;
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 

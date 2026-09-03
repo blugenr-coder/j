@@ -11,6 +11,28 @@ import { summary, getState, scoreFor, statusFor } from '../core/store.js';
 mountShell({ page: 'progress', nav: 'app', footer: false });
 if (requireUser('progress.html')) render();
 
+/* What to say when there is no weak topic: either nothing has been assessed
+   yet, or everything assessed is above the threshold — which is good news and
+   should read as such, plus somewhere useful to go next. */
+function nothingWeak(assessed) {
+  if (!assessed.length) {
+    return el('p', { class: 'small muted', style: 'margin:0',
+      text: 'Answer at least two questions in a topic and it will be assessed here.' });
+  }
+  const strongest = assessed[assessed.length - 1];
+  const next = EXERCISES.find(e => statusFor(e.id) === 'not-started');
+  return el('div', { class: 'row', style: 'gap:16px;align-items:flex-start;padding:8px 0' },
+    el('span', { class: 'tile-icon green', 'aria-hidden': 'true', text: '✓' }),
+    el('span', { class: 'grow' },
+      el('strong', { class: 'small', style: 'display:block', text: 'No weak topics right now' }),
+      el('span', { class: 'small muted', text:
+        `Every topic you have practised is at ${WEAK_LABEL}% or above — your best is ` +
+        `${TOPIC_MAP[strongest.id]?.name ?? strongest.id} at ${strongest.percent}%. ` +
+        'Try something new and this panel will start pointing at the gaps.' })),
+    next ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${next.id}`), text: 'Try one →' }) : null);
+}
+const WEAK_LABEL = 85;
+
 function render() {
   mountSideNav($('#side-nav-host'), 'progress');
   const s = summary();
@@ -47,7 +69,7 @@ function render() {
     el('div', { class: 'row', style: 'gap:4px;align-items:flex-end;height:120px;margin:16px 0 8px' },
       days.map(d => el('div', {
         style: 'flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%',
-        title: `${d.key}: ${formatMinutes(Math.round(d.minutes))}`
+        title: `${d.key}: ${formatMinutes(d.minutes)}`
       },
         el('div', {
           style: `height:${Math.max(3, (d.minutes / peak) * 100)}%;border-radius:4px;background:${d.minutes ? 'var(--primary)' : 'var(--surface-2)'}`
@@ -55,7 +77,7 @@ function render() {
     el('div', { class: 'row', style: 'gap:4px' },
       days.map(d => el('span', { class: 'small muted', style: 'flex:1;text-align:center', text: d.label }))),
     el('p', { class: 'small muted', style: 'margin-top:12px' },
-      `${formatMinutes(Math.round(days.reduce((a, d) => a + d.minutes, 0)))} in the last two weeks.`)
+      `${formatMinutes(days.reduce((a, d) => a + d.minutes, 0))} in the last two weeks.`)
   );
 
   /* ------------------------------ weak topics ------------------------------ */
@@ -72,11 +94,15 @@ function render() {
       if (a.correct) bucket.correct++;
     }
   }
-  const weak = Object.entries(topics)
+  /* Only topics genuinely below par belong here. Telling someone to "focus on"
+     a topic they scored 100% in is noise, and it teaches them to ignore the
+     panel entirely. */
+  const WEAK_BELOW = 85;
+  const assessed = Object.entries(topics)
     .filter(([, b]) => b.answered >= 2)
     .map(([id, b]) => ({ id, percent: Math.round((b.correct / b.answered) * 100), ...b }))
-    .sort((a, b) => a.percent - b.percent)
-    .slice(0, 4);
+    .sort((a, b) => a.percent - b.percent);
+  const weak = assessed.filter(t => t.percent < WEAK_BELOW).slice(0, 4);
 
   $('#weak-topics').replaceChildren(...(weak.length
     ? weak.map(t => {
@@ -90,8 +116,7 @@ function render() {
             el('span', { class: 'list-sub', text: `${t.correct} of ${t.answered} correct` })),
           fix ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${fix.id}`), text: 'Practise →' }) : null);
       })
-    : [el('p', { class: 'small muted', style: 'margin:0',
-        text: 'Answer at least two questions in a topic and it will be assessed here.' })]));
+    : [nothingWeak(assessed)]));
 
   /* -------------------------------- history -------------------------------- */
   const history = Object.keys(state.progress)

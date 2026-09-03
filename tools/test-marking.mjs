@@ -1,5 +1,6 @@
-/* Marking engine tests. Run with: node tools/test-marking.mjs */
+/* Marking engine and formatting tests. Run with: node tools/test-marking.mjs */
 import { mark, answerText, normalise } from '../assets/js/core/marking.js';
+import { formatMinutes } from '../assets/js/core/util.js';
 
 let pass = 0, fail = 0;
 const check = (label, actual, expected) => {
@@ -44,6 +45,15 @@ marks('written: never auto-marked',       { type: 'written' }, 'any prose', null
 check('normalise strips x=',              normalise('x = 12'), '12');
 check('answerText for order',             answerText({ type: 'order', items: ['Egg', 'Larva'] }), 'Egg → Larva');
 check('answerText for choice',            answerText({ type: 'choice', options: ['a', 'b'], answer: 1 }), 'b');
+
+/* Practice time: a real 45-second session must not read as "0m". */
+check('formatMinutes: nothing',        formatMinutes(0), '0m');
+check('formatMinutes: under a second', formatMinutes(0.008), '0m');
+check('formatMinutes: 11 seconds',     formatMinutes(0.18), '11s');
+check('formatMinutes: 45 seconds',     formatMinutes(0.75), '45s');
+check('formatMinutes: one minute',     formatMinutes(1), '1m');
+check('formatMinutes: under an hour',  formatMinutes(45), '45m');
+check('formatMinutes: over an hour',   formatMinutes(62.5), '1h 3m');
 
 console.log(`${pass} passed, ${fail} failed.`);
 process.exit(fail ? 1 : 0);
