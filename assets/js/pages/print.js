@@ -55,7 +55,7 @@ function sheetHead({ key = false } = {}) {
         el('div', { text: `${DIFF_MAP[ex.difficulty]?.name ?? ex.difficulty} · ${ex.count} questions` }),
         el('div', { text: `About ${ex.minutes} minutes` }))
     ),
-    el('h1', { text: ex.title }),
+    el('h2', { text: ex.title }),
     el('p', { class: 'sheet-sub', text: `${ex.level} ${SUBJECT_MAP[ex.subject]?.name} · ${TOPIC_MAP[ex.topic]?.name}` })
   );
 
