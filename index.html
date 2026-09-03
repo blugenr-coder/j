@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorksheetHub — Practice anything. Learn everything.</title>
+<meta name="description" content="Thousands of exercises for every grade and subject. Complete them online or print them whenever you want — then track your progress.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+</head>
+<body>
+
+<main id="main">
+
+  <!-- ============================== HERO ============================== -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">⭐ Built for every grade, from Pre-K to college</span>
+        <h1 style="margin-top:20px">Practice anything.<br><span class="accent">Learn everything.</span></h1>
+        <p class="lede">Thousands of exercises across every subject and grade. Work through them
+          online with instant feedback, or print a clean worksheet whenever you want.</p>
+        <div class="hero-cta">
+          <a class="btn btn-primary btn-lg" href="library.html">Browse exercises →</a>
+          <a class="btn btn-secondary btn-lg" href="signin.html?new=1">Create free account</a>
+        </div>
+        <div class="hero-proof">
+          <span><span class="tick">✓</span> Free exercises</span>
+          <span><span class="tick">✓</span> Online + printable</span>
+          <span><span class="tick">✓</span> All grades</span>
+          <span><span class="tick">✓</span> Every subject</span>
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <div class="preview-card">
+          <div class="row-between" style="margin-bottom:16px">
+            <strong style="font-family:var(--font-head)">Linear Equations</strong>
+            <span class="badge badge-primary">Grade 8</span>
+          </div>
+          <div class="preview-q">
+            <div class="small muted" style="margin-bottom:6px">Question 6 of 12</div>
+            <div class="math">2x <span class="op">+</span> 5 <span class="op">=</span> 15</div>
+          </div>
+          <div class="row" style="gap:8px;margin-bottom:16px">
+            <span class="badge badge-success">✓ Correct</span>
+            <span class="badge">💡 Hint available</span>
+          </div>
+          <div class="bar" aria-hidden="true"><span style="width:50%"></span></div>
+          <div class="row-between small muted" style="margin-top:8px">
+            <span>6 of 12 answered</span><span>50%</span>
+          </div>
+        </div>
+        <div class="float-card float-a"><span aria-hidden="true">🔥</span> 8 day streak</div>
+        <div class="float-card float-b"><span aria-hidden="true">🖨️</span> Worksheet ready to print</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================= SEARCH ============================= -->
+  <section class="wrap home-search">
+    <div class="card">
+      <h2 style="font-size:var(--step-2)">What do you want to practise?</h2>
+      <form id="home-search-form" role="search">
+        <div class="search-box">
+          <span class="search-ico" aria-hidden="true">🔍</span>
+          <label class="sr-only" for="home-search">Search exercises</label>
+          <input class="input" id="home-search" name="q" type="search" autocomplete="off"
+                 placeholder="Try “fractions grade 6”, “photosynthesis” or “grade 8 algebra”">
+        </div>
+      </form>
+      <div class="quick-links" id="home-suggestions"></div>
+    </div>
+  </section>
+
+  <!-- ========================= CHOOSE YOUR GRADE ========================= -->
+  <section class="wrap section">
+    <div class="section-head">
+      <h2>What grade are you in?</h2>
+      <p>Pick a level and the whole library adjusts — the questions, the language and the pace.</p>
+    </div>
+    <div class="grid grid-4" id="grade-cards"></div>
+  </section>
+
+  <!-- ========================== POPULAR SUBJECTS ========================== -->
+  <section class="wrap section-tight">
+    <div class="section-head">
+      <h2>Popular subjects</h2>
+      <p>Every subject breaks down into topics, so you can practise exactly the thing you are stuck on.</p>
+    </div>
+    <div class="grid grid-3" id="subject-cards"></div>
+    <p style="margin-top:24px"><a href="subjects.html">See all subjects →</a></p>
+  </section>
+
+  <!-- ========================= FEATURED WORKSHEETS ========================= -->
+  <section class="wrap section-tight">
+    <div class="row-between section-head" style="max-width:none">
+      <div>
+        <h2>Featured worksheets</h2>
+        <p style="margin:0">A cross-section of the library, from first counting to first derivatives.</p>
+      </div>
+      <a class="btn btn-ghost" href="library.html">View all</a>
+    </div>
+    <div class="grid grid-3" id="featured-cards"></div>
+  </section>
+
+  <!-- ============================ HOW IT WORKS ============================ -->
+  <section class="wrap section">
+    <div class="section-head center">
+      <h2>How it works</h2>
+      <p>Four steps, and the fourth is the one most worksheet sites skip.</p>
+    </div>
+    <div class="grid grid-4 step-grid">
+      <div class="step">
+        <h4>Find</h4>
+        <p class="small">Search or filter by grade, subject, topic and difficulty until you have exactly the right set.</p>
+      </div>
+      <div class="step">
+        <h4>Practice</h4>
+        <p class="small">Work online with eight question types, or print a clean worksheet and use a pencil.</p>
+      </div>
+      <div class="step">
+        <h4>Check</h4>
+        <p class="small">Instant marking with hints and worked explanations — never just a red cross.</p>
+      </div>
+      <div class="step">
+        <h4>Improve</h4>
+        <p class="small">Your accuracy, streak and weak topics are tracked, so the next session starts in the right place.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================= ONLINE + PRINTABLE ========================= -->
+  <section class="wrap section-tight">
+    <div class="card split" style="padding:var(--s7)">
+      <div>
+        <span class="badge badge-primary">The same exercise, either way</span>
+        <h2 style="margin-top:16px">Online when it suits. On paper when it doesn't.</h2>
+        <p>Every exercise works both ways from the same source. Practise online for instant feedback,
+          or print a worksheet with a name and date line, room to show working, and a separate answer
+          key so nobody sees the answers by accident.</p>
+        <div class="row" style="gap:12px;flex-wrap:wrap">
+          <a class="btn btn-primary" href="exercise.html?id=linear-equations">💻 Try one online</a>
+          <a class="btn btn-secondary" href="print.html?id=linear-equations">🖨️ See a printable</a>
+        </div>
+      </div>
+      <div class="card card-flat" style="background:var(--surface-2)">
+        <div class="small muted" style="letter-spacing:.16em;text-transform:uppercase;font-weight:700">WorksheetHub</div>
+        <h3 style="margin:8px 0 2px">Linear Equations</h3>
+        <div class="small muted">Grade 8 Mathematics</div>
+        <div class="row" style="gap:24px;margin:20px 0 24px">
+          <span class="small muted">Name: <span style="display:inline-block;width:90px;border-bottom:1px solid var(--border-strong)"></span></span>
+          <span class="small muted">Date: <span style="display:inline-block;width:60px;border-bottom:1px solid var(--border-strong)"></span></span>
+        </div>
+        <div style="display:grid;gap:18px">
+          <div>
+            <strong>1.</strong> Solve for x:
+            <div class="math" style="margin:6px 0 8px 20px;font-size:1.25em">2x <span class="op">+</span> 5 <span class="op">=</span> 15</div>
+            <div class="small muted" style="margin-left:20px">Answer: <span style="display:inline-block;width:120px;border-bottom:1px solid var(--border-strong)"></span></div>
+          </div>
+          <div>
+            <strong>2.</strong> Solve for x:
+            <div class="math" style="margin:6px 0 8px 20px;font-size:1.25em">3x <span class="op">−</span> 7 <span class="op">=</span> 14</div>
+            <div class="small muted" style="margin-left:20px">Answer: <span style="display:inline-block;width:120px;border-bottom:1px solid var(--border-strong)"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================== TEACHER SECTION =========================== -->
+  <section class="wrap section-tight">
+    <div class="teacher-band split">
+      <div>
+        <span class="badge" style="background:rgba(255,255,255,.15);color:#fff">For teachers</span>
+        <h2 style="margin-top:16px">Set work in a minute. See what they struggled with.</h2>
+        <p>Build an assignment from the library, share a six-character code, and get a class view
+          that tells you which questions actually caused trouble — not just who scored what.</p>
+        <div class="row" style="gap:12px;flex-wrap:wrap">
+          <a class="btn btn-primary" href="teacher/index.html">Open teacher tools</a>
+          <a class="btn btn-secondary" href="teacher/create.html">Create an assignment</a>
+        </div>
+      </div>
+      <div style="display:grid;gap:12px">
+        <div class="card card-flat" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)">
+          <div class="small" style="color:#94A3B8">Assignment code</div>
+          <div style="font-family:var(--font-head);font-size:var(--step-4);font-weight:700;letter-spacing:.18em;color:#fff">X7K-42P</div>
+          <div class="small" style="color:#CBD5E1">Students enter this to load the worksheet instantly.</div>
+        </div>
+        <div class="card card-flat" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16)">
+          <div class="small" style="color:#94A3B8;margin-bottom:8px">Most difficult questions</div>
+          <div class="small" style="color:#fff">Question 8 — 42% correct</div>
+          <div class="small" style="color:#fff">Question 13 — 48% correct</div>
+          <div class="small" style="color:#fff">Question 17 — 51% correct</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== TRUST ============================== -->
+  <section class="wrap section-tight">
+    <div class="stat-grid" id="trust-stats"></div>
+  </section>
+
+  <!-- =============================== CTA =============================== -->
+  <section class="wrap section">
+    <div class="cta-band">
+      <h2>Start practising for free</h2>
+      <p>No payment, no trial countdown. Make an account when you want your progress remembered.</p>
+      <div class="row" style="justify-content:center;gap:12px;margin-top:24px;flex-wrap:wrap">
+        <a class="btn btn-primary btn-lg" href="library.html">Browse exercises</a>
+        <a class="btn btn-ghost btn-lg" href="signin.html?new=1">Create free account</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="assets/js/pages/home.js"></script>
+</body>
+</html>

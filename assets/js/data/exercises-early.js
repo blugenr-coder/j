@@ -1,0 +1,242 @@
+/* Exercise content — Early Learning and Elementary bands.
+   Schema notes:
+     type: blank | choice | multi | math | match | order | graph | written
+     answer: string (blank/math) | index (choice) | index[] (multi)
+             | {x,y} (graph) | omitted for match/order/written
+     accept: extra accepted strings, compared case- and space-insensitively
+     hint / explanation: shown on request; explanation also prints on the answer key */
+
+export default [
+  {
+    id: 'counting-to-20',
+    title: 'Counting to 20',
+    subject: 'math', topic: 'arithmetic',
+    grade: 'early', level: 'Kindergarten', difficulty: 'easy', minutes: 8,
+    summary: 'Count objects, say what comes next, and put numbers in order up to twenty.',
+    questions: [
+      { id: 'q1', type: 'choice', prompt: 'How many stars? ⭐⭐⭐⭐⭐⭐', options: ['4', '5', '6', '7'], answer: 2,
+        hint: 'Touch each star as you count out loud.', explanation: 'Counting each star one at a time gives six.' },
+      { id: 'q2', type: 'blank', prompt: 'What number comes after 7?', answer: '8', accept: ['eight'],
+        hint: 'Count up: 5, 6, 7, …', explanation: '7 is followed by 8.' },
+      { id: 'q3', type: 'blank', prompt: 'What number comes before 12?', answer: '11', accept: ['eleven'],
+        hint: 'Count down from 12.', explanation: '11 comes just before 12.' },
+      { id: 'q4', type: 'order', prompt: 'Put these numbers in order from smallest to biggest.',
+        items: ['3', '6', '9', '14'], explanation: 'Smallest to biggest: 3, 6, 9, 14.' },
+      { id: 'q5', type: 'choice', prompt: 'Which group has more? 🍎🍎🍎 or 🍌🍌🍌🍌🍌',
+        options: ['The apples', 'The bananas', 'They are the same'], answer: 1,
+        hint: 'Count each group.', explanation: 'There are 3 apples and 5 bananas, so the bananas are more.' },
+      { id: 'q6', type: 'blank', prompt: 'Count by twos: 2, 4, 6, ___', answer: '8', accept: ['eight'],
+        hint: 'Add 2 to the last number.', explanation: '6 + 2 = 8.' },
+      { id: 'q7', type: 'choice', prompt: 'Which number is the biggest?', options: ['11', '17', '9', '15'], answer: 1,
+        explanation: '17 is the largest of these numbers.' },
+      { id: 'q8', type: 'blank', prompt: 'How many fingers are on two hands?', answer: '10', accept: ['ten'],
+        hint: 'Five on each hand.', explanation: '5 + 5 = 10.' }
+    ]
+  },
+  {
+    id: 'letters-and-sounds',
+    title: 'Letters and Sounds',
+    subject: 'ela', topic: 'spelling',
+    grade: 'early', level: 'Pre-K', difficulty: 'easy', minutes: 8,
+    summary: 'Match letters to the sounds they make and find the first letter of familiar words.',
+    questions: [
+      { id: 'q1', type: 'choice', prompt: 'Which letter does 🐱 "cat" start with?', options: ['B', 'C', 'K', 'T'], answer: 1,
+        hint: 'Say the word slowly: c-c-cat.', explanation: '"Cat" begins with the letter C.' },
+      { id: 'q2', type: 'choice', prompt: 'Which letter does 🌙 "moon" start with?', options: ['N', 'W', 'M', 'O'], answer: 2,
+        explanation: '"Moon" begins with M.' },
+      { id: 'q3', type: 'match', prompt: 'Match each letter to a word that starts with it.',
+        pairs: [ { left: 'S', right: 'Sun ☀️' }, { left: 'D', right: 'Dog 🐶' }, { left: 'F', right: 'Fish 🐟' }, { left: 'B', right: 'Ball ⚽' } ],
+        explanation: 'S–Sun, D–Dog, F–Fish, B–Ball.' },
+      { id: 'q4', type: 'choice', prompt: 'Which word rhymes with "hat"?', options: ['hop', 'bat', 'hit', 'sun'], answer: 1,
+        hint: 'Listen to the ending sound: -at.', explanation: '"Bat" ends with the same -at sound as "hat".' },
+      { id: 'q5', type: 'blank', prompt: 'Finish the word: c _ p  (you drink from it)', answer: 'u', accept: ['cup'],
+        explanation: 'The missing letter is u, making "cup".' },
+      { id: 'q6', type: 'multi', prompt: 'Which of these are vowels? Choose all that apply.',
+        options: ['A', 'B', 'E', 'R'], answer: [0, 2],
+        explanation: 'A and E are vowels. B and R are consonants.' }
+    ]
+  },
+  {
+    id: 'shapes-and-colours',
+    title: 'Shapes and Colours',
+    subject: 'math', topic: 'geometry',
+    grade: 'early', level: 'Kindergarten', difficulty: 'easy', minutes: 6,
+    summary: 'Name everyday shapes, count their sides, and spot patterns.',
+    questions: [
+      { id: 'q1', type: 'choice', prompt: 'How many sides does a triangle have?', options: ['2', '3', '4', '5'], answer: 1,
+        explanation: 'A triangle always has 3 sides.' },
+      { id: 'q2', type: 'choice', prompt: 'Which shape is round with no corners?', options: ['Square', 'Triangle', 'Circle', 'Rectangle'], answer: 2,
+        explanation: 'A circle has no corners at all.' },
+      { id: 'q3', type: 'blank', prompt: 'How many corners does a square have?', answer: '4', accept: ['four'],
+        explanation: 'A square has 4 corners and 4 equal sides.' },
+      { id: 'q4', type: 'choice', prompt: 'What comes next? 🔴 🔵 🔴 🔵 ___', options: ['🔴', '🔵', '🟡'], answer: 0,
+        hint: 'The pattern repeats red, blue, red, blue…', explanation: 'The pattern alternates, so red comes next.' },
+      { id: 'q5', type: 'match', prompt: 'Match each shape to something that looks like it.',
+        pairs: [ { left: 'Circle', right: 'Clock 🕐' }, { left: 'Square', right: 'Window 🪟' }, { left: 'Triangle', right: 'Slice of pizza 🍕' } ],
+        explanation: 'Clocks are circles, windows are squares, pizza slices are triangles.' },
+      { id: 'q6', type: 'choice', prompt: 'Which shape has 4 sides that are all the same length?',
+        options: ['Rectangle', 'Square', 'Triangle', 'Oval'], answer: 1,
+        explanation: 'A rectangle has 4 sides but only opposite sides are equal. A square has all 4 equal.' }
+    ]
+  },
+  {
+    id: 'addition-within-20',
+    title: 'Addition Within 20',
+    subject: 'math', topic: 'arithmetic',
+    grade: 'elementary', level: 'Grade 2', difficulty: 'easy', minutes: 10,
+    summary: 'Add single and double digit numbers, including simple word problems.',
+    questions: [
+      { id: 'q1', type: 'math', prompt: 'Add the numbers.', math: '7 + 6 = ?', answer: '13',
+        hint: 'Start at 7 and count on 6 more.', explanation: '7 + 6 = 13.' },
+      { id: 'q2', type: 'math', prompt: 'Add the numbers.', math: '8 + 9 = ?', answer: '17',
+        hint: 'Make a ten first: 8 + 2 = 10, then add the remaining 7.', explanation: '8 + 9 = 17.' },
+      { id: 'q3', type: 'blank', prompt: 'Ana has 5 stickers. She gets 8 more. How many does she have now?', answer: '13',
+        explanation: '5 + 8 = 13 stickers.' },
+      { id: 'q4', type: 'math', prompt: 'Find the missing number.', math: '4 + ? = 11', answer: '7',
+        hint: 'What do you add to 4 to reach 11?', explanation: '11 − 4 = 7, so the missing number is 7.' },
+      { id: 'q5', type: 'choice', prompt: 'Which sum equals 15?', options: ['6 + 8', '9 + 6', '7 + 7', '5 + 9'], answer: 1,
+        explanation: '9 + 6 = 15. The others give 14, 14 and 14.' },
+      { id: 'q6', type: 'math', prompt: 'Add three numbers.', math: '3 + 4 + 5 = ?', answer: '12',
+        hint: 'Add two of them first, then the third.', explanation: '3 + 4 = 7, and 7 + 5 = 12.' },
+      { id: 'q7', type: 'blank', prompt: 'There are 9 red balloons and 7 blue balloons. How many balloons in total?', answer: '16',
+        explanation: '9 + 7 = 16 balloons.' },
+      { id: 'q8', type: 'multi', prompt: 'Which of these add up to 10? Choose all that apply.',
+        options: ['6 + 4', '3 + 8', '2 + 8', '5 + 4'], answer: [0, 2],
+        explanation: '6 + 4 = 10 and 2 + 8 = 10. The others give 11 and 9.' }
+    ]
+  },
+  {
+    id: 'multiplication-tables',
+    title: 'Multiplication Tables 2–9',
+    subject: 'math', topic: 'arithmetic',
+    grade: 'elementary', level: 'Grade 3', difficulty: 'easy', minutes: 12,
+    summary: 'Recall multiplication facts quickly and use them in short word problems.',
+    questions: [
+      { id: 'q1', type: 'math', prompt: 'Multiply.', math: '6 × 7 = ?', answer: '42', explanation: '6 × 7 = 42.' },
+      { id: 'q2', type: 'math', prompt: 'Multiply.', math: '8 × 4 = ?', answer: '32', explanation: '8 × 4 = 32.' },
+      { id: 'q3', type: 'math', prompt: 'Find the missing factor.', math: '9 × ? = 63', answer: '7',
+        hint: 'Divide 63 by 9.', explanation: '63 ÷ 9 = 7.' },
+      { id: 'q4', type: 'blank', prompt: 'A box holds 6 eggs. How many eggs are in 5 boxes?', answer: '30',
+        explanation: '6 × 5 = 30 eggs.' },
+      { id: 'q5', type: 'choice', prompt: 'Which is the same as 4 × 9?',
+        options: ['9 + 9 + 9 + 9', '4 + 9', '9 × 9', '4 + 4 + 4 + 4'], answer: 0,
+        explanation: 'Multiplication is repeated addition: 4 × 9 means four nines.' },
+      { id: 'q6', type: 'math', prompt: 'Multiply.', math: '7 × 8 = ?', answer: '56', explanation: '7 × 8 = 56.' },
+      { id: 'q7', type: 'multi', prompt: 'Which of these equal 24? Choose all that apply.',
+        options: ['3 × 8', '4 × 6', '2 × 11', '5 × 5'], answer: [0, 1],
+        explanation: '3 × 8 = 24 and 4 × 6 = 24.' },
+      { id: 'q8', type: 'order', prompt: 'Order these products from smallest to largest.',
+        items: ['3 × 4', '5 × 3', '4 × 6', '7 × 5'],
+        explanation: '12, 15, 24, 35 — so 3 × 4, 5 × 3, 4 × 6, 7 × 5.' }
+    ]
+  },
+  {
+    id: 'fractions-first-steps',
+    title: 'Fractions: First Steps',
+    subject: 'math', topic: 'fractions',
+    grade: 'elementary', level: 'Grade 4', difficulty: 'medium', minutes: 14,
+    summary: 'Name fractions, compare them, and find equivalent fractions with simple denominators.',
+    questions: [
+      { id: 'q1', type: 'blank', prompt: 'A pizza is cut into 8 equal slices and you eat 3. What fraction did you eat?',
+        answer: '3/8', accept: ['three eighths'], explanation: '3 slices out of 8 is 3/8.' },
+      { id: 'q2', type: 'choice', prompt: 'Which fraction is the largest?', options: ['1/2', '1/4', '1/8', '1/3'], answer: 0,
+        hint: 'The bigger the bottom number, the smaller the pieces.', explanation: 'Halves are the biggest pieces here, so 1/2 is largest.' },
+      { id: 'q3', type: 'math', prompt: 'Complete the equivalent fraction.', math: '1/2 = ? / 6', answer: '3',
+        hint: 'What did you multiply 2 by to get 6? Do the same to the top.', explanation: '2 × 3 = 6, so 1 × 3 = 3, giving 3/6.' },
+      { id: 'q4', type: 'math', prompt: 'Add the fractions.', math: '1/5 + 2/5 = ?', answer: '3/5',
+        hint: 'The denominators match, so just add the top numbers.', explanation: '1 + 2 = 3 fifths, so 3/5.' },
+      { id: 'q5', type: 'choice', prompt: 'Which of these is equal to 1 whole?', options: ['3/4', '5/5', '2/3', '7/8'], answer: 1,
+        explanation: 'When the top and bottom are the same, the fraction equals 1.' },
+      { id: 'q6', type: 'order', prompt: 'Order these fractions from smallest to largest.',
+        items: ['1/6', '1/3', '1/2', '3/4'],
+        explanation: 'With the same numerator, a larger denominator means a smaller fraction: 1/6, 1/3, 1/2, then 3/4.' },
+      { id: 'q7', type: 'blank', prompt: 'Simplify 4/8 to its simplest form.', answer: '1/2',
+        hint: 'Divide the top and bottom by the same number.', explanation: '4 ÷ 4 = 1 and 8 ÷ 4 = 2, giving 1/2.' },
+      { id: 'q8', type: 'written', prompt: 'Explain in your own words why 2/4 and 1/2 are the same amount.',
+        sample: 'If you cut something into 4 equal parts and take 2, you have taken half of it. The pieces are smaller but you have twice as many, so the amount is the same.',
+        explanation: 'Look for the idea that multiplying (or dividing) top and bottom by the same number does not change the amount.' }
+    ]
+  },
+  {
+    id: 'parts-of-speech',
+    title: 'Parts of Speech',
+    subject: 'ela', topic: 'grammar',
+    grade: 'elementary', level: 'Grade 3', difficulty: 'easy', minutes: 10,
+    summary: 'Identify nouns, verbs, adjectives and adverbs inside real sentences.',
+    questions: [
+      { id: 'q1', type: 'choice', prompt: 'In "The tall boy ran quickly", which word is the verb?',
+        options: ['tall', 'boy', 'ran', 'quickly'], answer: 2,
+        hint: 'A verb is the action word.', explanation: '"Ran" is the action, so it is the verb.' },
+      { id: 'q2', type: 'choice', prompt: 'In the same sentence, which word is an adjective?',
+        options: ['tall', 'boy', 'ran', 'quickly'], answer: 0,
+        explanation: '"Tall" describes the boy, so it is an adjective.' },
+      { id: 'q3', type: 'blank', prompt: 'Write the plural of "child".', answer: 'children',
+        explanation: '"Child" has an irregular plural: children.' },
+      { id: 'q4', type: 'match', prompt: 'Match each word to its part of speech.',
+        pairs: [ { left: 'river', right: 'Noun' }, { left: 'jump', right: 'Verb' }, { left: 'bright', right: 'Adjective' }, { left: 'slowly', right: 'Adverb' } ],
+        explanation: 'Nouns name things, verbs are actions, adjectives describe nouns, adverbs describe verbs.' },
+      { id: 'q5', type: 'multi', prompt: 'Which words in this list are nouns? Choose all that apply.',
+        options: ['teacher', 'sing', 'city', 'happy'], answer: [0, 2],
+        explanation: '"Teacher" and "city" name people and places, so they are nouns.' },
+      { id: 'q6', type: 'choice', prompt: 'Which sentence uses correct punctuation?',
+        options: ['where is my book', 'Where is my book?', 'Where is my book', 'where is my book?'], answer: 1,
+        explanation: 'A question starts with a capital letter and ends with a question mark.' },
+      { id: 'q7', type: 'blank', prompt: 'Fill the blank with the right verb: She ___ to school every day.', answer: 'walks',
+        accept: ['goes', 'runs', 'cycles'], explanation: 'A singular subject in the present tense takes an -s ending, e.g. "walks" or "goes".' }
+    ]
+  },
+  {
+    id: 'living-things',
+    title: 'Living Things and Their Needs',
+    subject: 'science', topic: 'biology',
+    grade: 'elementary', level: 'Grade 4', difficulty: 'easy', minutes: 10,
+    summary: 'What plants and animals need to survive, and how living things are grouped.',
+    questions: [
+      { id: 'q1', type: 'multi', prompt: 'What do all living things need? Choose all that apply.',
+        options: ['Water', 'Wi-Fi', 'Energy from food or sunlight', 'Air or dissolved gases'], answer: [0, 2, 3],
+        explanation: 'Every living thing needs water, a source of energy, and gases to exchange. Wi-Fi is not a biological need.' },
+      { id: 'q2', type: 'choice', prompt: 'Which part of a plant takes in water from the soil?',
+        options: ['Leaf', 'Stem', 'Root', 'Flower'], answer: 2,
+        explanation: 'Roots absorb water and minerals from the soil.' },
+      { id: 'q3', type: 'match', prompt: 'Match each animal group to an example.',
+        pairs: [ { left: 'Mammal', right: 'Dolphin' }, { left: 'Bird', right: 'Penguin' }, { left: 'Reptile', right: 'Crocodile' }, { left: 'Amphibian', right: 'Frog' } ],
+        explanation: 'Dolphins are mammals, penguins are birds, crocodiles are reptiles and frogs are amphibians.' },
+      { id: 'q4', type: 'blank', prompt: 'What gas do plants take in from the air to make food?', answer: 'carbon dioxide',
+        accept: ['co2', 'carbon-dioxide'], explanation: 'Plants take in carbon dioxide and release oxygen.' },
+      { id: 'q5', type: 'order', prompt: 'Put the life cycle of a butterfly in order.',
+        items: ['Egg', 'Caterpillar', 'Chrysalis', 'Butterfly'],
+        explanation: 'Egg → caterpillar (larva) → chrysalis (pupa) → adult butterfly.' },
+      { id: 'q6', type: 'choice', prompt: 'An animal that eats only plants is called a…',
+        options: ['Carnivore', 'Herbivore', 'Omnivore', 'Decomposer'], answer: 1,
+        explanation: 'Herbivores eat plants; carnivores eat meat; omnivores eat both.' }
+    ]
+  },
+  {
+    id: 'world-geography-basics',
+    title: 'Continents, Oceans and Maps',
+    subject: 'social', topic: 'geography',
+    grade: 'elementary', level: 'Grade 5', difficulty: 'medium', minutes: 12,
+    summary: 'Locate continents and oceans, and read the basic features of a map.',
+    questions: [
+      { id: 'q1', type: 'blank', prompt: 'How many continents are there?', answer: '7', accept: ['seven'],
+        explanation: 'Africa, Antarctica, Asia, Australia, Europe, North America and South America.' },
+      { id: 'q2', type: 'choice', prompt: 'Which is the largest ocean?',
+        options: ['Atlantic', 'Indian', 'Pacific', 'Arctic'], answer: 2,
+        explanation: 'The Pacific is the largest and deepest ocean.' },
+      { id: 'q3', type: 'choice', prompt: 'What does a compass rose on a map show?',
+        options: ['Distance', 'Direction', 'Height above sea level', 'Population'], answer: 1,
+        explanation: 'A compass rose shows the cardinal directions: north, south, east and west.' },
+      { id: 'q4', type: 'match', prompt: 'Match each country to its continent.',
+        pairs: [ { left: 'Egypt', right: 'Africa' }, { left: 'Brazil', right: 'South America' }, { left: 'Japan', right: 'Asia' }, { left: 'Spain', right: 'Europe' } ],
+        explanation: 'Egypt–Africa, Brazil–South America, Japan–Asia, Spain–Europe.' },
+      { id: 'q5', type: 'blank', prompt: 'The imaginary line around the middle of the Earth is called the ___.',
+        answer: 'equator', explanation: 'The equator is at 0° latitude, halfway between the poles.' },
+      { id: 'q6', type: 'multi', prompt: 'Which of these are physical features (not human-made)? Choose all that apply.',
+        options: ['Mountain', 'Bridge', 'River', 'Motorway'], answer: [0, 2],
+        explanation: 'Mountains and rivers are natural; bridges and motorways are built by people.' },
+      { id: 'q7', type: 'written', prompt: 'Describe one way maps are useful in everyday life.',
+        sample: 'Maps help you plan a route between two places, so you know which roads to take and roughly how far it is.',
+        explanation: 'Any reasonable use — navigation, planning a trip, understanding where things are — is acceptable.' }
+    ]
+  }
+];
