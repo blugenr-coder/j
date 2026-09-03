@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Join with a code — WorksheetHub</title>
-<meta name="description" content="Enter the code your teacher gave you to open the assignment.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<title>Join a class — WorksheetHub</title>
+<meta name="description" content="Enter the code your teacher gave you and see the work they set.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%20%3Crect%20width=%2232%22%20height=%2232%22%20rx=%227%22%20fill=%22%236366F1%22/%3E%20%3Crect%20x=%229%22%20y=%225.5%22%20width=%2215%22%20height=%2219%22%20rx=%222.6%22%20fill=%22%23fff%22%20opacity=%22.32%22/%3E%20%3Crect%20x=%225.5%22%20y=%228%22%20width=%2215%22%20height=%2219%22%20rx=%222.6%22%20fill=%22%23fff%22/%3E%20%3Cpath%20d=%22M9%2013.5h5.5M9%2017.6h8M9%2021.7h4.5%22%20stroke=%22%236366F1%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20opacity=%22.5%22/%3E%20%3Cpath%20d=%22m14.2%2018.4%203%203%206.3-6.9%22%20fill=%22none%22%20stroke=%22%234F46E5%22%20stroke-width=%222.8%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
@@ -15,25 +15,31 @@
 <link rel="stylesheet" href="assets/css/pages.css">
 </head>
 <body>
-<main id="main" class="wrap section" style="max-width:640px">
+<main id="main" class="wrap section" style="max-width:720px">
   <div class="center" style="margin-bottom:32px">
     <span class="tile-icon lg" style="margin-inline:auto"><span class="ico" data-icon="key" data-size="24"></span></span>
-    <h1 style="margin-top:16px">Join with a code</h1>
-    <p>Your teacher gives you a six-character code. Enter it here and the worksheet opens.</p>
+    <h1 style="margin-top:16px">Join a class</h1>
+    <p>Your teacher gives you a six-character code, or a link. Either one adds the class here,
+      and the work they set appears on your dashboard.</p>
   </div>
 
   <form class="card" id="join-form">
     <label class="field">
-      <span class="label">Assignment code</span>
+      <span class="label">Class code</span>
       <input class="input" id="code" type="text" inputmode="latin" autocomplete="off"
              placeholder="X7K-42P" maxlength="8"
              style="text-transform:uppercase;letter-spacing:.24em;text-align:center;font-family:var(--font-head);font-size:var(--step-2);font-weight:700">
     </label>
-    <button class="btn btn-primary btn-block btn-lg" type="submit">Open assignment</button>
+    <label class="field">
+      <span class="label">Your name</span>
+      <input class="input" id="student-name" type="text" autocomplete="name" placeholder="How your teacher knows you">
+    </label>
+    <button class="btn btn-primary btn-block btn-lg" type="submit">Join class</button>
     <p class="hint" id="join-error" style="color:var(--danger)" hidden></p>
   </form>
 
-  <div id="my-assignments" style="margin-top:32px"></div>
+  <section id="invite" hidden style="margin-top:24px"></section>
+  <section id="my-classes" style="margin-top:32px"></section>
 </main>
 
 <script type="module" src="assets/js/pages/join.js"></script>

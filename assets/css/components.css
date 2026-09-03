@@ -263,3 +263,57 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   font-family: var(--font-head); font-weight: 700; font-size: 10px;
   color: var(--text-3); min-width: 9px; flex: none;
 }
+
+/* ============================== subject index ==============================
+   A quiet, typographic list. The subject index is a table of contents, not a
+   set of buttons, so it is set rather than decorated. */
+.subject-index { border-top: 1px solid var(--border); }
+.subject-row-card {
+  display: block; color: inherit; text-decoration: none;
+  padding: var(--s5) var(--s4) var(--s5) 0;
+  border-bottom: 1px solid var(--border);
+  transition: background .14s, padding-left .14s;
+}
+.subject-row-card:hover {
+  text-decoration: none; background: var(--surface);
+  padding-left: var(--s4); padding-right: var(--s4);
+}
+.subject-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); }
+.subject-row-title {
+  margin: 0; font-size: var(--step-2); font-weight: 600; letter-spacing: -.015em;
+}
+.subject-row-card:hover .subject-row-title { color: var(--primary); }
+.subject-row-count {
+  font-size: var(--step--1); color: var(--text-3); font-weight: 600;
+  font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.subject-row-count::after { content: ' worksheets'; font-variant-numeric: normal; }
+.subject-row-blurb { margin: 6px 0 0; color: var(--text-2); font-size: var(--step-0); max-width: 68ch; }
+.subject-row-topics {
+  margin: var(--s3) 0 0; font-size: var(--step--1); color: var(--text-3);
+  line-height: 1.7; max-width: 90ch;
+}
+
+@media (min-width: 900px) {
+  .subject-index { column-count: 2; column-gap: var(--s7); }
+  .subject-row-card { break-inside: avoid; }
+}
+
+/* ------------------------------ class cards ------------------------------ */
+.class-card { display: grid; gap: var(--s3); }
+.class-stats {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3);
+  padding: var(--s3) 0; border-block: 1px solid var(--border);
+}
+.class-stats > div { display: grid; gap: 2px; }
+.class-stats strong { font-family: var(--font-head); font-size: var(--step-1); }
+.class-stats span { font-size: var(--step--1); color: var(--text-2); }
+.cell-dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid var(--border-strong);
+}
+.selected-strip {
+  margin-top: var(--s4); padding: var(--s4);
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md);
+}
+.assigned-overdue { border-color: var(--danger); }

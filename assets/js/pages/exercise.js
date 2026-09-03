@@ -13,7 +13,8 @@ import { renderQuestion, mathNode } from '../core/question.js';
 import { mark, answerText, isAutoMarked } from '../core/marking.js';
 import {
   runFor, recordAnswer, clearAnswer, resetRun, completeRun, scoreFor,
-  addPracticeTime, toggleFlag, getState, unlockAchievements, currentUser, findAssignment
+  addPracticeTime, toggleFlag, getState, unlockAchievements, currentUser, findAssignment,
+  recordSubmission
 } from '../core/store.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
@@ -330,6 +331,9 @@ function start() {
     trackTime();
     completeRun(ex.id);
     const s = scoreFor(ex.id);
+    /* If this worksheet was set to a class the student has joined, the result
+       belongs to that assignment as well as to their own progress. */
+    recordSubmission(ex.id, { percent: s.percent, correct: s.correct, total: s.gradable });
     const unlocked = unlockAchievements();
 
     $('#player').hidden = true;

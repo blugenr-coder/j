@@ -25,11 +25,6 @@ if (!subject) {
     { label: subject.name }
   ]));
 
-  const badge = $('#subject-emoji');
-  badge.replaceChildren(icon(subject.icon, { size: 24 }));
-  if (subject.accent === 'green') badge.classList.add('green');
-  if (subject.accent === 'orange') badge.classList.add('orange');
-
   $('#subject-title').textContent = subject.name;
   $('#subject-blurb').textContent = subject.blurb;
   $('#subject-all-link').href = href(`library.html?subject=${subject.id}`);

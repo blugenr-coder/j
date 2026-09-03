@@ -33,7 +33,7 @@ await open('library.html');
 const firstPage = await page.locator('.ex-card').count();
 ok('the library renders a page of worksheet cards', firstPage === 24);
 ok('the result count reports the whole library, not the page',
-  /1,0\d\d worksheets/.test(await page.locator('#result-count').innerText()));
+  /^[\d,]{4,} worksheets$/.test((await page.locator('#result-count').innerText()).trim()));
 ok('each card shows real questions from its own worksheet',
   await page.locator('.ex-card .preview-sheet').count() === firstPage);
 await page.click('#load-more button');

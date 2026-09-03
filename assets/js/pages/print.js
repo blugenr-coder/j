@@ -24,7 +24,9 @@ if (!ex) {
   document.title = `${ex.title} — printable worksheet`;
   document.body.dataset.band = GRADE_MAP[ex.grade]?.band ?? 'mid';
   $('#doc-title').textContent = ex.title;
-  $('#doc-meta').textContent = `${ex.level} · ${SUBJECT_MAP[ex.subject]?.name} · ${ex.count} questions`;
+  $('#doc-meta').textContent =
+    `${ex.level} · ${SUBJECT_MAP[ex.subject]?.name} · ${ex.count} questions · ` +
+    `${ex.pages ?? 1} page${(ex.pages ?? 1) === 1 ? '' : 's'}`;
   $('#back-link').href = href(`exercise.html?id=${ex.id}`);
   $('#online-link').href = href(`exercise.html?id=${ex.id}&mode=online`);
   $('#print-btn').addEventListener('click', () => window.print());
@@ -41,19 +43,19 @@ function render() {
   const copies = Number($('#opt-copies').value);
 
   const sheets = [];
-  for (let c = 0; c < copies; c++) sheets.push(worksheet({ withWork, withHints, copy: c + 1, copies }));
+  for (let c = 0; c < copies; c++) sheets.push(...worksheet({ withWork, withHints, copy: c + 1, copies }));
   if (withKey) sheets.push(answerKey());
   $('#sheets').replaceChildren(...sheets);
 }
 
 /* --------------------------------- header --------------------------------- */
-function sheetHead({ key = false } = {}) {
+function sheetHead({ key = false, page = 1, pages = 1 } = {}) {
   const head = el('header', { class: 'sheet-head' },
     el('div', { class: 'sheet-brand' },
       el('span', { class: 'sheet-logo', text: 'WorksheetHub' }),
       el('span', { class: 'sheet-meta' },
         el('div', { text: `${DIFF_MAP[ex.difficulty]?.name ?? ex.difficulty} · ${ex.count} questions` }),
-        el('div', { text: `About ${ex.minutes} minutes` }))
+        el('div', { text: pages > 1 ? `Page ${page} of ${pages}` : `About ${ex.minutes} minutes` }))
     ),
     el('h2', { text: ex.title }),
     el('p', { class: 'sheet-sub', text: `${ex.level} ${SUBJECT_MAP[ex.subject]?.name} · ${TOPIC_MAP[ex.topic]?.name}` })
@@ -61,7 +63,7 @@ function sheetHead({ key = false } = {}) {
 
   if (key) {
     head.append(el('p', { style: 'margin-top:6mm' }, el('span', { class: 'key-badge', text: 'Answer key' })));
-  } else {
+  } else if (page === 1) {
     head.append(el('div', { class: 'sheet-fields' },
       el('span', { class: 'fld' }, 'Name:', el('span', { class: 'line' })),
       el('span', { class: 'fld' }, 'Date:', el('span', { class: 'line' })),
@@ -72,23 +74,41 @@ function sheetHead({ key = false } = {}) {
 }
 
 /* ------------------------------- worksheet ------------------------------- */
+/**
+ * The worksheet, split across the number of pages it declares. Each page is
+ * its own sheet with its own header, so a booklet handed out in class still
+ * makes sense if the staple comes out.
+ */
 function worksheet({ withWork, withHints, copy, copies }) {
-  const sheet = el('section', { class: 'sheet' });
-  sheet.append(sheetHead());
+  const pages = Math.max(1, ex.pages ?? 1);
+  const perPage = Math.ceil(ex.questions.length / pages);
+  const out = [];
 
-  sheet.append(el('div', { class: 'sheet-instructions' },
-    el('strong', { text: 'Instructions: ' }),
-    'Answer every question, showing your working where there is space. ' +
-    'Write your final answer on the line provided.'
-  ));
+  for (let page = 0; page < pages; page++) {
+    const slice = ex.questions.slice(page * perPage, (page + 1) * perPage);
+    if (!slice.length) continue;
+    const sheet = el('section', { class: 'sheet' });
+    sheet.append(sheetHead({ page: page + 1, pages }));
 
-  ex.questions.forEach((q, i) => sheet.append(printQuestion(q, i, { withWork, withHints })));
+    if (page === 0) {
+      sheet.append(el('div', { class: 'sheet-instructions' },
+        el('strong', { text: 'Instructions: ' }),
+        'Answer every question, showing your working where there is space. ' +
+        'Write your final answer on the line provided.' +
+        (pages > 1 ? ` This worksheet runs to ${pages} pages.` : '')
+      ));
+    }
 
-  sheet.append(el('footer', { class: 'sheet-foot' },
-    el('span', { text: `worksheethub · ${ex.title}` }),
-    el('span', { text: copies > 1 ? `Copy ${copy} of ${copies}` : 'Answer key available separately' })
-  ));
-  return sheet;
+    slice.forEach((q, i) => sheet.append(printQuestion(q, page * perPage + i, { withWork, withHints })));
+
+    sheet.append(el('footer', { class: 'sheet-foot' },
+      el('span', { text: `worksheethub · ${ex.title}` }),
+      el('span', { text: pages > 1 ? `Page ${page + 1} of ${pages}` :
+        copies > 1 ? `Copy ${copy} of ${copies}` : 'Answer key available separately' })
+    ));
+    out.push(sheet);
+  }
+  return out;
 }
 
 function printQuestion(q, i, { withWork, withHints }) {

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My classes — WorksheetHub</title>
+<meta name="description" content="Create a class, share the join code, and set work.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20viewBox=%220%200%2032%2032%22%3E%20%3Crect%20width=%2232%22%20height=%2232%22%20rx=%227%22%20fill=%22%236366F1%22/%3E%20%3Crect%20x=%229%22%20y=%225.5%22%20width=%2215%22%20height=%2219%22%20rx=%222.6%22%20fill=%22%23fff%22%20opacity=%22.32%22/%3E%20%3Crect%20x=%225.5%22%20y=%228%22%20width=%2215%22%20height=%2219%22%20rx=%222.6%22%20fill=%22%23fff%22/%3E%20%3Cpath%20d=%22M9%2013.5h5.5M9%2017.6h8M9%2021.7h4.5%22%20stroke=%22%236366F1%22%20stroke-width=%221.9%22%20stroke-linecap=%22round%22%20opacity=%22.5%22/%3E%20%3Cpath%20d=%22m14.2%2018.4%203%203%206.3-6.9%22%20fill=%22none%22%20stroke=%22%234F46E5%22%20stroke-width=%222.8%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/pages.css">
+</head>
+<body data-base="..">
+<main id="main" class="wrap wrap-wide">
+  <div class="app-layout">
+    <div id="side-nav-host"></div>
+    <div>
+      <div class="welcome">
+        <div>
+          <h1>My classes</h1>
+          <p class="muted" style="margin:0">Each class has a join code. Share it and students appear on the roster.</p>
+        </div>
+        <button class="btn btn-primary" type="button" id="new-class-btn">New class</button>
+      </div>
+
+      <section class="card" id="new-class-panel" hidden style="margin-bottom:24px">
+        <h3 style="font-size:var(--step-1)">Create a class</h3>
+        <div class="grid grid-split">
+          <label class="field">
+            <span class="label">Class name</span>
+            <input class="input" id="c-name" type="text" placeholder="e.g. Grade 8 Mathematics — Period 3">
+          </label>
+          <label class="field">
+            <span class="label">Level</span>
+            <select class="select" id="c-level"></select>
+          </label>
+          <label class="field">
+            <span class="label">Main subject (optional)</span>
+            <select class="select" id="c-subject"></select>
+          </label>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn btn-primary" type="button" id="create-class-btn">Create class</button>
+          <button class="btn btn-ghost" type="button" id="cancel-class-btn">Cancel</button>
+        </div>
+      </section>
+
+      <div id="class-list" class="grid grid-2"></div>
+      <div id="class-empty"></div>
+    </div>
+  </div>
+</main>
+
+<script type="module" src="../assets/js/pages/teacher-classes.js"></script>
+</body>
+</html>

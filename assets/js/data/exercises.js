@@ -19,6 +19,8 @@ function decorate(ex) {
   const types = ex.types ?? [...new Set(ex.questions.map(q => q.type))];
   return {
     printable: true, online: true, featured: false, generated: false,
+    /* Authored worksheets predate the page count; derive one from their length. */
+    pages: Math.max(1, Math.min(4, Math.round((ex.count ?? ex.questions?.length ?? 10) / 10) || 1)),
     ...ex,
     types,
     count: ex.count ?? ex.questions.length,

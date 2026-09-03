@@ -11,12 +11,12 @@ import { parseQuery, suggest } from '../core/search.js';
 mountShell({ page: 'home', nav: 'public' });
 
 $('#grade-cards').replaceChildren(...GRADES.map(gradeCard));
-$('#subject-cards').replaceChildren(...SUBJECTS.slice(0, 6).map(subjectCard));
+$('#subject-cards').replaceChildren(...SUBJECTS.map(subjectCard));
 $('#featured-cards').replaceChildren(...featuredExercises(6).map(ex => exerciseCard(ex, { showProgress: false })));
 
 const totalQuestions = EXERCISES.reduce((a, e) => a + e.count, 0);
 $('#trust-stats').replaceChildren(
-  statTile({ label: 'Worksheets in the library', value: compact(EXERCISES.length), foot: 'Across every grade band', iconName: 'library' }),
+  statTile({ label: 'Worksheets in the library', value: EXERCISES.length.toLocaleString(), foot: `Across ${SUBJECTS.length} subjects`, iconName: 'library' }),
   statTile({ label: 'Questions to practise',    value: compact(totalQuestions),   foot: 'With hints and explanations', iconName: 'help', tone: 'green' }),
   statTile({ label: 'Question types',           value: String(QUESTION_TYPES.length), foot: 'From multiple choice to graphs', iconName: 'q-match', tone: 'orange' }),
   statTile({ label: 'Printable worksheets',     value: '100%',                    foot: 'Every one, with an answer key', iconName: 'printer' })

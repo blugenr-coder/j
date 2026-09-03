@@ -1,4 +1,4 @@
-/* Student dashboard — section 10. */
+/* Student dashboard — section 10, plus the work a teacher has set. */
 
 import { $, el, pct, formatMinutes, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
@@ -6,7 +6,8 @@ import { statTile, exerciseRow, exerciseCard, emptyState, subjectIcon, subjectTo
 import { GRADE_MAP, SUBJECT_MAP, ACHIEVEMENTS } from '../data/catalog.js';
 import { icon } from '../core/icons.js';
 import { EXERCISES, getExercise } from '../data/exercises.js';
-import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor } from '../core/store.js';
+import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor,
+         assignedToMe, enrollments } from '../core/store.js';
 
 mountShell({ page: 'dashboard', nav: 'app', footer: false });
 if (requireUser('dashboard.html')) render();
@@ -31,6 +32,9 @@ function render() {
     statTile({ label: 'Current streak',      value: String(s.streak),    foot: s.streak === 1 ? 'day' : 'days in a row', iconName: 'flame', tone: 'orange' }),
     statTile({ label: 'Practice time',       value: formatMinutes(s.minutes), foot: 'Across all worksheets', iconName: 'clock' })
   );
+
+  /* ------------------------------ assigned work ------------------------------ */
+  drawAssigned();
 
   /* ------------------------------ continue card ------------------------------ */
   const continueId = continueTarget();
@@ -125,4 +129,59 @@ function render() {
         el('span', { class: 'list-sub', text: nextUp.desc })),
       el('span', { class: 'badge', text: 'Next up' })) : null
   );
+}
+
+
+/**
+ * Worksheets set to the classes this student has joined. Shown above their own
+ * practice, because a due date beats a recommendation.
+ */
+function drawAssigned() {
+  const work = assignedToMe();
+  const section = $('#assigned');
+  if (!work.length) { section.hidden = true; return; }
+  section.hidden = false;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const cards = [];
+
+  for (const a of work) {
+    const sheets = (a.worksheetIds ?? [a.exerciseId]).filter(Boolean).map(getExercise).filter(Boolean);
+    const done = sheets.filter(w => statusFor(w.id) === 'completed').length;
+    const overdue = a.due && a.due < today && done < sheets.length;
+
+    cards.push(el('article', { class: `card ${overdue ? 'assigned-overdue' : ''}` },
+      el('div', { class: 'row-between', style: 'align-items:flex-start' },
+        el('div', {},
+          el('div', { class: 'small muted', text: a.class?.name ?? 'Class' }),
+          el('h3', { style: 'margin:2px 0 0;font-size:var(--step-1)', text: a.title })),
+        a.due
+          ? el('span', { class: `badge ${overdue ? 'badge-danger' : 'badge-warn'}`,
+              text: overdue ? `Overdue ${a.due}` : `Due ${a.due}` })
+          : null),
+
+      a.note ? el('p', { class: 'small', style: 'margin:10px 0 0', text: a.note }) : null,
+
+      el('div', { class: 'list list-divided', style: 'margin-top:12px' },
+        sheets.map(w => {
+          const finished = statusFor(w.id) === 'completed';
+          return el('a', { class: 'list-item', href: href(`exercise.html?id=${w.id}&mode=online&code=${a.code}`) },
+            el('span', { class: `tile-icon ${finished ? 'green' : ''}`, style: 'width:30px;height:30px' },
+              icon(finished ? 'check' : 'library', { size: 15 })),
+            el('span', { class: 'grow' },
+              el('span', { class: 'list-title', style: 'display:block', text: w.title }),
+              el('span', { class: 'list-sub',
+                text: `${w.level} · ${w.count} questions${w.pages > 1 ? ` · ${w.pages} pages` : ''}` })),
+            el('span', { class: 'small mono muted',
+              text: finished ? `${scoreFor(w.id).percent}%` : 'Not started' }));
+        })),
+
+      el('div', { class: 'row-between', style: 'margin-top:14px' },
+        el('span', { class: 'small muted', text: `${done} of ${sheets.length} finished` }),
+        el('div', { class: `bar ${done === sheets.length ? 'green' : ''}`, style: 'flex:1;max-width:160px' },
+          el('span', { style: `width:${Math.round((done / Math.max(1, sheets.length)) * 100)}%` })))
+    ));
+  }
+
+  $('#assigned-list').replaceChildren(...cards);
 }

@@ -4,6 +4,7 @@
 
 import { el, esc, $ } from './util.js';
 import { icon, iconHtml } from './icons.js';
+import { logoTile } from './logo.js';
 import { applyTheme, setTheme, getState, currentUser, signOut, isTeacher } from './store.js';
 
 /* Pages inside /teacher/ set data-base=".." so every link still resolves. */
@@ -30,7 +31,7 @@ const STUDENT_SIDE = [
   { group: 'Browse',      items: [
     { id: 'subjects',     label: 'Subjects',     icon: 'subjects', path: 'subjects.html' },
     { id: 'grades',       label: 'Grades',       icon: 'grades', path: 'grades.html' },
-    { id: 'join',         label: 'Join a class', icon: 'key', path: 'join.html' }
+    { id: 'join',         label: 'My classes',   icon: 'users', path: 'join.html' }
   ]},
   { group: 'More',        items: [
     { id: 'teachers',     label: 'Teacher tools', icon: 'teacher', path: 'teacher/index.html' },
@@ -41,9 +42,10 @@ const STUDENT_SIDE = [
 const TEACHER_SIDE = [
   { group: null,        items: [
     { id: 't-home',     label: 'Teacher home', icon: 'teacher', path: 'teacher/index.html' },
-    { id: 't-create',   label: 'New assignment', icon: 'plus', path: 'teacher/create.html' },
+    { id: 't-classes',  label: 'Classes',      icon: 'users', path: 'teacher/classes.html' },
+    { id: 't-create',   label: 'Set work',     icon: 'plus', path: 'teacher/create.html' },
     { id: 't-analytics',label: 'Class analytics', icon: 'progress', path: 'teacher/analytics.html' },
-    { id: 't-builder',  label: 'Exercise builder', icon: 'settings', path: 'teacher/builder.html' }
+    { id: 't-builder',  label: 'Worksheet builder', icon: 'settings', path: 'teacher/builder.html' }
   ]},
   { group: 'Library',   items: [
     { id: 'library',    label: 'All worksheets', icon: 'library', path: 'library.html' },
@@ -126,10 +128,10 @@ function buildHeader(page, nav) {
   const header = el('header', { class: 'site-header' });
   const wrap = el('div', { class: 'wrap' });
 
-  wrap.append(el('a', { class: 'brand', href: href(user ? 'dashboard.html' : 'index.html') },
-    el('span', { class: 'brand-mark', 'aria-hidden': 'true', text: 'W' }),
-    'WorksheetHub'
-  ));
+  wrap.append(el('a', {
+    class: 'brand', href: href(user ? 'dashboard.html' : 'index.html'),
+    html: `${logoTile({ size: 34 })}<span class="brand-word">Worksheet<span class="brand-word-accent">Hub</span></span>`
+  }));
 
   const list = el('nav', { class: 'main-nav', id: 'main-nav', 'aria-label': 'Main' });
   for (const item of PUBLIC_NAV) {
@@ -201,10 +203,10 @@ function buildFooter() {
   const cols = [
     { title: 'Practise', links: [
       ['Browse worksheets', 'library.html'], ['By subject', 'subjects.html'],
-      ['By grade', 'grades.html'], ['Join with a code', 'join.html']] },
+      ['By grade', 'grades.html'], ['Join a class', 'join.html']] },
     { title: 'Teachers', links: [
-      ['Teacher home', 'teacher/index.html'], ['Create an assignment', 'teacher/create.html'],
-      ['Class analytics', 'teacher/analytics.html'], ['Exercise builder', 'teacher/builder.html']] },
+      ['Teacher home', 'teacher/index.html'], ['Classes', 'teacher/classes.html'],
+      ['Set work', 'teacher/create.html'], ['Worksheet builder', 'teacher/builder.html']] },
     { title: 'About', links: [
       ['How it works', 'how-it-works.html'], ['Progress tracking', 'progress.html'],
       ['Achievements', 'achievements.html'], ['Settings', 'settings.html']] }
@@ -214,8 +216,10 @@ function buildFooter() {
   const grid = el('div', { class: 'footer-grid' });
 
   grid.append(el('div', {},
-    el('a', { class: 'brand', href: href('index.html') },
-      el('span', { class: 'brand-mark', 'aria-hidden': 'true', text: 'W' }), 'WorksheetHub'),
+    el('a', {
+      class: 'brand', href: href('index.html'),
+      html: `${logoTile({ size: 30 })}<span class="brand-word">Worksheet<span class="brand-word-accent">Hub</span></span>`
+    }),
     el('p', { class: 'small', style: 'margin-top:12px;max-width:34ch',
       text: 'One place to practise, print, track and improve — for every grade and every subject.' })
   ));

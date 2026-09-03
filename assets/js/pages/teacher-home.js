@@ -40,13 +40,13 @@ $('#t-stats').replaceChildren(
 );
 
 /* -------------------------------- classes -------------------------------- */
-$('#class-list').replaceChildren(...t.classes.map(c => {
+$('#class-list').replaceChildren(...t.classes.filter(c => !c.archived).map(c => {
   const r = classResults(c.id, c.exerciseIds[0]);
-  return el('a', { class: 'list-item', href: href(`teacher/analytics.html?class=${c.id}`) },
+  return el('a', { class: 'list-item', href: href(`teacher/class.html?id=${c.id}`) },
     el('span', { class: 'tile-icon' }, icon('teacher', { size: 18 })),
     el('span', { class: 'grow' },
       el('span', { class: 'list-title', style: 'display:block', text: c.name }),
-      el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · ${plural(c.exerciseIds.length, 'worksheet')} set` })),
+      el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · code ${c.code}` })),
     el('span', { class: 'row', style: 'gap:8px' },
       c.sample ? el('span', { class: 'badge', text: 'Sample' }) : null,
       el('strong', { class: 'mono small', text: r ? `${r.average}%` : '—' })));

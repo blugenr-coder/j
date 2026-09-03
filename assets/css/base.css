@@ -97,10 +97,14 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px; flex: none;
   background: linear-gradient(140deg, var(--primary), var(--primary-dark));
-  color: #fff; display: grid; place-items: center; font-size: 17px; font-weight: 700;
-  box-shadow: var(--shadow-1);
+  display: grid; place-items: center;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, .3);
 }
-[data-mode="teacher"] .brand-mark { background: linear-gradient(140deg, var(--text), #334155); }
+.brand-mark-lg { width: 54px; height: 54px; border-radius: 15px; margin-inline: auto; }
+.brand-word { letter-spacing: -.015em; }
+.brand-word-accent { color: var(--primary); }
+[data-mode="teacher"] .brand-word-accent { color: var(--text-2); }
+[data-mode="teacher"] .brand-mark { background: linear-gradient(140deg, var(--text), #334155); box-shadow: var(--shadow-1); }
 
 .main-nav { display: flex; align-items: center; gap: var(--s1); margin-inline: auto; }
 .main-nav a {

@@ -9,7 +9,7 @@ const START = ['index.html', 'library.html', 'grades.html', 'subjects.html', 'ho
   'signin.html', 'join.html', 'dashboard.html', 'progress.html', 'favorites.html',
   'achievements.html', 'settings.html', '404.html', 'exercise.html?id=linear-equations',
   'print.html?id=linear-equations', 'teacher/index.html', 'teacher/create.html',
-  'teacher/analytics.html', 'teacher/builder.html'];
+  'teacher/analytics.html', 'teacher/builder.html', 'teacher/classes.html'];
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext();

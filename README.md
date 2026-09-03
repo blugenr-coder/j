@@ -2,8 +2,9 @@
 
 **Practice anything. Learn everything.**
 
-A library of **1,056 worksheets** for every grade from Pre-K to college, where the
-same worksheet works online *and* on paper. Search it, practise it with instant
+A library of **1,924 worksheets** across **15 subjects**, for every grade from Pre-K
+to college, where the same worksheet works online *and* on paper — including
+multi-page packs of up to four printed pages. Search it, practise it with instant
 marking, print it with a separate answer key, and track what you are actually
 weak at.
 
@@ -54,17 +55,36 @@ modules, which browsers refuse over `file://`.
 | Page | What it does |
 |---|---|
 | `teacher/index.html` | Classes, assignments, and the questions your classes struggled with |
-| `teacher/create.html` | Filter the library → pick an exercise → get a code and a shareable link |
+| `teacher/classes.html` | Create a class, get its join code and link, see every class at a glance |
+| `teacher/class.html` | One class: roster, assignments, and a grid of who has done what |
+| `teacher/create.html` | Filter the library → tick several worksheets → set them with a due date |
 | `teacher/analytics.html` | Class average, per-student results, and success rate for every question |
 | `teacher/builder.html` | Write your own questions; they play and print through the same code paths |
+
+### Classes
+
+A teacher creates a class and gets two ways to share it: a six-character join
+code, and a link. Students join, see the work on their dashboard with its due
+date, complete it, and the result lands in the teacher's grid.
+
+The honest boundary: **a code resolves only on the device the class was created
+on; the link works anywhere**, because the class details travel inside the URL.
+What no link can do is send results back without a server, so a student working
+on their own laptop shows on the roster but their marks stay on their machine.
+The interface says this rather than implying otherwise.
 
 Teacher pages switch the interface into a denser, more sober visual mode
 (`data-mode="teacher"`) using the same palette, so both audiences clearly see one product.
 
 ### The library
 
-**1,056 worksheets / 11,222 questions** across 36 topics, eight subjects and every
-level from Pre-K to college. They come from two sources behind one shape:
+**1,924 worksheets / 27,290 questions** across 57 topics, 15 subjects and every
+level from Pre-K to college — from counting to calculus, and from nutrition and
+personal finance to cyber security, philosophy and world religions.
+Most are single sheets; 321 are multi-page packs (2, 3 or 4 printed pages) for a
+week of homework or a revision booklet, offered only on topics whose questions
+are computed rather than drawn from a fixed bank, since only those can fill four
+pages without repeating. They come from two sources behind one shape:
 
 - **26 authored worksheets**, written by hand — the deepest content, and what sets
   the tone for everything else.
@@ -175,9 +195,11 @@ This is a complete front end with local persistence. Being precise about the gap
 - **No server and no real accounts.** "Signing in" is a name, a role and a level held
   in `localStorage`. There is no password, nothing is transmitted, and clearing site
   data erases everything. `settings.html` says so on the page and offers an export.
-- **Assignment codes only resolve on the device that created them.** The generation,
-  sharing and joining flows are real; the lookup is local. This is the single highest-
-  value thing a backend would unlock.
+- **Classes are real but single-device for results.** Creating classes, rosters,
+  multi-worksheet assignments, due dates, joining by code or link, and the
+  who-has-done-what grid all work. Results only flow back to the teacher when
+  the student worked in the same browser. This is the single highest-value thing
+  a backend would unlock.
 - **Teacher analytics runs on sample classes.** Results are generated deterministically
   from student and question ids so the view is usable and reproducible before real
   students exist. Every sample class is labelled as such in the interface.

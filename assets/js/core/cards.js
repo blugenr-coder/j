@@ -110,7 +110,10 @@ export function exerciseCard(ex, { showProgress = true, preview = true } = {}) {
   card.append(el('div', { class: 'ex-tags' },
     difficultyBadge(ex.difficulty),
     el('span', { class: 'badge' }, icon('library', { size: 13 }), `${ex.count} questions`),
-    el('span', { class: 'badge' }, icon('clock', { size: 13 }), `${ex.minutes} min`)
+    el('span', { class: 'badge' }, icon('clock', { size: 13 }), `${ex.minutes} min`),
+    ex.pages > 1
+      ? el('span', { class: 'badge badge-primary' }, icon('layers', { size: 13 }), `${ex.pages} pages`)
+      : null
   ));
 
   if (showProgress && status !== 'not-started') {
@@ -173,17 +176,20 @@ export function gradeCard(grade) {
   );
 }
 
+/**
+ * Subject entry for the index. Deliberately typographic: no icon, no colour
+ * block. A subject is a body of work, and a list of its topics says more about
+ * it than any pictogram could.
+ */
 export function subjectCard(subject) {
   const count = EXERCISES.filter(e => e.subject === subject.id).length;
-  return el('a', { class: 'card subject-card', href: href(`subjects.html?subject=${subject.id}`) },
-    el('span', { class: `tile-icon lg ${subjectTone(subject.id)}` }, icon(subject.icon, { size: 24 })),
-    el('h3', { style: 'margin:0', text: subject.name }),
-    el('p', { class: 'small', style: 'margin:0', text: subject.blurb }),
-    el('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap' },
-      subject.topics.slice(0, 3).map(t => el('span', { class: 'badge', text: t.name })),
-      subject.topics.length > 3 ? el('span', { class: 'badge', text: `+${subject.topics.length - 3}` }) : null
-    ),
-    el('span', { class: 'small muted', text: `${count.toLocaleString()} worksheets` })
+  const topics = subject.topics.map(t => t.name);
+  return el('a', { class: 'subject-row-card', href: href(`subjects.html?subject=${subject.id}`) },
+    el('div', { class: 'subject-row-head' },
+      el('h3', { class: 'subject-row-title', text: subject.name }),
+      el('span', { class: 'subject-row-count mono', text: count.toLocaleString() })),
+    el('p', { class: 'subject-row-blurb', text: subject.blurb }),
+    el('p', { class: 'subject-row-topics', text: topics.join(' · ') })
   );
 }
 

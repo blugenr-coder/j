@@ -54,28 +54,18 @@ await open('teacher/create.html');
 await page.selectOption('#f-subject', 'math');
 await page.waitForTimeout(200);
 await page.locator('#match-list button').first().click();
+await page.waitForTimeout(250);
 await page.fill('#f-title', 'Friday homework');
 await page.click('#create-btn');
 await page.waitForSelector('#result-card .code-display');
 const code = (await page.locator('.code-display').innerText()).trim();
 ok('an assignment code is generated in XXX-XXX form', /^[A-Z0-9]{3}-[A-Z0-9]{3}$/.test(code));
 
-/* ------------------------------ join by that code ------------------------------ */
+/* The join flow itself is covered in full by tools/e2e-classes.mjs; here we
+   only check the code field's formatting behaviour. */
 await open('join.html');
 await page.fill('#code', code.replace('-', ''));
 ok('the code field formats itself as you type', (await page.inputValue('#code')) === code);
-await page.click('button[type="submit"]');
-await page.waitForTimeout(500);
-ok('a valid code opens the exercise', page.url().includes('exercise.html'));
-ok('the assignment is announced on the exercise',
-  (await page.locator('#main').innerText()).includes(code));
-
-await open('join.html');
-await page.fill('#code', 'ZZZZZZ');
-await page.click('button[type="submit"]');
-await page.waitForTimeout(300);
-ok('an unknown code reports an error instead of navigating',
-  !(await page.locator('#join-error').isHidden()));
 
 /* -------------------------------- the builder -------------------------------- */
 await open('teacher/builder.html');

@@ -357,8 +357,10 @@ export const algebra = [
   (r, t) => {
     const a = int(r, 1, 4), b = int(r, 2, 9), c = int(r, 1, 9);
     const disc = b * b - 4 * a * c;
+    /* "1x²" is not how anyone writes it. */
+    const lead = a === 1 ? '' : String(a);
     return choice(r, {
-      prompt: `How many real roots does this equation have?`, math: `${a}x² + ${b}x + ${c} = 0`,
+      prompt: `How many real roots does this equation have?`, math: `${lead}x² + ${b}x + ${c} = 0`,
       correct: disc > 0 ? 'Two' : disc === 0 ? 'One (repeated)' : 'None',
       distractors: ['Two', 'One (repeated)', 'None'],
       hint: 'Work out the discriminant, b² − 4ac.',

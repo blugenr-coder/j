@@ -143,8 +143,9 @@ export function searchExercises(f = {}) {
     if (f.format === 'online' && !ex.online) continue;
     if (f.format === 'printable' && !ex.printable) continue;
     if (f.length === 'short'  && ex.count > 7) continue;
-    if (f.length === 'medium' && (ex.count <= 7 || ex.count > 10)) continue;
-    if (f.length === 'long'   && ex.count <= 10) continue;
+    if (f.length === 'medium' && (ex.count <= 7 || ex.count > 12)) continue;
+    if (f.length === 'long'   && ex.count <= 12) continue;
+    if (f.pages && String(ex.pages ?? 1) !== String(f.pages)) continue;
 
     let score = 0;
     if (words.length) {
@@ -195,5 +196,5 @@ export function suggest(input, limit = 6) {
   return out;
 }
 
-export const FILTER_KEYS = ['grade', 'level', 'subject', 'topic', 'difficulty', 'type', 'format', 'length', 'text', 'sort'];
+export const FILTER_KEYS = ['grade', 'level', 'subject', 'topic', 'difficulty', 'type', 'format', 'length', 'pages', 'text', 'sort'];
 export const TYPE_OPTIONS = QUESTION_TYPES;

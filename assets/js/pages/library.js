@@ -10,7 +10,7 @@ import { searchExercises, parseQuery } from '../core/search.js';
 
 mountShell({ page: 'library', nav: 'public' });
 
-const FILTERS = ['grade', 'level', 'subject', 'topic', 'difficulty', 'type', 'format', 'length'];
+const FILTERS = ['grade', 'level', 'subject', 'topic', 'difficulty', 'type', 'format', 'length', 'pages'];
 
 /* The library holds over a thousand worksheets and each card renders two real
    questions from its sheet, so results are paged. Rendering everything would
@@ -92,8 +92,12 @@ function buildFilters() {
     filterGroup('Format', 'format', [{ id: 'online', label: 'Online' }, { id: 'printable', label: 'Printable' }]),
     filterGroup('Length', 'length', [
       { id: 'short', label: 'Under 8 questions' },
-      { id: 'medium', label: '8–10 questions' },
-      { id: 'long', label: '11+ questions' }
+      { id: 'medium', label: '8–12 questions' },
+      { id: 'long', label: '13+ questions' }
+    ]),
+    filterGroup('Printed pages', 'pages', [
+      { id: '1', label: '1 page' }, { id: '2', label: '2 pages' },
+      { id: '3', label: '3 pages' }, { id: '4', label: '4 pages' }
     ])
   );
 }
@@ -106,7 +110,8 @@ const LABELS = {
   difficulty: id => id[0].toUpperCase() + id.slice(1),
   type: id => QUESTION_TYPES.find(t => t.id === id)?.name ?? id,
   format: id => id === 'online' ? 'Online' : 'Printable',
-  length: id => ({ short: 'Under 8 questions', medium: '8–10 questions', long: '11+ questions' }[id])
+  length: id => ({ short: 'Under 8 questions', medium: '8–12 questions', long: '13+ questions' }[id]),
+  pages: id => `${id} page${id === '1' ? '' : 's'}`
 };
 
 function buildActiveFilters() {

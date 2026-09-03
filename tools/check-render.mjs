@@ -9,9 +9,9 @@ const BASE = process.argv[2] ?? 'http://127.0.0.1:8099';
 
 /* path → selectors that must contain at least one element. */
 const PAGES = [
-  ['index.html',                      ['#grade-cards .card', '#subject-cards .card', '#featured-cards .ex-card', '#trust-stats .stat']],
+  ['index.html',                      ['#grade-cards .card', '#subject-cards .subject-row-card', '#featured-cards .ex-card', '#trust-stats .stat']],
   ['grades.html',                     ['#grade-cards .card', '#level-groups .chip']],
-  ['subjects.html',                   ['#subject-cards .card']],
+  ['subjects.html',                   ['#subject-cards .subject-row-card']],
   ['subjects.html?subject=science',   ['#topic-cards .card', '#subject-exercises .ex-card']],
   ['library.html',                    ['#results .ex-card', '#filter-groups .chip']],
   ['library.html?grade=high',         ['#results .ex-card']],
@@ -31,6 +31,7 @@ const PAGES = [
   ['404.html',                        ['#nf-form']],
   ['teacher/index.html',              ['#t-stats .stat', '#class-list .list-item', '#hardest-list .list-item', '#suggested .ex-card']],
   ['teacher/create.html',             ['#f-class option', '#match-list button']],
+  ['teacher/classes.html',            ['#class-list .class-card', '#c-level option']],
   ['teacher/analytics.html',          ['#a-stats .stat', '#hardest .list-item', '#question-bars .row', '#student-rows tr']],
   ['teacher/builder.html',            ['#add-buttons .chip', '#e-level option']]
 ];

@@ -42,7 +42,9 @@ export const SUBJECTS = [
       { id: 'geometry',     name: 'Geometry' },
       { id: 'trigonometry', name: 'Trigonometry' },
       { id: 'statistics',   name: 'Statistics' },
-      { id: 'calculus',     name: 'Calculus' }
+      { id: 'calculus',     name: 'Calculus' },
+      { id: 'measurement',  name: 'Measurement and Units' },
+      { id: 'discrete',     name: 'Discrete Mathematics' }
     ]
   },
   {
@@ -94,7 +96,9 @@ export const SUBJECTS = [
     topics: [
       { id: 'programming', name: 'Programming' },
       { id: 'algorithms',  name: 'Algorithms' },
-      { id: 'data',        name: 'Data & Databases' }
+      { id: 'data',        name: 'Data & Databases' },
+      { id: 'web',         name: 'Web Development' },
+      { id: 'cyber',       name: 'Cyber Security' }
     ]
   },
   {
@@ -111,7 +115,68 @@ export const SUBJECTS = [
     blurb: 'Theory, history and vocabulary of the arts.',
     topics: [
       { id: 'art-history', name: 'Art History' },
-      { id: 'music-theory', name: 'Music Theory' }
+      { id: 'music-theory', name: 'Music Theory' },
+      { id: 'drama',        name: 'Drama and Theatre' }
+    ]
+  },
+
+  /* ----------------------- subjects beyond the core ----------------------- */
+  {
+    id: 'health', name: 'Health & Physical Education', icon: 'science', accent: 'green',
+    blurb: 'Nutrition, the human body, and how training actually works.',
+    topics: [
+      { id: 'nutrition', name: 'Nutrition' },
+      { id: 'anatomy',   name: 'Human Anatomy' },
+      { id: 'fitness',   name: 'Fitness and Training' }
+    ]
+  },
+  {
+    id: 'business', name: 'Business & Finance', icon: 'progress', accent: 'primary',
+    blurb: 'Money, markets and how organisations keep score.',
+    topics: [
+      { id: 'finance',    name: 'Personal Finance' },
+      { id: 'accounting', name: 'Accounting' },
+      { id: 'marketing',  name: 'Marketing' }
+    ]
+  },
+  {
+    id: 'engineering', name: 'Engineering & Design', icon: 'settings', accent: 'orange',
+    blurb: 'How things get designed, wired and made to work reliably.',
+    topics: [
+      { id: 'design',      name: 'Design and Materials' },
+      { id: 'electronics', name: 'Electronics' },
+      { id: 'robotics',    name: 'Robotics and Control' }
+    ]
+  },
+  {
+    id: 'environment', name: 'Environment & Sustainability', icon: 'social', accent: 'green',
+    blurb: 'Climate, ecosystems and the arithmetic of living within limits.',
+    topics: [
+      { id: 'climate',      name: 'Climate and Energy' },
+      { id: 'conservation', name: 'Ecology and Conservation' }
+    ]
+  },
+  {
+    id: 'mind', name: 'Psychology & Sociology', icon: 'study', accent: 'primary',
+    blurb: 'How people think, learn, and behave in groups.',
+    topics: [
+      { id: 'psychology', name: 'Psychology' },
+      { id: 'sociology',  name: 'Sociology' }
+    ]
+  },
+  {
+    id: 'humanities', name: 'Philosophy & Religion', icon: 'ela', accent: 'orange',
+    blurb: 'Argument, ethics and the world’s major traditions.',
+    topics: [
+      { id: 'philosophy', name: 'Philosophy and Logic' },
+      { id: 'religions',  name: 'World Religions' }
+    ]
+  },
+  {
+    id: 'media', name: 'Media & Film', icon: 'monitor', accent: 'primary',
+    blurb: 'Reading the news critically, and how film makes meaning.',
+    topics: [
+      { id: 'media', name: 'Media and Film Studies' }
     ]
   }
 ];

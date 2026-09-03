@@ -6,9 +6,11 @@
 import { $, $$, el, qs } from '../core/util.js';
 import { mountShell, href } from '../core/shell.js';
 import { GRADES } from '../data/catalog.js';
+import { logoMark } from '../core/logo.js';
 import { signIn, currentUser } from '../core/store.js';
 
 mountShell({ page: '', nav: 'public', footer: false });
+$('#signin-mark').innerHTML = logoMark({ size: 38, solid: true });
 
 const creating = qs('new') === '1';
 const next = qs('next');

@@ -5,7 +5,7 @@
    the rest of the app is unchanged. */
 
 import { todayKey, hashCode } from './util.js';
-import { ACHIEVEMENTS } from '../data/catalog.js';
+import { ACHIEVEMENTS, GRADES } from '../data/catalog.js';
 import { EXERCISE_MAP, getExercise } from '../data/exercises.js';
 import { STORAGE_KEY as KEY } from './storage-key.js';
 
@@ -18,6 +18,8 @@ const BLANK = {
   days: {},            // 'YYYY-MM-DD' -> minutes practised
   achievements: [],
   teacher: null,       // { classes, assignments } — created on first use
+  enrollments: [],     // classes this student has joined
+  submissions: {},     // assignmentId -> studentId -> worksheetId -> result
   customExercises: []
 };
 
@@ -295,6 +297,181 @@ export function unlockAchievements() {
 }
 export const hasAchievement = id => state.achievements.includes(id);
 
+/* Join codes avoid 0/O and 1/I, which get misread off a whiteboard. */
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+export function makeAssignmentCode() {
+  const pick = n => Array.from({ length: n }, () =>
+    CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
+  return `${pick(3)}-${pick(3)}`;
+}
+
+/* ================================ CLASSES ================================
+   A class is a roster plus a code. A teacher creates one and shares either the
+   six-character code (which resolves on this device) or a join link, which
+   carries the class details in the URL and therefore works on any device.
+   What a link cannot do is send results back without a server — that boundary
+   is stated in the interface rather than papered over. */
+
+export function createClass({ name, level, subject = null }) {
+  /* Store the band as well as the level: "Set work" filters the library by
+     band, and without it a Grade 8 class was offered Pre-K worksheets. */
+  const band = GRADES.find(g => g.levels.includes(level))?.id ?? 'middle';
+  const cls = {
+    id: `c-${Date.now().toString(36)}`,
+    name: name.trim(),
+    level, grade: band, subject,
+    code: makeAssignmentCode(),
+    created: Date.now(),
+    archived: false,
+    sample: false,
+    students: [],
+    exerciseIds: []
+  };
+  update(s => {
+    s.teacher ??= seedTeacher();
+    s.teacher.classes.unshift(cls);
+  });
+  return cls;
+}
+
+export function updateClass(classId, patch) {
+  update(s => {
+    const cls = s.teacher?.classes.find(c => c.id === classId);
+    if (cls) Object.assign(cls, patch);
+  });
+  return findClass(classId);
+}
+
+export function archiveClass(classId) { return updateClass(classId, { archived: true }); }
+
+export function deleteClass(classId) {
+  update(s => {
+    if (!s.teacher) return;
+    s.teacher.classes = s.teacher.classes.filter(c => c.id !== classId);
+    s.teacher.assignments = s.teacher.assignments.filter(a => a.classId !== classId);
+  });
+}
+
+export const findClass = classId =>
+  (state.teacher?.classes ?? []).find(c => c.id === classId) ?? null;
+
+export function findClassByCode(code) {
+  const clean = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!clean) return null;
+  return (state.teacher?.classes ?? [])
+    .find(c => c.code && c.code.replace('-', '') === clean) ?? null;
+}
+
+export function addStudent(classId, name) {
+  const student = {
+    id: `s-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e4)}`,
+    name: name.trim(),
+    joinedAt: Date.now(),
+    source: 'added'
+  };
+  update(s => {
+    const cls = s.teacher?.classes.find(c => c.id === classId);
+    if (cls) cls.students.push(student);
+  });
+  return student;
+}
+
+export function removeStudent(classId, studentId) {
+  update(s => {
+    const cls = s.teacher?.classes.find(c => c.id === classId);
+    if (cls) cls.students = cls.students.filter(st => st.id !== studentId);
+  });
+}
+
+/* ------------------------------ join links ------------------------------ */
+/** Pack a class into a URL-safe token so a join link works on any device. */
+export function encodeClass(cls) {
+  const payload = JSON.stringify({ n: cls.name, l: cls.level, c: cls.code, s: cls.subject ?? null });
+  return btoa(unescape(encodeURIComponent(payload))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodeClass(token) {
+  try {
+    const b64 = token.replace(/-/g, '+').replace(/_/g, '/');
+    const obj = JSON.parse(decodeURIComponent(escape(atob(b64))));
+    if (!obj?.n || !obj?.c) return null;
+    return { name: obj.n, level: obj.l ?? null, code: obj.c, subject: obj.s ?? null };
+  } catch {
+    return null;
+  }
+}
+
+/* ----------------------------- student side ----------------------------- */
+export const enrollments = () => state.enrollments ?? [];
+export const isEnrolled = code => {
+  const clean = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return Boolean(clean) && enrollments()
+    .some(e => e.code && e.code.replace('-', '') === clean);
+};
+
+export function joinClass({ name, level, code, subject = null, studentName }) {
+  if (isEnrolled(code)) return enrollments().find(e => e.code === code);
+  const enrolment = {
+    classId: null,
+    className: name,
+    level, subject, code,
+    studentName: studentName || state.user?.name || 'Student',
+    studentId: null,
+    joinedAt: Date.now()
+  };
+  /* If the class lives on this device, attach to the real roster so the
+     teacher sees the student appear. */
+  const local = findClassByCode(code);
+  if (local) {
+    const student = addStudent(local.id, enrolment.studentName);
+    enrolment.classId = local.id;
+    enrolment.studentId = student.id;
+    update(s => {
+      const cls = s.teacher.classes.find(c => c.id === local.id);
+      const st = cls?.students.find(x => x.id === student.id);
+      if (st) st.source = 'joined';
+    });
+  }
+  update(s => { s.enrollments.push(enrolment); });
+  return enrolment;
+}
+
+export function leaveClass(code) {
+  const e = enrollments().find(x => x.code === code);
+  update(s => { s.enrollments = s.enrollments.filter(x => x.code !== code); });
+  if (e?.classId && e?.studentId) removeStudent(e.classId, e.studentId);
+}
+
+/* ----------------------------- assignments ----------------------------- */
+/** Worksheets set to the classes this student has joined, newest first. */
+export function assignedToMe() {
+  const codes = new Set(enrollments().map(e => e.code));
+  const classes = (state.teacher?.classes ?? []).filter(c => codes.has(c.code));
+  const byId = Object.fromEntries(classes.map(c => [c.id, c]));
+  return (state.teacher?.assignments ?? [])
+    .filter(a => byId[a.classId])
+    .map(a => ({ ...a, class: byId[a.classId] }))
+    .sort((x, y) => (y.created ?? 0) - (x.created ?? 0));
+}
+
+/** Record a finished worksheet against every assignment that set it. */
+export function recordSubmission(exerciseId, result) {
+  const mine = assignedToMe().filter(a => (a.worksheetIds ?? [a.exerciseId]).includes(exerciseId));
+  if (!mine.length) return;
+  update(s => {
+    for (const a of mine) {
+      const enrolment = s.enrollments.find(e => e.classId === a.classId);
+      const studentId = enrolment?.studentId ?? 'me';
+      s.submissions[a.id] ??= {};
+      s.submissions[a.id][studentId] ??= {};
+      s.submissions[a.id][studentId][exerciseId] = { ...result, at: Date.now() };
+    }
+  });
+}
+
+export const submissionsFor = assignmentId => state.submissions?.[assignmentId] ?? {};
+
 /* ------------------------------- teacher ------------------------------- */
 /* Teacher mode needs a class with results in it to be worth looking at.
    On first use we seed two sample classes with deterministic pseudo-results
@@ -311,8 +488,14 @@ function seedTeacher() {
                  'Zoe Martin', 'Ibrahim Sy', 'Hanna Koch', 'Luca Rossi', 'Nina Petrova'];
   const mk = (id, name, grade, level, size, exerciseIds) => ({
     id, name, grade, level,
+    subject: 'math',
+    code: makeAssignmentCode(),
+    created: Date.now(),
+    archived: false,
     sample: true,
-    students: names.slice(0, size).map((n, i) => ({ id: `${id}-s${i}`, name: n })),
+    students: names.slice(0, size).map((n, i) => ({
+      id: `${id}-s${i}`, name: n, joinedAt: Date.now(), source: 'added'
+    })),
     exerciseIds
   });
   const classes = [
@@ -364,18 +547,14 @@ export function classResults(classId, exerciseId) {
 }
 
 /* ------------------------------ assignments ------------------------------ */
-const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no confusable 0/O, 1/I
-
-export function makeAssignmentCode() {
-  const pick = n => Array.from({ length: n }, () =>
-    CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)]).join('');
-  return `${pick(3)}-${pick(3)}`;
-}
-
-export function createAssignment({ exerciseId, classId, title, due, note }) {
+export function createAssignment({ exerciseId, worksheetIds, classId, title, due, note }) {
+  const ids = worksheetIds?.length ? worksheetIds : (exerciseId ? [exerciseId] : []);
   const assignment = {
+    id: `a-${Date.now().toString(36)}`,
     code: makeAssignmentCode(),
-    exerciseId, classId, title, due, note,
+    exerciseId: ids[0] ?? null,   // kept for links that name a single worksheet
+    worksheetIds: ids,
+    classId, title, due, note,
     created: Date.now()
   };
   update(s => {
