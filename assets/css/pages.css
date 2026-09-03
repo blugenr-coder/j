@@ -31,7 +31,7 @@
   display: flex; align-items: center; gap: var(--s3); font-size: var(--step--1); font-weight: 600;
 }
 .float-a { top: -22px; right: -6px; }
-.float-b { bottom: -26px; left: -18px; }
+.float-b { bottom: -30px; left: -34px; }
 @media (prefers-reduced-motion: no-preference) {
   .float-card { animation: bob 5s ease-in-out infinite; }
   .float-b { animation-delay: -2.5s; }

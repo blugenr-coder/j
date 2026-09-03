@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Print worksheet — WorksheetHub</title>
+<meta name="description" content="A clean printable worksheet with room to work, plus a separate answer key.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236366F1'/%3E%3Ctext x='16' y='23' font-family='Poppins,sans-serif' font-size='18' font-weight='700' fill='white' text-anchor='middle'%3EW%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="stylesheet" href="assets/css/print.css">
+</head>
+<body>
+<div class="paper-toolbar no-print">
+  <div class="wrap wrap-wide row-between">
+    <div class="row" style="gap:12px">
+      <a class="icon-btn" id="back-link" href="library.html" aria-label="Back">←</a>
+      <div>
+        <strong id="doc-title" style="font-family:var(--font-head)"></strong>
+        <div class="small muted" id="doc-meta"></div>
+      </div>
+    </div>
+
+    <div class="row" style="gap:16px;flex-wrap:wrap">
+      <label class="row small" style="gap:6px">
+        <input type="checkbox" id="opt-key" checked> Include answer key
+      </label>
+      <label class="row small" style="gap:6px">
+        <input type="checkbox" id="opt-work" checked> Space for working
+      </label>
+      <label class="row small" style="gap:6px">
+        <input type="checkbox" id="opt-hints"> Print hints
+      </label>
+      <label class="row small" style="gap:6px">
+        <span>Copies</span>
+        <select class="select" id="opt-copies" style="width:auto;padding:4px 28px 4px 10px">
+          <option>1</option><option>2</option><option>3</option>
+        </select>
+      </label>
+      <a class="btn btn-ghost btn-sm" id="online-link" href="#">💻 Do it online</a>
+      <button class="btn btn-primary btn-sm" id="print-btn" type="button">🖨️ Print</button>
+    </div>
+  </div>
+</div>
+
+<main id="main" class="paper-stage">
+  <div id="sheets"></div>
+  <div id="not-found" class="wrap" hidden></div>
+</main>
+
+<script type="module" src="assets/js/pages/print.js"></script>
+</body>
+</html>
