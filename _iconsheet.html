@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{font:13px system-ui;background:#F8FAFC;color:#0F172A;padding:24px;margin:0}
+.g{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}
+.i{background:#fff;border:1px solid #E2E8F0;border-radius:10px;padding:12px 8px;text-align:center}
+.i svg{color:#4F46E5}
+.n{font-size:10px;color:#64748B;margin-top:6px;word-break:break-all}
+</style></head><body><div class="g" id="g"></div>
+<script type="module">
+import { ICON_NAMES, iconHtml } from '/assets/js/core/icons.js';
+document.getElementById('g').innerHTML = ICON_NAMES.map(n =>
+  `<div class="i">${iconHtml(n,{size:26})}<div class="n">${n}</div></div>`).join('');
+</script></body></html>

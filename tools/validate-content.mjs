@@ -2,12 +2,17 @@
    Catches the mistakes that are easy to make when authoring exercises by hand:
    dangling answer indexes, missing answers, unknown subjects or topics. */
 
-import { EXERCISES } from '../assets/js/data/exercises.js';
+import { AUTHORED, GENERATED, getExercise } from '../assets/js/data/exercises.js';
 import { SUBJECT_MAP, TOPIC_MAP, GRADE_MAP, DIFF_MAP, QTYPE_MAP } from '../assets/js/data/catalog.js';
 
 const errors = [];
 const warn = [];
 const seen = new Set();
+let genNoExplain = 0;
+
+/* Generated worksheets are checked by materialising every one of them: the
+   whole point of generating content is that it must be verifiable in bulk. */
+const EXERCISES = [...AUTHORED, ...GENERATED.map(b => getExercise(b.id))];
 
 for (const ex of EXERCISES) {
   const at = (extra = '') => `${ex.id}${extra}`;
@@ -24,6 +29,8 @@ for (const ex of EXERCISES) {
     errors.push(`${at()}: level "${ex.level}" is not in band "${ex.grade}"`);
   if (!DIFF_MAP[ex.difficulty])           errors.push(`${at()}: unknown difficulty "${ex.difficulty}"`);
   if (!ex.summary)                        warn.push(`${at()}: no summary`);
+  if (ex.generated && ex.questions.length !== ex.count)
+    errors.push(`${at()}: generated ${ex.questions.length} questions but declares ${ex.count}`);
   if (!ex.questions?.length)              errors.push(`${at()}: no questions`);
 
   const qids = new Set();
@@ -66,12 +73,15 @@ for (const ex of EXERCISES) {
         if (!q.sample) warn.push(`${w}: no sample answer for the key`);
         break;
     }
-    if (!q.explanation) warn.push(`${w}: no explanation (the answer key will be thin)`);
+    if (!q.explanation && !ex.generated) warn.push(`${w}: no explanation (the answer key will be thin)`);
+    if (!q.explanation && ex.generated) genNoExplain++;
   }
 }
 
 const totalQ = EXERCISES.reduce((a, e) => a + e.questions.length, 0);
-console.log(`Checked ${EXERCISES.length} exercises / ${totalQ} questions.`);
+console.log(`Checked ${EXERCISES.length} worksheets / ${totalQ} questions ` +
+  `(${AUTHORED.length} authored, ${GENERATED.length} generated).`);
+if (genNoExplain) warn.push(`${genNoExplain} generated question(s) have no explanation`);
 if (warn.length)   console.log(`\n${warn.length} warning(s):\n  ` + warn.join('\n  '));
 if (errors.length) { console.error(`\n${errors.length} error(s):\n  ` + errors.join('\n  ')); process.exit(1); }
 console.log('\nNo errors.');
