@@ -2,9 +2,9 @@
 
 **Practice anything. Learn everything.**
 
-A library of **1,924 worksheets** across **15 subjects**, for every grade from Pre-K
-to college, where the same worksheet works online *and* on paper — including
-multi-page packs of up to four printed pages. Search it, practise it with instant
+A library of **24,857 worksheets** across **15 subjects**, for every grade from
+Pre-K to college, where the same worksheet works online *and* on paper —
+including multi-page packs of up to four printed pages and 40 questions. Search it, practise it with instant
 marking, print it with a separate answer key, and track what you are actually
 weak at.
 
@@ -78,13 +78,35 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**1,924 worksheets / 27,290 questions** across 57 topics, 15 subjects and every
-level from Pre-K to college — from counting to calculus, and from nutrition and
-personal finance to cyber security, philosophy and world religions.
-Most are single sheets; 321 are multi-page packs (2, 3 or 4 printed pages) for a
-week of homework or a revision booklet, offered only on topics whose questions
-are computed rather than drawn from a fixed bank, since only those can fill four
-pages without repeating. They come from two sources behind one shape:
+**24,857 worksheets** across 57 topics, 15 subjects and every level from Pre-K to
+college — from counting to calculus, and from nutrition and personal finance to
+cyber security, philosophy and world religions. Sheets run from 6 to 40
+questions; 3,084 are multi-page packs of 2, 3 or 4 printed pages.
+
+### How a library gets to 24,857 without padding
+
+Most worksheets exist in several **sets** — the same focus at the same level,
+seeded differently, so Set A and Set K contain genuinely different questions.
+The number of sets a topic gets is **measured, not declared**:
+
+- At load, every generator is probed with five seeds. It counts as varying only
+  if the *question itself* changes — reshuffling the options of a fixed item is
+  not new content.
+- Sets are then allocated in proportion to that measured variety, capped, so a
+  topic that can compose fresh questions carries many and one that deals from a
+  small fixed bank carries one.
+
+This replaced a hand-written list of "procedural" topics that got it wrong and
+gave Business & Finance more worksheets than Science.
+
+Where a topic has a naturally large pool — vocabulary, spelling, three
+languages, grammar, geography, chemistry, biology, history, anatomy, art
+history — questions are **sampled from that pool** rather than drawn from a
+fixed list, which is what makes hundreds of genuinely different sheets possible.
+
+The honest ceiling: **the library is as large as its content can support, not as
+large as a number sounds.** Going much beyond this would mean re-dealing the
+same items, and the set allocation deliberately refuses to. They come from two sources behind one shape:
 
 - **26 authored worksheets**, written by hand — the deepest content, and what sets
   the tone for everything else.

@@ -171,7 +171,7 @@ export function gradeCard(grade) {
     el('span', { class: 'tile-icon lg' }, icon(grade.icon, { size: 24 })),
     el('h3', { text: grade.name }),
     el('span', { class: 'grade-range', text: grade.range }),
-    el('span', { class: 'small muted', text: grade.tone }),
+    el('span', { class: 'grade-tone', text: grade.tone }),
     el('span', { class: 'grade-count' }, `${count.toLocaleString()} worksheets`, icon('arrow-right', { size: 14 }))
   );
 }
@@ -189,7 +189,11 @@ export function subjectCard(subject) {
       el('h3', { class: 'subject-row-title', text: subject.name }),
       el('span', { class: 'subject-row-count mono', text: count.toLocaleString() })),
     el('p', { class: 'subject-row-blurb', text: subject.blurb }),
-    el('p', { class: 'subject-row-topics', text: topics.join(' · ') })
+    /* Each topic is its own span so the separator can hang off the word before
+       it. Joining with " · " lets a line break land before the dot, which puts
+       a stray separator at the start of the next line. */
+    el('p', { class: 'subject-row-topics' },
+      topics.map(name => el('span', { class: 'topic-chip', text: name })))
   );
 }
 

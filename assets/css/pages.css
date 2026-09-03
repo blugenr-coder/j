@@ -46,11 +46,21 @@
 .section-head.center { margin-inline: auto; }
 .section-head p { font-size: var(--step-1); }
 
-.grade-card { display: grid; gap: var(--s3); padding: var(--s5); text-align: left; }
-.grade-card .grade-emoji { font-size: 34px; line-height: 1; }
-.grade-card h3 { margin: 0; }
-.grade-card .grade-range { color: var(--text-2); font-size: var(--step--1); font-weight: 600; }
-.grade-card .grade-count { margin-top: auto; color: var(--text-3); font-size: var(--step--1); }
+.card.grade-card {
+  display: flex; flex-direction: column; gap: var(--s2);
+  padding: var(--s5); text-align: left; height: 100%;
+}
+.card.grade-card h3 { margin: var(--s2) 0 0; font-size: var(--step-2); }
+.card.grade-card .grade-range {
+  color: var(--text-2); font-size: var(--step--1); font-weight: 600; letter-spacing: .01em;
+}
+.card.grade-card .grade-tone {
+  color: var(--text-2); font-size: var(--step--1); line-height: 1.55; margin-top: var(--s1);
+}
+.card.grade-card .grade-count {
+  margin-top: auto; padding-top: var(--s4); border-top: 1px solid var(--border);
+  color: var(--text-3); font-size: var(--step--1); font-weight: 600;
+}
 
 .step-grid { counter-reset: step; }
 .step { position: relative; padding-top: var(--s5); }

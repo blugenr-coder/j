@@ -47,7 +47,11 @@ function loadCustom() {
 }
 
 export const AUTHORED = [...early, ...middle, ...upper].map(decorate);
-export const GENERATED = buildBlueprints().map(decorate);
+
+/* Blueprints are NOT passed through decorate: they already answer every field
+   it would add, and spreading one evaluates every getter — which is exactly
+   the eager string building the lazy type exists to avoid. */
+export const GENERATED = buildBlueprints();
 export const CUSTOM = loadCustom().map(decorate);
 
 /* Authored worksheets come first: they are the deepest and set the tone. */
@@ -65,9 +69,14 @@ export function getExercise(id) {
   if (ex.questions) return ex;
   if (hydrated.has(id)) return hydrated.get(id);
 
+  /* Hydrating is the one place a blueprint is flattened, because the caller is
+     about to read all of it anyway. */
   const questions = generateQuestions(ex);
   const full = {
-    ...ex,
+    id: ex.id, title: ex.title, subject: ex.subject, topic: ex.topic,
+    grade: ex.grade, level: ex.level, difficulty: ex.difficulty,
+    minutes: ex.minutes, summary: ex.summary, types: ex.types,
+    band: ex.band, pages: ex.pages, generated: true, printable: true, online: true,
     questions,
     count: questions.length,
     autoMarked: questions.filter(q => q.type !== 'written').length

@@ -36,7 +36,11 @@
 }
 .card-flat { box-shadow: none; }
 .card-pad-sm { padding: var(--s4); }
-a.card, .card-link { display: block; color: inherit; transition: transform .15s, box-shadow .15s, border-color .15s; }
+/* A card that is a link: inherit colour and lift on hover, but do NOT dictate
+   `display` — variants such as .grade-card set their own, and a rule of equal
+   or higher specificity here silently overrode them. */
+a.card, .card-link { color: inherit; transition: transform .15s, box-shadow .15s, border-color .15s; }
+.card { display: block; }
 a.card:hover, .card-link:hover { text-decoration: none; transform: translateY(-2px); box-shadow: var(--shadow-2); border-color: var(--border-strong); }
 
 .card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-bottom: var(--s4); }
@@ -255,7 +259,7 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 }
 
 .grade-card .grade-count { display: inline-flex; align-items: center; gap: 6px; }
-.subject-card { display: grid; gap: var(--s3); align-content: start; }
+
 
 .load-more { display: grid; justify-items: center; gap: var(--s3); padding: var(--s6) 0 var(--s3); }
 .preview-opt { display: flex; gap: 7px; align-items: baseline; }
@@ -294,9 +298,19 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   line-height: 1.7; max-width: 90ch;
 }
 
+/* Separators belong to the word before them, never to the line after. */
+.subject-row-topics .topic-chip + .topic-chip::before {
+  content: '·'; color: var(--border-strong); margin: 0 .45em 0 .2em;
+}
+
+/* A grid rather than CSS columns: rows line up across the two tracks, and no
+   entry can be split down the middle of a column break. */
 @media (min-width: 900px) {
-  .subject-index { column-count: 2; column-gap: var(--s7); }
-  .subject-row-card { break-inside: avoid; }
+  .subject-index {
+    display: grid; grid-template-columns: 1fr 1fr;
+    column-gap: var(--s7); border-top: 0;
+  }
+  .subject-row-card:nth-child(-n+2) { border-top: 1px solid var(--border); }
 }
 
 /* ------------------------------ class cards ------------------------------ */

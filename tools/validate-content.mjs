@@ -10,9 +10,33 @@ const warn = [];
 const seen = new Set();
 let genNoExplain = 0;
 
-/* Generated worksheets are checked by materialising every one of them: the
-   whole point of generating content is that it must be verifiable in bulk. */
-const EXERCISES = [...AUTHORED, ...GENERATED.map(b => getExercise(b.id))];
+
+/* Every generated worksheet has its metadata checked; a large deterministic
+   sample also has its questions materialised. Building all 25,000 sheets takes
+   minutes, and sheets from the same focus differ only by seed, so sampling
+   across every (topic, focus, page-count) combination catches the same faults
+   for a fraction of the time. Pass --full to check every one. */
+const FULL = process.argv.includes('--full');
+const seenCombo = new Set();
+const sample = GENERATED.filter(b => {
+  if (FULL) return true;
+  const key = `${b.topic}|${b.title.replace(/ — Set .*/, '')}|${b.pages}|${b.level}`;
+  if (seenCombo.has(key)) return false;
+  seenCombo.add(key);
+  return true;
+});
+
+/* Metadata on every blueprint, questions on the sample. */
+for (const b of GENERATED) {
+  if (!SUBJECT_MAP[b.subject]) errors.push(`${b.id}: unknown subject "${b.subject}"`);
+  if (!TOPIC_MAP[b.topic])     errors.push(`${b.id}: unknown topic "${b.topic}"`);
+  if (!GRADE_MAP[b.grade])     errors.push(`${b.id}: unknown grade band "${b.grade}"`);
+  if (!DIFF_MAP[b.difficulty]) errors.push(`${b.id}: unknown difficulty "${b.difficulty}"`);
+  if (!(b.pages >= 1 && b.pages <= 4)) errors.push(`${b.id}: page count ${b.pages} out of range`);
+  if (!b.count || b.count < 4) errors.push(`${b.id}: implausible question count ${b.count}`);
+}
+
+const EXERCISES = [...AUTHORED, ...sample.map(b => getExercise(b.id))];
 
 for (const ex of EXERCISES) {
   const at = (extra = '') => `${ex.id}${extra}`;
@@ -79,8 +103,10 @@ for (const ex of EXERCISES) {
 }
 
 const totalQ = EXERCISES.reduce((a, e) => a + e.questions.length, 0);
-console.log(`Checked ${EXERCISES.length} worksheets / ${totalQ} questions ` +
-  `(${AUTHORED.length} authored, ${GENERATED.length} generated).`);
+console.log(`Library: ${(AUTHORED.length + GENERATED.length).toLocaleString()} worksheets ` +
+  `(${AUTHORED.length} authored, ${GENERATED.length.toLocaleString()} generated).`);
+console.log(`Metadata checked on all of them; questions materialised and checked on ` +
+  `${EXERCISES.length.toLocaleString()} (${totalQ.toLocaleString()} questions).`);
 if (genNoExplain) warn.push(`${genNoExplain} generated question(s) have no explanation`);
 if (warn.length)   console.log(`\n${warn.length} warning(s):\n  ` + warn.join('\n  '));
 if (errors.length) { console.error(`\n${errors.length} error(s):\n  ` + errors.join('\n  ')); process.exit(1); }

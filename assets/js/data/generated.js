@@ -13,20 +13,60 @@ import { VERBAL_GENERATORS } from './gen-verbal.js';
 import { WORLD_GENERATORS } from './gen-world.js';
 import { LIFE_GENERATORS } from './gen-life.js';
 import { APPLIED_GENERATORS } from './gen-applied.js';
+import { POOL_GENERATORS } from './gen-pools.js';
 
-export const GENERATORS = {
+const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
   ...LIFE_GENERATORS, ...APPLIED_GENERATORS
 };
 
-/* Topics whose questions are computed from parameters rather than drawn from a
-   fixed bank. Only these can fill a multi-page pack without repeating
-   themselves, so only these are offered as 2- and 4-page worksheets. */
-const PROCEDURAL = new Set([
-  'arithmetic', 'fractions', 'decimals', 'percentages', 'algebra', 'geometry',
-  'trigonometry', 'statistics', 'calculus', 'measurement', 'discrete',
-  'physics', 'finance', 'accounting', 'electronics', 'programming'
-]);
+/* Pool generators sample from large lists, so they extend a topic rather than
+   replacing it: the authored items stay, and the pool supplies the variety. */
+export const GENERATORS = (() => {
+  const out = { ...BASE_GENERATORS };
+  for (const [topic, pool] of Object.entries(POOL_GENERATORS)) {
+    out[topic] = [...pool, ...(out[topic] ?? [])];
+  }
+  return out;
+})();
+
+/**
+ * How much genuinely different content a topic can produce, measured rather
+ * than declared. A generator counts only if changing the seed changes the
+ * question itself — shuffling the options of a fixed item is not new content,
+ * and an earlier hand-written list of "procedural" topics got this wrong,
+ * giving Business & Finance more worksheets than Science.
+ */
+const VARIETY = (() => {
+  const out = {};
+  for (const [topic, gens] of Object.entries(GENERATORS)) {
+    let varied = 0;
+    for (let i = 0; i < gens.length; i++) {
+      const seen = new Set();
+      for (const tag of ['a', 'b', 'c', 'd', 'e']) {
+        try {
+          const q = gens[i](probeRng(`${topic}${i}${tag}`), 2);
+          if (q) seen.add(`${q.prompt ?? ''}|${q.math ?? ''}`);
+        } catch { /* a generator that rejects a seed contributes nothing */ }
+      }
+      if (seen.size > 1) varied++;
+    }
+    out[topic] = varied;
+  }
+  return out;
+})();
+
+function probeRng(key) {
+  let a = seedFrom(key) >>> 0;
+  return () => { a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+
+/* A topic needs several varying generators before a multi-page pack can be
+   filled without repeating itself. */
+const PROCEDURAL = new Set(Object.keys(VARIETY).filter(t => VARIETY[t] >= 4));
 
 /* Roughly ten questions fit on a printed page with room to work. */
 const PAGE_SIZES = { 1: 10, 2: 20, 3: 30, 4: 40 };
@@ -256,83 +296,134 @@ function allowedAt(topic, level) {
   return all.map((_, i) => i).filter(i => !gates[i] || idx(level) >= idx(gates[i]));
 }
 
+/**
+ * A blueprint holds only what cannot be derived — eight numbers and two
+ * references — and computes its id, title, summary and seed the first time
+ * anything asks. At a few thousand worksheets an object literal per sheet was
+ * fine; at tens of thousands it is half a second of parsing and megabytes of
+ * strings nobody has looked at yet.
+ */
+class Blueprint {
+  constructor(topic, levelIdx, focus, only, pages, difficulty, count, set) {
+    this.topic = topic;
+    this._level = levelIdx;
+    this._focus = focus;
+    this.only = only;
+    this.pages = pages;
+    this.difficulty = difficulty;
+    this.count = count;
+    this._set = set;               // 0 for the first, 1+ for "Set B", "Set C"…
+  }
+
+  get level()   { return LEVELS[this._level].level; }
+  get grade()   { return LEVELS[this._level].grade; }
+  get band()    { return GRADE_BAND[this.grade] ?? 'mid'; }
+  get subject() { return TOPIC_SUBJECT[this.topic]; }
+  get types()   { return typesFor(this.topic); }
+  get minutes() { return Math.max(6, Math.round(this.count * 1.4)); }
+  get generated() { return true; }
+  get printable() { return true; }
+  get online()    { return true; }
+  get featured()  { return false; }
+  get autoMarked() { return Math.max(1, this.count - 1); }
+
+  get title() {
+    return this._set ? `${this._focus} — Set ${setLabel(this._set)}` : this._focus;
+  }
+
+  get id() {
+    return `${this.topic}-${slug(this.level)}-${slug(this._focus)}` +
+           (this._set ? `-set-${setLabel(this._set).toLowerCase()}` : '');
+  }
+
+  get seed() { return seedFrom(this.id); }
+
+  get summary() {
+    const topicName = this.topic.replace(/-/g, ' ');
+    if (this.pages > 1) {
+      return `A ${this.pages}-page ${this._focus.toLowerCase()} covering ${topicName} at ` +
+             `${this.level} level, with ${this.count} questions and an answer key.`;
+    }
+    return `${this._focus} at ${this.level} level — ${topicName} practice you can ` +
+           `work through online or print.`;
+  }
+}
+
+/* Set labels run A…Z then AA, AB… like spreadsheet columns, so a topic can
+   carry more than twenty-six sets without the naming falling over. */
+function setLabel(n) {
+  let out = '', i = n;
+  do { out = String.fromCharCode(65 + (i % 26)) + out; i = Math.floor(i / 26) - 1; } while (i >= 0);
+  return out;
+}
+const GRADE_BAND = Object.fromEntries(GRADES.map(g => [g.id, g.band]));
+
 /** Expand the plan into blueprints. */
+
+/* How many differently-seeded sets a topic can carry without repeating itself.
+   A procedural topic composes fresh numbers every time; a bank topic would
+   just deal the same cards again, so it gets one set only. */
+/* Sets are allocated in proportion to measured variety: a topic that can
+   compose fresh questions carries many, one that deals from a small fixed bank
+   carries one, because re-dealing the same items is padding, not content. */
+const SETS_PER_VARIETY = 8;
+const MAX_SETS = 34;
+const setsFor = topic =>
+  Math.max(1, Math.min(MAX_SETS, (VARIETY[topic] ?? 0) * SETS_PER_VARIETY));
+
+/* Single sheets come in a few lengths, and packs run to four printed pages.
+   35 questions is the longest single assignment most teachers set at once. */
+const PACK_SHAPES = [
+  [2, 15, 'Practice Pack'],
+  [2, 20, 'Extended Practice'],
+  [3, 25, 'Problem Set'],
+  [3, 30, 'Consolidation Pack'],
+  [4, 35, 'Revision Booklet'],
+  [4, 40, 'Full Review']
+];
+
 export function buildBlueprints() {
   const out = [];
+  const seenIds = new Set();
+  const push = bp => { const id = bp.id; if (!seenIds.has(id)) { seenIds.add(id); out.push(bp); } };
+
   for (const [topic, [from, to, focuses]] of Object.entries(PLAN)) {
     const start = idx(from), end = idx(to);
     if (start === undefined || end === undefined) continue;
     const levels = LEVELS.slice(start, end + 1);
+    const sets = setsFor(topic);
 
     levels.forEach((lv, pos) => {
       for (let v = 0; v < VARIANTS_PER_LEVEL; v++) {
-        /* Offset the focus by level so consecutive levels do not repeat titles. */
         const entry = focuses[(pos * VARIANTS_PER_LEVEL + v) % focuses.length];
         const focus = Array.isArray(entry) ? entry[0] : entry;
         const only = Array.isArray(entry) ? entry[1] : null;
         const minLevel = Array.isArray(entry) ? entry[2] : null;
-        /* A focus can be too advanced for the bottom of its topic's range. */
         if (minLevel && idx(lv.level) < idx(minLevel)) continue;
+
         const difficulty = difficultyFor(pos, levels.length, v);
         const pool = only?.length || (GENERATORS[topic] ?? []).length;
         const count = Math.min(questionCount(lv.level, difficulty), Math.max(6, pool * 2));
-        const id = `${topic}-${slug(lv.level)}-${slug(focus)}`;
-        out.push({
-          id,
-          title: focus,
-          only,
-          pages: 1,
-          subject: TOPIC_SUBJECT[topic],
-          topic,
-          grade: lv.grade,
-          level: lv.level,
-          difficulty,
-          minutes: Math.max(6, Math.round(count * 1.4)),
-          summary: SUMMARY(focus, topic.replace('-', ' '), lv.level),
-          count,
-          types: typesFor(topic),
-          generated: true,
-          seed: seedFrom(id)
-        });
+
+        for (let set = 0; set < sets; set++) {
+          push(new Blueprint(topic, start + pos, focus, only, 1, difficulty, count, set));
+        }
       }
-    });
-  }
-  /* Multi-page packs. A pack is the same topic at the same level, just longer —
-     the sort of thing a teacher sets as a week of homework or a revision
-     booklet. Only procedural topics can fill one without repeating. */
-  const packs = [];
-  for (const [topic, [from, to]] of Object.entries(PLAN)) {
-    if (!PROCEDURAL.has(topic)) continue;
-    const start = idx(from), end = idx(to);
-    const levels = LEVELS.slice(start, end + 1);
-    levels.forEach((lv, pos) => {
-      /* Skip the very youngest levels: a four-page pack for Pre-K is not a
-         thing anyone wants to hand to a five-year-old. */
-      if (idx(lv.level) < idx('Grade 2')) return;
-      const difficulty = difficultyFor(pos, levels.length, 1);
+
+      /* Packs: the same topic and level, several pages long. */
+      if (!PROCEDURAL.has(topic) || idx(lv.level) < idx('Grade 2')) return;
       const usable = allowedAt(topic, lv.level);
-      for (const [pages, label] of [[2, 'Practice Pack'], [3, 'Extended Practice'], [4, 'Revision Booklet']]) {
+      const difficulty = difficultyFor(pos, levels.length, 1);
+      for (const [pages, count, label] of PACK_SHAPES) {
         if (pages >= 3 && idx(lv.level) < idx('Grade 4')) continue;
         if (pages === 4 && idx(lv.level) < idx('Grade 5')) continue;
-        const id = `${topic}-${slug(lv.level)}-${slug(label)}`;
-        packs.push({
-          id, title: label, only: usable, pages,
-          subject: TOPIC_SUBJECT[topic], topic,
-          grade: lv.grade, level: lv.level, difficulty,
-          minutes: PAGE_SIZES[pages] * 2,
-          summary: `A ${pages}-page ${label.toLowerCase()} covering ${topic.replace('-', ' ')} at ${lv.level} level, with an answer key.`,
-          count: PAGE_SIZES[pages],
-          types: typesFor(topic),
-          generated: true,
-          seed: seedFrom(id)
-        });
+        for (let set = 0; set < Math.min(sets, 6); set++) {
+          push(new Blueprint(topic, start + pos, label, usable, pages, difficulty, count, set));
+        }
       }
     });
   }
-
-  /* Two levels can land on the same focus for the same topic; keep the first. */
-  const seen = new Set();
-  return [...out, ...packs].filter(b => (seen.has(b.id) ? false : (seen.add(b.id), true)));
+  return out;
 }
 
 /** Materialise the questions for one blueprint. Same blueprint, same sheet. */

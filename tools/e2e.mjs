@@ -40,10 +40,13 @@ await page.click('#load-more button');
 await page.waitForTimeout(600);
 ok('showing more adds another page', await page.locator('.ex-card').count() === 48);
 await open('library.html?q=fractions%20grade%206');
-const titles = await page.locator('.ex-card h3').allInnerTexts();
-ok('a natural-language query filters to Grade 6 fractions',
-  titles.length > 0 && titles.length < 12 &&
-  (await page.locator('.ex-card .ex-meta').first().innerText()).includes('Grade 6'));
+/* With sets, a topic-and-level query legitimately returns hundreds. What must
+   hold is that every result really is Grade 6 fractions. */
+const metas = await page.locator('.ex-card .ex-meta').allInnerTexts();
+ok('a natural-language query filters to Grade 6 mathematics',
+  metas.length > 0 && metas.every(m => m.includes('Grade 6') && m.includes('Mathematics')));
+ok('the filters the query implied are shown as chips',
+  (await page.locator('#active-filters').innerText()).includes('Fractions'));
 ok('the query is explained back to the user',
   (await page.locator('#parse-note').innerText()).includes('Grade 6'));
 await open('library.html?text=zzzznope');

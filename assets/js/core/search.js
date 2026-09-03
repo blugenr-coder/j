@@ -113,15 +113,22 @@ export function parseQuery(input) {
   return { ...found, text: q.replace(/\b(worksheet|worksheets|exercise|exercises|practice|for|in|on|the)\b/g, '').replace(/\s+/g, ' ').trim() };
 }
 
-/* Everything a worksheet can be matched against, built once.
-   Only worksheets whose questions are already in memory contribute their
-   question text: forcing a thousand generated sheets to materialise just to
-   build a search index would defeat the point of generating them lazily. */
-const HAYSTACK = new Map(EXERCISES.map(ex => [
-  ex.id,
-  [ex.title, ex.summary, ex.level, ex.topic, ex.subject,
-   ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)].join(' ').toLowerCase()
-]));
+/* What a worksheet can be matched against, built per worksheet on first use.
+   Doing this eagerly would mean concatenating and lower-casing a string for
+   every one of twenty-five thousand sheets before the page could paint, to
+   serve a search box most visitors never type into. Only worksheets whose
+   questions are already in memory contribute their question text. */
+const haystackCache = new Map();
+function haystack(ex) {
+  let s = haystackCache.get(ex.id);
+  if (s === undefined) {
+    s = [ex.title, ex.summary, ex.level, ex.topic, ex.subject,
+         ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
+      .join(' ').toLowerCase();
+    haystackCache.set(ex.id, s);
+  }
+  return s;
+}
 
 /**
  * Filter and rank the library.
@@ -149,7 +156,7 @@ export function searchExercises(f = {}) {
 
     let score = 0;
     if (words.length) {
-      const hay = HAYSTACK.get(ex.id);
+      const hay = haystack(ex);
       const title = ex.title.toLowerCase();
       for (const w of words) {
         if (title.includes(w)) score += 12;

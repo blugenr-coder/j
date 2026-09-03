@@ -10,6 +10,7 @@
     "test:e2e": "node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs",
     "test:links": "node tools/check-links.mjs",
     "test:render": "node tools/check-render.mjs",
-    "test:all": "node tools/check-render.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs"
+    "test:spacing": "node tools/check-spacing.mjs",
+    "test:all": "node tools/check-render.mjs && node tools/check-spacing.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs"
   }
 }
