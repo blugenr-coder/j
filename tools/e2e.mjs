@@ -12,6 +12,11 @@ const ok = (label, cond) => { cond ? pass++ : fail++; console.log(`${cond ? '✓
 
 const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1400, height: 950 } });
+/* The font CDN is not needed for these checks and adds seconds per page;
+   the stylesheets carry real fallback stacks. */
+await ctx.route('**://fonts.googleapis.com/**', r => r.abort());
+await ctx.route('**://fonts.gstatic.com/**', r => r.abort());
+
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));

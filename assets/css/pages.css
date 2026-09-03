@@ -113,13 +113,19 @@
   background: var(--surface); border-bottom: 1px solid var(--border);
   padding-block: var(--s3);
 }
-.ex-topbar .wrap { display: flex; align-items: center; gap: var(--s4); }
+.ex-topbar .wrap { display: flex; align-items: center; gap: var(--s4); flex-wrap: nowrap; }
 .ex-topbar .ex-name { font-family: var(--font-head); font-weight: 600; font-size: var(--step-1); }
-.ex-topbar .ex-count { color: var(--text-2); font-size: var(--step--1); white-space: nowrap; }
+.ex-topbar .ex-count, .ex-topbar .ex-percent { color: var(--text-2); font-size: var(--step--1); white-space: nowrap; }
 .ex-topbar .bar { flex: 1; min-width: 90px; }
 
 .player-layout { display: grid; grid-template-columns: 232px 1fr 280px; gap: var(--s4); align-items: start; padding-block: var(--s5); }
 .player-side { position: sticky; top: calc(var(--header-h) + 66px); display: grid; gap: var(--s4); }
+
+/* On a phone the question grid is a drawer (section 20) — open it when you
+   want to jump, keep the question itself at the top of the screen otherwise.
+   On wider screens the summary is hidden and the panel is simply always open. */
+.qnav-drawer > .qnav-summary { display: none; }
+.qnav-drawer[open] > .qnav-summary { margin-bottom: var(--s3); }
 
 .qnav { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s2); }
 .qnav button {
@@ -216,7 +222,14 @@
 .result-hero .result-score { font-family: var(--font-head); font-size: var(--step-5); font-weight: 700; line-height: 1; color: var(--primary); }
 
 @media (max-width: 1100px) {
-  .player-layout { grid-template-columns: 1fr; }
+  .player-layout { grid-template-columns: minmax(0, 1fr); }
+  .qnav-drawer > .qnav-summary {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--s3); cursor: pointer; list-style: none;
+  }
+  .qnav-drawer > .qnav-summary::-webkit-details-marker { display: none; }
+  .qnav-drawer > .qnav-summary::after { content: '⌄'; color: var(--text-3); font-size: 16px; }
+  .qnav-drawer[open] > .qnav-summary::after { content: '⌃'; }
   .player-side { position: static; }
   .player-side.side-left .qnav { grid-template-columns: repeat(10, 1fr); }
   .player-side.side-left .card { padding: var(--s4); }
@@ -224,10 +237,18 @@
 }
 @media (max-width: 700px) {
   .player-side.side-left .qnav { grid-template-columns: repeat(6, 1fr); }
+  /* The top bar keeps the title and progress; moving between questions is
+     done from the buttons under the question and the number grid. */
+  .ex-topbar #prev-btn, .ex-topbar #next-btn { display: none; }
+  .ex-topbar .wrap { gap: var(--s3); }
   .question-card { padding: var(--s4); }
   .mode-choice, .match-grid { grid-template-columns: 1fr; }
   .legend { grid-auto-flow: row; }
-  .ex-topbar .ex-name { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Keep the exercise name legible: the question counter is already in the
+     drawer summary below, so it is the one that goes. */
+  .ex-topbar .ex-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ex-topbar .ex-count, .ex-topbar .bar { display: none; }
+  .ex-topbar #ex-percent { flex: none; font-weight: 700; color: var(--primary); }
 }
 
 /* ============================== DASHBOARD ============================== */

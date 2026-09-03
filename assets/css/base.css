@@ -36,7 +36,8 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .section { padding-block: var(--s8); }
 .section-tight { padding-block: var(--s7); }
 .stack > * + * { margin-top: var(--s4); }
-.row { display: flex; align-items: center; gap: var(--s3); }
+.row { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.row-nowrap { flex-wrap: nowrap; }
 .row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--s4); flex-wrap: wrap; }
 .grow { flex: 1; }
 .center { text-align: center; }
@@ -55,9 +56,17 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .skip-link:focus { top: var(--s4); }
 
 .grid { display: grid; gap: var(--s4); }
+/* minmax(0, …) throughout: without it a grid track refuses to shrink below the
+   min-content width of what is inside it, which is how a long word or a wide
+   table pushes a whole page into horizontal scroll. */
+.grid > * { min-width: 0; }
 .grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
 .grid-3 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .grid-4 { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+
+/* Two-column sections that become one column on small screens. */
+.grid-split      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.grid-split-wide { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
 
 /* ------------------------------- header ------------------------------- */
 .site-header {
@@ -66,7 +75,7 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
-.site-header .wrap { display: flex; align-items: center; gap: var(--s5); height: var(--header-h); }
+.site-header .wrap { display: flex; align-items: center; gap: var(--s5); height: var(--header-h); flex-wrap: nowrap; }
 
 .brand { display: inline-flex; align-items: center; gap: var(--s3); font-family: var(--font-head); font-weight: 700; font-size: var(--step-1); color: var(--text); }
 .brand:hover { text-decoration: none; }
@@ -106,7 +115,7 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .user-chip .name { font-size: var(--step--1); font-weight: 600; color: var(--text); }
 
 /* --------------------------- app sidebar layout --------------------------- */
-.app-layout { display: grid; grid-template-columns: 248px 1fr; gap: var(--s5); align-items: start; padding-block: var(--s5); }
+.app-layout { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: var(--s5); align-items: start; padding-block: var(--s5); }
 .side-nav { position: sticky; top: calc(var(--header-h) + var(--s5)); display: flex; flex-direction: column; gap: var(--s1); }
 .side-nav .side-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); padding: var(--s4) var(--s3) var(--s2); }
 .side-nav a {
@@ -131,7 +140,8 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .bottom-nav { display: none; }
 
 @media (max-width: 900px) {
-  .app-layout { grid-template-columns: 1fr; }
+  .app-layout { grid-template-columns: minmax(0, 1fr); }
+  .grid-split, .grid-split-wide { grid-template-columns: minmax(0, 1fr); }
   .side-nav { display: none; }
   .main-nav {
     position: fixed; inset: var(--header-h) 0 auto 0; z-index: 55;
@@ -141,11 +151,16 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   }
   .main-nav[hidden] { display: none; }
   .main-nav a { padding: var(--s3) var(--s4); border-radius: var(--r-md); }
-  .nav-toggle { display: grid; margin-left: auto; }
+  .nav-toggle { display: grid; }
+  .site-header .wrap { gap: var(--s3); }
+  /* Search lives in the library and the bottom bar on small screens, so the
+     header keeps only what cannot be reached another way. */
+  .header-actions > .icon-btn:first-child { display: none; }
+  .user-chip .name { display: none; }
   .footer-grid { grid-template-columns: 1fr 1fr; gap: var(--s5); }
 
   .bottom-nav {
-    display: grid; grid-template-columns: repeat(5, 1fr);
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 70;
     background: var(--surface); border-top: 1px solid var(--border);
     padding-bottom: env(safe-area-inset-bottom);
@@ -157,10 +172,14 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   .bottom-nav a:hover { text-decoration: none; }
   .bottom-nav a[aria-current="page"] { color: var(--primary); }
   .bottom-nav .ico { font-size: 18px; line-height: 1.2; }
+  .bottom-nav a > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   body { padding-bottom: 62px; }
 }
 @media (max-width: 560px) {
   .wrap { padding-inline: var(--s4); }
+  .brand { font-size: var(--step-0); }
+  /* One call to action in the header is enough when space is this tight. */
+  .header-actions .btn-ghost { display: none; }
   .section { padding-block: var(--s6); }
   .footer-grid { grid-template-columns: 1fr; }
 }

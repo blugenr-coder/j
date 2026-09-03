@@ -1,0 +1,13 @@
+{
+  "name": "worksheethub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Practice anything. Learn everything. — an exercise library that works online and on paper.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server -p 8099 -c-1 .",
+    "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs",
+    "test:e2e": "node tools/e2e.mjs",
+    "test:links": "node tools/check-links.mjs"
+  }
+}

@@ -68,6 +68,11 @@ function start() {
 
   function openPlayer() {
     gate.hidden = true;
+    /* The number grid is a drawer on phones and an always-open panel above. */
+    const narrow = window.matchMedia('(max-width: 1100px)');
+    const syncDrawer = () => { $('#qnav-drawer').open = !narrow.matches; };
+    syncDrawer();
+    narrow.addEventListener('change', syncDrawer);
     $('#player').hidden = false;
     $('#ex-topbar').hidden = false;
     $('#ex-name').textContent = ex.title;
@@ -276,6 +281,7 @@ function start() {
     $('#ex-bar').querySelector('span').style.width = `${percent}%`;
     $('#ex-bar').setAttribute('aria-valuenow', String(percent));
     $('#ex-percent').textContent = `${percent}%`;
+    $('#qnav-summary-count').textContent = `Question ${index + 1} of ${ex.count}`;
     $('#prev-btn').disabled = index === 0;
     $('#next-btn').textContent = index === ex.count - 1 ? 'Finish' : 'Next ›';
   }
