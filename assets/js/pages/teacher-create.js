@@ -56,7 +56,7 @@ function refreshMatches() {
   });
 
   $('#match-count').textContent = results.length
-    ? `${plural(results.length, 'exercise')} match. Choose one.`
+    ? `${plural(results.length, 'worksheet')} match. Choose one.`
     : 'Nothing matches those choices — widen one of them.';
 
   if (chosen && !results.some(r => r.id === chosen)) chosen = null;

@@ -24,14 +24,14 @@ function render() {
 
   /* A short, honest progress line for the ones still locked. */
   const towards = {
-    'first-sheet':  () => `${s.completed} of 1 exercise completed`,
+    'first-sheet':  () => `${s.completed} of 1 worksheet completed`,
     'streak-7':     () => `${s.streak} of 7 days`,
     'bookworm':     () => `${s.completed} of 50 completed`,
-    'math-master':  () => `${s.mathHighScores} of 20 maths exercises at 90%+`,
+    'math-master':  () => `${s.mathHighScores} of 20 maths worksheets at 90%+`,
     'perfect':      () => `${s.perfectRuns} of 1 perfect run`,
     'explorer':     () => `${s.subjectsTouched} of 4 subjects`,
     'century':      () => `${s.correct} of 100 correct answers`,
-    'early-bird':   () => 'Finish an exercise before 9am'
+    'early-bird':   () => 'Finish a worksheet before 9am'
   };
 
   $('#ach-grid').replaceChildren(...ACHIEVEMENTS.map(a => {

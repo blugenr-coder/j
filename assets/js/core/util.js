@@ -109,7 +109,8 @@ export function donut(value, { size = 96, label = null, colorVar = '--primary' }
     <svg viewBox="0 0 100 100" aria-hidden="true">
       <circle class="track" cx="50" cy="50" r="${r}"></circle>
       <circle class="value" cx="50" cy="50" r="${r}"
-              style="stroke: var(${colorVar}); stroke-dasharray: ${(c * clamp(value, 0, 100)) / 100} ${c}"></circle>
+              style="stroke: var(${colorVar}); stroke-dasharray: ${(c * clamp(value, 0, 100)) / 100} ${c};
+                     ${value <= 0 ? 'display:none' : ''}"></circle>
     </svg>
     <span class="donut-label">${esc(label ?? value + '%')}</span>`;
   return wrap;

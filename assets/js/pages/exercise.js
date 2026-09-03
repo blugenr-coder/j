@@ -23,7 +23,7 @@ const ex = getExercise(qs('id'));
 if (!ex) {
   $('#not-found').hidden = false;
   $('#not-found').append(emptyState('help', 'Worksheet not found',
-    'That link points at an exercise that is not in the library.',
+    'That link points at a worksheet that is not in the library.',
     el('a', { class: 'btn btn-primary', href: href('library.html'), text: 'Browse worksheets' })));
 } else {
   start();

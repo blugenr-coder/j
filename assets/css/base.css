@@ -76,8 +76,8 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .grid-4 { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 
 /* Two-column sections that become one column on small screens. */
-.grid-split      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.grid-split-wide { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); }
+.grid-split      { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.grid-split-wide { grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); align-items: start; }
 
 /* ------------------------------- header ------------------------------- */
 .site-header {

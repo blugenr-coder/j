@@ -46,7 +46,7 @@ $('#class-list').replaceChildren(...t.classes.map(c => {
     el('span', { class: 'tile-icon' }, icon('teacher', { size: 18 })),
     el('span', { class: 'grow' },
       el('span', { class: 'list-title', style: 'display:block', text: c.name }),
-      el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · ${plural(c.exerciseIds.length, 'exercise')} set` })),
+      el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · ${plural(c.exerciseIds.length, 'worksheet')} set` })),
     el('span', { class: 'row', style: 'gap:8px' },
       c.sample ? el('span', { class: 'badge', text: 'Sample' }) : null,
       el('strong', { class: 'mono small', text: r ? `${r.average}%` : '—' })));
@@ -67,7 +67,7 @@ $('#assignment-list').replaceChildren(...(assignments.length
     })
   : [el('div', { style: 'padding:8px 0' },
       el('p', { class: 'small muted', style: 'margin:0 0 12px',
-        text: 'No assignments yet. Pick an exercise, choose a class, and share the code.' }),
+        text: 'No assignments yet. Pick a worksheet, choose a class, and share the code.' }),
       el('a', { class: 'btn btn-primary btn-sm', href: href('teacher/create.html'), text: 'Create an assignment' }))]));
 
 /* ------------------------------- hardest Qs ------------------------------- */

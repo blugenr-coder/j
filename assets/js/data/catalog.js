@@ -137,14 +137,14 @@ export const QUESTION_TYPES = [
    never makes the product feel childish, so they live on their own page and
    surface as a quiet toast, not a full-screen celebration. */
 export const ACHIEVEMENTS = [
-  { id: 'first-sheet',  icon: 'trophy', name: 'First Worksheet', desc: 'Complete your first exercise.',            test: s => s.completed >= 1 },
+  { id: 'first-sheet',  icon: 'trophy', name: 'First Worksheet', desc: 'Complete your first worksheet.',            test: s => s.completed >= 1 },
   { id: 'streak-7',     icon: 'flame', name: '7 Day Streak',    desc: 'Practise seven days in a row.',            test: s => s.streak >= 7 },
   { id: 'bookworm',     icon: 'subjects', name: 'Bookworm',        desc: 'Complete 50 worksheets.',                  test: s => s.completed >= 50 },
-  { id: 'math-master',  icon: 'math', name: 'Math Master',     desc: 'Score 90% or higher on 20 maths exercises.', test: s => s.mathHighScores >= 20 },
-  { id: 'perfect',      icon: 'target', name: 'Perfect Score',   desc: 'Get every question in an exercise correct.', test: s => s.perfectRuns >= 1 },
+  { id: 'math-master',  icon: 'math', name: 'Math Master',     desc: 'Score 90% or higher on 20 maths worksheets.', test: s => s.mathHighScores >= 20 },
+  { id: 'perfect',      icon: 'target', name: 'Perfect Score',   desc: 'Get every question in a worksheet correct.', test: s => s.perfectRuns >= 1 },
   { id: 'explorer',     icon: 'compass', name: 'Explorer',        desc: 'Practise in four different subjects.',      test: s => s.subjectsTouched >= 4 },
   { id: 'century',      icon: 'hash', name: 'Century',         desc: 'Answer 100 questions correctly.',           test: s => s.correct >= 100 },
-  { id: 'early-bird',   icon: 'sunrise', name: 'Early Bird',      desc: 'Finish an exercise before 9am.',            test: s => s.earlyBird === true }
+  { id: 'early-bird',   icon: 'sunrise', name: 'Early Bird',      desc: 'Finish a worksheet before 9am.',            test: s => s.earlyBird === true }
 ];
 
 /* ------------------------------- lookups ------------------------------- */

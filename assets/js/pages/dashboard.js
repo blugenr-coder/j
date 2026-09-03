@@ -21,7 +21,7 @@ function render() {
 
   const s = summary();
   $('#greeting-sub').textContent = s.completed
-    ? `${plural(s.completed, 'exercise')} finished so far. Keep it going.`
+    ? `${plural(s.completed, 'worksheet')} finished so far. Keep it going.`
     : 'Pick something below and make a start — the first one is the hardest.';
 
   /* --------------------------------- stats --------------------------------- */

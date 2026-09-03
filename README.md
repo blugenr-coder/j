@@ -2,9 +2,10 @@
 
 **Practice anything. Learn everything.**
 
-An exercise library for every grade from Pre-K to college, where the same exercise
-works online *and* on paper. Search it, practise it with instant marking, print it
-with a separate answer key, and track what you are actually weak at.
+A library of **1,056 worksheets** for every grade from Pre-K to college, where the
+same worksheet works online *and* on paper. Search it, practise it with instant
+marking, print it with a separate answer key, and track what you are actually
+weak at.
 
 The differentiator is the loop, not the download:
 
@@ -62,22 +63,40 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-26 exercises / 204 questions, hand-written across all five grade bands and seven
-subjects. Every question carries a hint and a worked explanation; the explanation is
-also what prints on the answer key.
+**1,056 worksheets / 11,222 questions** across 36 topics, eight subjects and every
+level from Pre-K to college. They come from two sources behind one shape:
+
+- **26 authored worksheets**, written by hand — the deepest content, and what sets
+  the tone for everything else.
+- **1,030 generated worksheets**, expanded from a curriculum plan. These are
+  deterministic (the same worksheet always contains the same questions) and their
+  answers are *computed*, not transcribed, so a sheet cannot disagree with its own
+  answer key. Questions materialise only when a worksheet is opened, which is what
+  lets the library list a thousand of them instantly.
+
+Two rules keep the generated set honest, both added after the first pass broke them:
+
+- A specific title is only allowed where it is pinned to matching question
+  generators. Otherwise the worksheet is called *Core Practice* — a sheet titled
+  "Loops" that asks about dictionaries is worse than an honestly generic one.
+- A focus can declare the earliest level it belongs at, so quadratics stop turning
+  up in Grade 7.
+
+Every question carries a hint and a worked explanation; the explanation is also what
+prints on the answer key.
 
 Eight question types, each with its own interaction:
 
 | Type | Interaction |
 |---|---|
-| ✏️ Fill in the blank | Text entry |
-| 🔢 Math input | Text entry with a symbol keypad (x, ÷, √, ^, π, ±) |
-| 🔘 Multiple choice | One option |
-| ☑️ Multiple answers | Every correct option, and no wrong ones |
-| 🧩 Matching | Click a term, then its partner |
-| 🔀 Ordering | Move rows into sequence |
-| 📊 Graph | Click a coordinate grid, or type the point |
-| ✍️ Written response | Saved and compared against a sample — never auto-marked |
+| Fill in the blank | Text entry |
+| Math input | Text entry with a symbol keypad (x, ÷, √, ^, π, ±) |
+| Multiple choice | One option |
+| Multiple answers | Every correct option, and no wrong ones |
+| Matching | Click a term, then its partner |
+| Ordering | Move rows into sequence |
+| Graph | Click a coordinate grid, or type the point |
+| Written response | Saved and compared against a sample — never auto-marked |
 
 ---
 
@@ -90,10 +109,11 @@ starts instantly, and nothing rots.
 ```
 assets/css/     tokens → base → components → pages → print
 assets/js/
-  core/         store, marking, search, question renderers, app shell, cards
-  data/         taxonomy + exercise content
+  core/         store, marking, search, question renderers, app shell, cards, icons
+  data/         taxonomy, authored content, and the generator engine
   pages/        one module per page
-tools/          content validator, marking tests, syntax check, e2e, link check
+tools/          content validator, marking tests, syntax check, e2e, link check,
+                render check, icon contact sheet
 ```
 
 A few decisions worth knowing about:
@@ -109,10 +129,20 @@ migration for the client.
 **Feedback never leaks the answer.** A wrong attempt offers another go and a hint;
 the worked explanation appears only when the learner asks for it.
 
-**Content is data, not markup.** Adding an exercise means adding an object to
-`assets/js/data/exercises-*.js`. `node tools/validate-content.mjs` then checks it for
-dangling answer indexes, unknown topics, levels that do not belong to their band, and
-missing explanations.
+**Content is data, not markup.** Adding a worksheet means adding an object to
+`assets/js/data/exercises-*.js`, or a line to the plan in `generated.js`.
+`node tools/validate-content.mjs` materialises all 11,222 questions and checks them
+for dangling answer indexes, unknown topics, levels that do not belong to their band,
+and worksheets that come up short of their declared length.
+
+**No emoji anywhere.** All 77 icons are line SVGs on a 24px grid that inherit type
+colour and weight. Emoji render differently on every platform, cannot be styled, and
+read as toy-like — wrong for something a teacher puts in front of a class. Open
+`/tools/icon-sheet.html` on a running server to see the whole set.
+
+**A worksheet card shows its questions.** Cards render two real questions from the
+sheet they describe rather than summarising it, which is also why results are paged
+at 24 — a card that renders real content cannot be multiplied by a thousand.
 
 ---
 
@@ -155,6 +185,11 @@ This is a complete front end with local persistence. Being precise about the gap
   ordering and graph questions need dedicated editing interfaces; shipping a
   half-working editor for them would produce broken exercises. What it does save
   joins the library on that device and plays and prints like anything else.
+- **Generated worksheets are template-driven, not hand-written.** They are correct
+  and level-appropriate, but a generated sheet on a knowledge topic draws from a
+  bank of authored items rather than being composed for that exact worksheet. The
+  26 authored sheets are noticeably richer. Growing the banks is the cheapest way
+  to raise the quality of the whole library.
 - **No AI generation.** Section 18 of the plan puts it deliberately late, and the
   library is the product.
 
