@@ -79,13 +79,17 @@ function filterGroup(label, key, options, counts, { compact = false } = {}) {
   box.append(summary);
 
   const opts = el('div', { class: 'filter-options' });
-  const showAll = expanded.has(key) || options.length <= COLLAPSE_AT;
-  const visible = showAll ? options : options.slice(0, COLLAPSE_AT);
+  /* Drop the options with nothing behind them BEFORE deciding what to collapse.
+     Slicing first hid NGSS behind "show all" and then filtered away the eleven
+     empty frameworks in front of it, leaving a group that claimed there was
+     nothing to narrow by while NGSS was the active filter. */
+  const live = options.filter(o => (counts?.[o.id] ?? 0) > 0 || chosen === o.id);
+  const showAll = expanded.has(key) || live.length <= COLLAPSE_AT;
+  const visible = showAll ? live : live.slice(0, COLLAPSE_AT);
 
   for (const o of visible) {
     const n = counts?.[o.id] ?? 0;
     const on = chosen === o.id;
-    if (!n && !on) continue;                     // an option with nothing behind it is noise
     opts.append(el('button', {
       class: 'facet', type: 'button', 'aria-pressed': String(on),
       onclick: () => {
@@ -102,10 +106,10 @@ function filterGroup(label, key, options, counts, { compact = false } = {}) {
   }
 
   if (!opts.childElementCount) opts.append(el('p', { class: 'small muted', text: 'Nothing left to narrow by.' }));
-  else if (options.length > COLLAPSE_AT) {
+  else if (live.length > COLLAPSE_AT) {
     opts.append(el('button', {
       class: 'facet facet-more', type: 'button',
-      text: showAll ? 'Show fewer' : `Show all ${options.length}`,
+      text: showAll ? 'Show fewer' : `Show all ${live.length}`,
       onclick: () => { showAll ? expanded.delete(key) : expanded.add(key); apply({ pushUrl: false }); }
     }));
   }
