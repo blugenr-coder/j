@@ -77,3 +77,19 @@
 }
 
 .sheet-std { font-size: 8pt; color: #64748B; margin: 1mm 0 0; }
+
+/* ---------------------------- labelled diagrams ----------------------------
+   Printed figures are line art on white whatever the screen theme is: the
+   variables are re-bound here so a diagram never arrives at the printer as a
+   dark rectangle. */
+.q-figure { --fig-bg: #fff; --fig-line: #334155; --fig-text: #0F172A;
+  --fig-tint: #F1F5F9; --fig-accent: #E2E8F0; --fig-deep: #CBD5E1;
+  --fig-warm: #FEF3C7; --fig-cool: #E0F2FE; --fig-leaf: #DCFCE7;
+  --fig-accent-line: #475569; --fig-cool-line: #94A3B8;
+  margin: 2mm 0 1mm; text-align: center; break-inside: avoid; }
+.fig-print { width: 100%; max-width: 92mm; height: auto; }
+.fig-print-cap { font-size: 8pt; color: #475569; margin-top: 1mm; }
+.q-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5mm 6mm; margin-top: 2mm; }
+.lline { display: flex; align-items: baseline; gap: 2mm; }
+.lline .lnum { font-weight: 700; min-width: 6mm; }
+.lline .line { flex: 1; border-bottom: 1px solid #94A3B8; height: 4mm; }

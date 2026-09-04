@@ -101,6 +101,16 @@ export function mark(question, given) {
       };
     }
 
+    case 'label': {
+      /* One label per marker, in marker order. Every marker must be right:
+         a diagram with the nucleus in the wrong place is not 7/8 correct in
+         any sense a teacher would accept. */
+      const want = question.answer ?? [];
+      const got = Array.isArray(given) ? given : [];
+      const wrong = want.map((v, i) => (got[i] === v ? -1 : i)).filter(i => i >= 0);
+      return { correct: wrong.length === 0 && got.length === want.length, detail: { wrong } };
+    }
+
     case 'written':
       /* Extended writing is not something a browser should pretend to grade.
          The learner compares against a sample answer and marks themselves;
@@ -122,6 +132,8 @@ export function answerText(question) {
     case 'graph':  return `(${question.answer.x}, ${question.answer.y})`;
     case 'match':  return question.pairs.map(p => `${p.left} → ${p.right}`).join('; ');
     case 'order':  return question.items.join(' → ');
+    case 'label':  return (question.answer ?? [])
+      .map((v, i) => `${i + 1}. ${question.options[v]}`).join('; ');
     case 'written': return question.sample ?? 'Open response — compare with the sample answer.';
     default: return '';
   }

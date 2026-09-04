@@ -127,7 +127,9 @@ export const UNIT_FORMATS = [
   { id: 'counting',  label: 'Counting and Writing',  only: ['count-objects', 'count-choose', 'count-letters', 'what-comes-next', 'what-came-before'] },
   { id: 'numberwork', label: 'Number Work',          only: ['add-pictures', 'add-numbers', 'take-away', 'number-bond', 'doubles', 'one-more', 'one-less'] },
   { id: 'sequence',  label: 'Sequencing Activity',  only: ['sequence'] },
-  { id: 'applied',   label: 'Applied Questions',    only: ['apply'] }
+  { id: 'applied',   label: 'Applied Questions',    only: ['apply'] },
+  { id: 'diagram',   label: 'Label the Diagram',    only: ['label-diagram'] },
+  { id: 'annotated', label: 'Annotated Diagram',    only: ['label-diagram', 'term-from-meaning', 'meaning-from-term', 'cloze'] }
 ];
 
 /** Makers a format may use for a unit, or null if the unit cannot fill it. */
@@ -469,8 +471,15 @@ class Blueprint {
     return this.types.includes('written') ? Math.max(1, this.count - 1) : this.count;
   }
 
+  /* The name a teacher would write on the sheet. Set 0 keeps the family name;
+     later sets take another name for the same kind of sheet, because "Set B"
+     next to "Set C" is not a distinction anyone can act on. */
   get title() {
-    return this._set ? `${this._focus} — Set ${setLabel(this._set)}` : this._focus;
+    if (!this._set) return this._focus;
+    const cut = this._focus.lastIndexOf(' — ');
+    const base = cut > 0 ? this._focus.slice(0, cut) : this._focus;
+    const label = cut > 0 ? this._focus.slice(cut + 3) : 'Quick Quiz';
+    return `${base} — ${setName(label, this._set)}`;
   }
 
   /** The id of the family's first sheet: every id in the family plus a suffix. */
@@ -490,7 +499,10 @@ class Blueprint {
       const meta = UNIT_META[this.unit];
       const what = FORMAT_BLURB[this.format] ?? 'A quiz';
       const pages = this.pages > 1 ? ` Printed over ${this.pages} pages.` : '';
-      return `${what} on ${lowerFirst(meta?.name ?? topicName)} for ${this.level}, ` +
+      /* Unit names are title-cased and stay that way. Lower-casing the first
+         letter turned "Cell Structure and Function" into "cell Structure and
+         Function", which reads like a typo because it is one. */
+      return `${what} on ${meta?.name ?? topicName} for ${this.level}, ` +
              `with ${this.count} questions and a separate answer key.${pages}`;
     }
     if (this.pages > 1) {
@@ -502,6 +514,114 @@ class Blueprint {
   }
 }
 
+/* ------------------------------- set names -------------------------------
+   Sets are the same unit at the same level with different questions drawn from
+   the bank. Numbering them "Set B", "Set C" … was accurate and useless: a
+   shelf of worksheets whose names differ by one letter tells a teacher nothing
+   and reads as filler. Each set now takes a name a teacher would actually
+   write on a sheet, from a pool per format. Ids still use the letter — they
+   have to stay stable — but nobody sees them. */
+const SET_NAMES = {
+  'Quick Quiz': ['Quick Quiz', 'Knowledge Check', 'Topic Quiz', 'Recall Quiz', 'Lesson Quiz',
+    'Ten-Minute Quiz', 'Class Quiz', 'Rapid Check', 'Low-Stakes Quiz', 'Do Now Quiz',
+    'Bell-Ringer Quiz', 'End-of-Lesson Quiz', 'Pop Quiz', 'Confidence Check'],
+  'Vocabulary Check': ['Vocabulary Check', 'Key Terms Check', 'Word Bank Check', 'Terminology Quiz',
+    'Glossary Check', 'Key Vocabulary Review', 'Term Recognition', 'Language of the Unit',
+    'Subject Vocabulary', 'Word Work', 'Terminology Audit', 'Key Words Recall'],
+  'Definitions Drill': ['Definitions Drill', 'Define the Term', 'Unaided Recall', 'Say What It Means',
+    'Definition Practice', 'Term to Meaning', 'Closed-Book Definitions', 'Meaning Recall',
+    'Definitions Under Pressure', 'Explain the Term', 'Precise Definitions'],
+  'Matching Activity': ['Matching Activity', 'Pair Them Up', 'Term and Meaning Match', 'Link the Pairs',
+    'Match and Check', 'Connect the Terms', 'Sorting and Matching', 'Find the Partner',
+    'Two-Column Match', 'Card Sort'],
+  'Cloze Exercise': ['Cloze Exercise', 'Fill the Gaps', 'Missing Word Practice', 'Complete the Statement',
+    'Gap Fill', 'Sentence Completion', 'Blanked Statements', 'Fill in the Missing Term',
+    'Close Reading Gaps', 'Supply the Word'],
+  'True or False': ['True or False', 'Fact or Fiction', 'Right or Wrong', 'Statement Audit',
+    'Agree or Disagree', 'True, False, Explain', 'Verify the Claim', 'Claim Check',
+    'Sort the Statements', 'Judgement Check'],
+  'Misconception Check': ['Misconception Check', 'Spot the Error', 'Common Mistakes', 'Myth Buster',
+    'What Went Wrong', 'Find the Fault', 'Correct the Claim', 'Error Analysis',
+    'Diagnose the Mistake', 'Frequent Errors Check', 'Put It Right'],
+  'Odd One Out': ['Odd One Out', 'Which Does Not Belong', 'Sort and Justify', 'Group and Explain',
+    'Belongs or Not', 'Classification Check', 'Find the Intruder', 'Categorise It',
+    'In or Out', 'Sorting Challenge'],
+  'Retrieval Practice': ['Retrieval Practice', 'Brain Dump', 'No-Notes Recall', 'Last Lesson, Last Week',
+    'Cold Recall', 'Retrieval Starter', 'Memory Check', 'Recall Without Prompts',
+    'Spaced Retrieval', 'Free Recall'],
+  'Starter Activity': ['Starter Activity', 'Do Now', 'Bell Work', 'Five-Minute Starter',
+    'Settler', 'Entry Task', 'Warm-Up', 'Quick Start', 'Opening Task', 'First Five'],
+  'Written Response': ['Written Response', 'Extended Writing', 'Explain in Full', 'Long Answer Practice',
+    'Structured Response', 'Write It Out', 'Explanation Task', 'Six-Mark Practice',
+    'Justify Your Answer', 'Discursive Response'],
+  'Exam-Style Questions': ['Exam-Style Questions', 'Exam Practice', 'Past-Paper Style', 'Assessment Practice',
+    'Mock Questions', 'Exam Preparation', 'Test Conditions', 'Graded Questions',
+    'Formal Assessment', 'Paper-Style Practice', 'Timed Questions'],
+  'Homework Sheet': ['Homework Sheet', 'Take-Home Practice', 'Independent Work', 'Prep Sheet',
+    'Home Learning', 'Overnight Practice', 'Set Work', 'Study Sheet',
+    'Practice at Home', 'Weekly Homework'],
+  'Mixed Practice': ['Mixed Practice', 'Interleaved Practice', 'Everything So Far', 'Mixed Review',
+    'Full Range Practice', 'All Question Types', 'Varied Practice', 'Combined Review',
+    'Whole-Unit Mix', 'Broad Practice'],
+  'Practice Sheet': ['Practice Sheet', 'Skills Practice', 'Drill Sheet', 'Fluency Practice',
+    'Routine Practice', 'Repetition Set', 'Method Practice', 'Guided Practice',
+    'Independent Practice', 'Daily Practice'],
+  'Counting and Writing': ['Counting and Writing', 'Count and Write', 'Number Formation', 'Counting Practice',
+    'How Many?', 'Count the Objects', 'Writing Numbers', 'Counting Fun',
+    'Numbers to Write', 'Count Together'],
+  'Number Work': ['Number Work', 'Adding and Taking Away', 'Number Bonds Practice', 'Sums Practice',
+    'Number Facts', 'Add and Subtract', 'Number Games', 'Working with Numbers',
+    'Calculation Practice', 'Number Skills'],
+  'Sequencing Activity': ['Sequencing Activity', 'Put It in Order', 'Order the Steps', 'Sequence Check',
+    'What Comes First', 'Ordering Task', 'Step Order', 'Arrange in Sequence',
+    'Timeline Task', 'Correct Order'],
+  'Label the Diagram': ['Label the Diagram', 'Diagram Practice', 'Name the Parts', 'Labelling Task',
+    'Annotate the Figure', 'Identify the Parts', 'Diagram Check', 'Parts and Labels',
+    'Anatomy of the Diagram', 'Figure Recall'],
+  'Annotated Diagram': ['Annotated Diagram', 'Diagram and Terms', 'Figure with Vocabulary',
+    'Labelled Notes', 'Diagram Study Sheet', 'Annotate and Explain', 'Visual Glossary',
+    'Diagram Workbook'],
+  'Applied Questions': ['Applied Questions', 'Apply It', 'In Context', 'Transfer Task',
+    'Real Situations', 'Use What You Know', 'Applied Problems', 'New Contexts',
+    'Problem Solving', 'Beyond the Textbook'],
+  'Extended Practice': ['Extended Practice', 'Longer Practice', 'Deep Practice', 'Extended Set',
+    'Sustained Practice', 'Long-Form Practice', 'Full Session', 'Double Lesson Set'],
+  /* multi-page packs */
+  'Practice Pack': ['Practice Pack', 'Two-Page Practice', 'Practice Bundle', 'Paired Sheets'],
+  'Problem Set': ['Problem Set', 'Question Bank', 'Problem Bundle', 'Set of Problems'],
+  'Consolidation Pack': ['Consolidation Pack', 'Bringing It Together', 'Consolidation Set', 'Secure the Learning'],
+  'Revision Booklet': ['Revision Booklet', 'Revision Pack', 'Study Booklet', 'Review Booklet'],
+  'Full Review': ['Full Review', 'Complete Review', 'Whole-Unit Review', 'Comprehensive Review'],
+  'Half-Term Review': ['Half-Term Review', 'Mid-Unit Review', 'Term Review', 'Progress Review'],
+  'Topic Mastery Pack': ['Topic Mastery Pack', 'Mastery Set', 'Master the Topic', 'Mastery Bundle'],
+  'End-of-Unit Booklet': ['End-of-Unit Booklet', 'Unit Finale', 'Closing Booklet', 'End-of-Unit Review'],
+  'Complete Revision Booklet': ['Complete Revision Booklet', 'Everything Booklet', 'Full Revision Pack', 'The Whole Unit'],
+  'Revision Pack': ['Revision Pack', 'Revision Set', 'Review Pack', 'Study Pack'],
+  'Extended Set': ['Extended Set', 'Longer Set', 'Extended Question Set', 'Wider Practice'],
+  'Long Practice Paper': ['Long Practice Paper', 'Extended Paper', 'Full-Length Practice', 'Long Paper'],
+  'Unit Assessment': ['Unit Assessment', 'End-of-Unit Test', 'Unit Check', 'Assessment Paper'],
+  'Half-Term Booklet': ['Half-Term Booklet', 'Mid-Term Booklet', 'Half-Term Pack', 'Term Booklet'],
+  'Full Unit Paper': ['Full Unit Paper', 'Whole-Unit Paper', 'Complete Paper', 'Full Paper'],
+  'Consolidation Booklet': ['Consolidation Booklet', 'Consolidation Pack', 'Secure It Booklet', 'Embedding Booklet'],
+  'Topic Mastery Booklet': ['Topic Mastery Booklet', 'Mastery Booklet', 'Master the Unit', 'Depth Booklet']
+};
+
+/* When a pool runs out, the sheet is qualified rather than numbered — a
+   teacher setting the eleventh quiz on a unit is setting a second round of it,
+   and that is what the name should say. */
+const SET_ROUNDS = ['Second Round', 'Third Round', 'Fourth Round', 'Fifth Round',
+  'Sixth Round', 'Seventh Round', 'Eighth Round', 'Ninth Round', 'Tenth Round'];
+
+/** The display name of set `n` of a family whose first sheet is labelled `label`. */
+function setName(label, n) {
+  const pool = SET_NAMES[label] ?? SET_NAMES['Practice Sheet'];
+  const name = pool[n % pool.length];
+  const round = Math.floor(n / pool.length);
+  if (!round) return name;
+  const suffix = SET_ROUNDS[round - 1];
+  return suffix ? `${name} · ${suffix}` : `${name} · Round ${round + 1}`;
+}
+
 /* Set labels run A…Z then AA, AB… like spreadsheet columns, so a family can
    carry more than twenty-six sheets without the naming falling over. */
 function setLabel(n) {
@@ -510,7 +630,6 @@ function setLabel(n) {
   return out;
 }
 
-const lowerFirst = s => String(s).charAt(0).toLowerCase() + String(s).slice(1);
 
 /* What each format actually asks a student to do, for the summary line. */
 const FORMAT_BLURB = {
@@ -529,6 +648,8 @@ const FORMAT_BLURB = {
   homework:  'A homework sheet',
   mixed:     'Mixed practice across every question type this unit supports',
   sequence:  'A sequencing activity',
+  diagram:   'A diagram-labelling sheet',
+  annotated: 'An annotated diagram, with the terms that go around it',
   applied:   'Applied questions — the idea in an unfamiliar situation',
   practice:  'A practice sheet with a fresh set of questions every time',
   counting:  'Counting and writing numbers',
@@ -601,7 +722,11 @@ const FORMAT_SHAPE = {
   applied:   { count: 10, pages: 1 },
   practice:  { count: 12, pages: 1 },
   counting:  { count: 10, pages: 1 },
-  numberwork:{ count: 12, pages: 1 }
+  numberwork:{ count: 12, pages: 1 },
+  /* A labelling question fills a lot of page, so these sheets are short by
+     design: six diagrams is already two printed sides. */
+  diagram:   { count: 6,  pages: 1 },
+  annotated: { count: 10, pages: 2 }
 };
 
 /* Topic sheets get formats too. A procedural topic composes fresh numbers
@@ -622,28 +747,53 @@ const TOPIC_FORMATS = [
    asking a small bank for sixty questions yields a short sheet with a
    misleading title. */
 const UNIT_PACKS = [
-  [3, 25,  'Revision Pack'],
+  [2, 25,  'Revision Pack'],
+  [3, 30,  'Extended Set'],
+  [3, 35,  'Long Practice Paper'],
   [4, 40,  'Consolidation Booklet'],
+  [4, 45,  'Unit Assessment'],
+  [5, 50,  'Half-Term Booklet'],
   [6, 60,  'Topic Mastery Booklet'],
+  [7, 75,  'Full Unit Paper'],
   [10, 100, 'Complete Revision Booklet']
 ];
 
+/* The level a booklet of a given length is reasonable at. Forty questions is a
+   homework for a Grade 9 class and an unkind afternoon for a Grade 3 one, so
+   the longer shapes start higher up rather than being offered everywhere the
+   bank happens to be deep enough. */
+const PACK_FLOOR = count => count >= 75 ? 'Grade 8'
+                          : count >= 50 ? 'Grade 6'
+                          : count >= 35 ? 'Grade 5'
+                          : 'Grade 4';
+
 /**
  * How many sheets a family carries.
+ *
  * Sets × questions is how many question slots the family has to fill; capacity
  * is how many genuinely different questions exist to fill them. The ratio is
- * how often a given question comes round again across the family — three times
- * across thirty sheets is what practice material looks like; thirty times is
- * padding, and the cap is what stops it.
+ * how often a given question comes round again across the family.
+ *
+ * This was three, with a ceiling of 140, and it was the wrong trade. It bought
+ * a very large number by putting a hundred and forty near-identical sheets
+ * behind one unit — an alphabet of quizzes, differing in which twelve of the
+ * same eighty questions each happened to deal. A teacher scrolling that list
+ * cannot tell them apart, because there is nothing to tell apart.
+ *
+ * At one repeat the sheets in a family are close to disjoint: the family holds
+ * about as many sheets as its bank can fill without re-dealing. The library
+ * gets smaller and every sheet in it is worth opening. Growth now has to come
+ * from where it should — more units, more formats, more levels — rather than
+ * from re-dealing the same bank.
  */
-const REPEATS_ALLOWED = 3;
+const REPEATS_ALLOWED = 1;
 const setsFrom = (capacity, count) => {
-  /* The ceiling is a guard against re-dealing a small bank, so it rises with
-     the bank. A family whose makers compose fresh questions every time —
-     counting objects, adding numbers — has nothing to re-deal, and holding it
-     to the same limit as a sixteen-item vocabulary list is arbitrary. */
-  const ceiling = Math.min(140, Math.max(60, Math.round(capacity / 4)));
-  return Math.max(4, Math.min(ceiling, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
+  /* The ceiling still rises with the bank, because a family whose makers
+     compose fresh numbers every time has nothing to re-deal. It is far lower
+     than it was: past a couple of dozen sheets on one unit at one level in one
+     format, nobody is choosing between them. */
+  const ceiling = Math.min(32, Math.max(6, Math.round(capacity / 12)));
+  return Math.max(3, Math.min(ceiling, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
 };
 
 /**
@@ -729,7 +879,13 @@ export function buildFamilies() {
         const capacity = meta.formatCapacity[format.id] ?? 0;
         if (!capacity) continue;
         const gens = makersFor(meta.key, format.id);
-        if (!gens || gens.length < 2) continue;
+        /* Two makers, or one that is varied enough to carry a sheet on its own.
+           The flat "at least two" rule was written for text formats, where one
+           maker means the same question shape twenty times; a diagram maker
+           picks a different figure and a different set of parts each time, so
+           the honest test is capacity, not how many makers there happen to be. */
+        if (!gens?.length) continue;
+        if (gens.length < 2 && capacity < 40) continue;
 
         const shape = FORMAT_SHAPE[format.id] ?? { count: 10, pages: 1 };
         const count = shape.count ?? questionCount(lv.level, difficulty);
@@ -742,9 +898,9 @@ export function buildFamilies() {
         family(bp, setsFrom(capacity, count));
       }
 
-      /* Long booklets, from Grade 5 up and only where the bank can fill them. */
-      if (idx(lv.level) < idx('Grade 5')) continue;
+      /* Long booklets, only where the bank can fill them and the level suits. */
       for (const [pages, count, label] of UNIT_PACKS) {
+        if (idx(lv.level) < idx(PACK_FLOOR(count))) continue;
         if (count * 1.6 > meta.capacity) break;
         const bp = new Blueprint(meta.topic, start + pos, `${meta.name} — ${label}`, null,
                                  pages, difficulty, count, 0, meta.key, 'mixed');

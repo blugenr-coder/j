@@ -150,7 +150,8 @@ function* catalogue() {
   yield* FAMILIES;
 }
 
-const MATCH = {
+/* One value per filter, tested against one worksheet. */
+const IS = {
   grade:      (ex, v) => ex.grade === v,
   level:      (ex, v) => ex.level === v,
   subject:    (ex, v) => ex.subject === v,
@@ -165,11 +166,25 @@ const MATCH = {
   pages:      (ex, v) => String(ex.pages ?? 1) === String(v),
   framework:  (ex, v) => ex.framework === v
 };
+
+/* A filter value may be one thing or several. Several means OR inside the
+   group and AND between groups, which is what a reader expects: picking
+   Biology and Chemistry widens the results, picking Biology and Grade 8
+   narrows them. */
+const anyOf = test => (ex, v) => Array.isArray(v) ? v.some(one => test(ex, one)) : test(ex, v);
+const MATCH = Object.fromEntries(Object.entries(IS).map(([k, fn]) => [k, anyOf(fn)]));
+
 export const FACET_KEYS = Object.keys(MATCH);
+
+/** Is a filter actually set? An empty array is not a filter. */
+export const isSet = v => Array.isArray(v) ? v.length > 0 : Boolean(v);
+
+/** The chosen values of one filter, always as a list. */
+export const valuesOf = v => Array.isArray(v) ? v : (v ? [v] : []);
 
 function passesAll(ex, f, except = null) {
   for (const k of FACET_KEYS) {
-    if (k === except || !f[k]) continue;
+    if (k === except || !isSet(f[k])) continue;
     if (!MATCH[k](ex, f[k])) return false;
   }
   return true;
@@ -194,7 +209,7 @@ export function facetCounts(f = {}) {
     /* Which single filter, if any, this worksheet fails. */
     let failed = null, failures = 0;
     for (const k of FACET_KEYS) {
-      if (!f[k]) continue;
+      if (!isSet(f[k])) continue;
       if (!MATCH[k](ex, f[k])) { failed = k; if (++failures > 1) break; }
     }
     if (failures > 1) continue;

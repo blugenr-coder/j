@@ -11,12 +11,17 @@ import { APPLIED_UNITS } from './units-applied.js';
 import { ELECTIVE_UNITS } from './units-electives.js';
 import { EARLY_UNITS } from './units-early.js';
 import { MORE_UNITS } from './units-more.js';
+import { BIO_UNITS } from './units-bio.js';
+import { CHEM_UNITS } from './units-chem.js';
+import { MATHS_UNITS } from './units-maths.js';
+import { MATHS2_UNITS } from './units-maths2.js';
+import { WIDER_UNITS } from './units-wider.js';
 
 /* Merged per topic: several files may contribute units to the same topic. */
 export const UNITS = (() => {
   const out = {};
   for (const src of [EARLY_UNITS, SCIENCE_UNITS, HUMANITIES_UNITS, ELA_UNITS, LANGUAGE_UNITS,
-                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS]) {
+                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS]) {
     for (const [topic, units] of Object.entries(src)) {
       (out[topic] ??= []).push(...units);
     }

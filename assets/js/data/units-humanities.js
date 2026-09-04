@@ -477,6 +477,7 @@ export const HUMANITIES_UNITS = {
     },
     {
       name: 'Rivers, Coasts and Landforms', from: 'Grade 5', to: 'Grade 12',
+      figures: ['river'],
       facts: [
         ['erosion', 'the wearing away and removal of rock by a moving force'],
         ['deposition', 'the laying down of transported material'],
@@ -601,6 +602,7 @@ export const HUMANITIES_UNITS = {
     },
     {
       name: 'Natural Hazards', from: 'Grade 6', to: 'College',
+      figures: ['volcano'],
       facts: [
         ['natural hazard', 'a natural event that threatens people or property'],
         ['tectonic hazard', 'a hazard caused by plate movement, such as an earthquake'],

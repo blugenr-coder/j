@@ -10,6 +10,7 @@ export const SCIENCE_UNITS = {
   biology: [
     {
       name: 'Cell Structure and Function', from: 'Grade 6', to: 'Grade 12',
+      figures: ['animal-cell', 'plant-cell'],
       facts: [
         ['nucleus', 'the organelle that holds the cell’s DNA and controls its activities'],
         ['mitochondrion', 'the organelle where aerobic respiration releases energy'],
@@ -43,6 +44,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Photosynthesis', from: 'Grade 6', to: 'Grade 12',
+      figures: ['leaf', 'plant-cell'],
       facts: [
         ['photosynthesis', 'the process making glucose from carbon dioxide and water using light'],
         ['chlorophyll', 'the green pigment that absorbs light energy'],
@@ -74,6 +76,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Respiration and Energy', from: 'Grade 7', to: 'College',
+      figures: ['animal-cell'],
       facts: [
         ['aerobic respiration', 'the release of energy from glucose using oxygen'],
         ['anaerobic respiration', 'the release of energy from glucose without oxygen'],
@@ -105,6 +108,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Genetics and Inheritance', from: 'Grade 8', to: 'College',
+      figures: ['dna'],
       facts: [
         ['gene', 'a section of DNA coding for one protein'],
         ['allele', 'one of the different versions of a gene'],
@@ -169,6 +173,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'The Human Digestive System', from: 'Grade 6', to: 'Grade 12',
+      figures: ['digestive'],
       facts: [
         ['oesophagus', 'the muscular tube carrying food from the mouth to the stomach'],
         ['peristalsis', 'the wave of muscle contraction that pushes food along the gut'],
@@ -200,6 +205,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Circulation and the Heart', from: 'Grade 7', to: 'College',
+      figures: ['heart'],
       facts: [
         ['atrium', 'an upper heart chamber that receives blood'],
         ['ventricle', 'a lower heart chamber that pumps blood out'],
@@ -231,6 +237,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Nervous System and Response', from: 'Grade 8', to: 'College',
+      figures: ['neuron'],
       facts: [
         ['neurone', 'a nerve cell that carries electrical impulses'],
         ['synapse', 'the gap between two neurones, crossed by chemicals'],
@@ -326,6 +333,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Plants and Transport', from: 'Grade 7', to: 'Grade 12',
+      figures: ['flower', 'leaf'],
       facts: [
         ['xylem', 'dead hollow tubes carrying water and minerals upwards'],
         ['phloem', 'living tubes carrying dissolved sugars in both directions'],
@@ -361,6 +369,7 @@ export const SCIENCE_UNITS = {
   chemistry: [
     {
       name: 'Atomic Structure', from: 'Grade 7', to: 'College',
+      figures: ['atom-carbon', 'atom-sodium', 'atom-oxygen'],
       facts: [
         ['proton', 'a positive particle in the nucleus, relative mass 1'],
         ['neutron', 'a neutral particle in the nucleus, relative mass 1'],
@@ -423,6 +432,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Bonding and Structure', from: 'Grade 8', to: 'College',
+      figures: ['ionic-bond', 'covalent-bond'],
       facts: [
         ['ionic bond', 'the electrostatic attraction between oppositely charged ions'],
         ['covalent bond', 'a shared pair of electrons between two atoms'],
@@ -644,6 +654,7 @@ export const SCIENCE_UNITS = {
   physics: [
     {
       name: 'Forces and Motion', from: 'Grade 7', to: 'College',
+      figures: ['forces'],
       facts: [
         ['speed', 'distance travelled divided by time taken'],
         ['velocity', 'speed in a stated direction'],
@@ -706,6 +717,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Waves', from: 'Grade 8', to: 'College',
+      figures: ['wave'],
       facts: [
         ['wavelength', 'the distance from one point on a wave to the same point on the next'],
         ['frequency', 'the number of waves passing a point each second'],
@@ -737,6 +749,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Light and Optics', from: 'Grade 7', to: 'Grade 12',
+      figures: ['wave'],
       facts: [
         ['angle of incidence', 'the angle between the incoming ray and the normal'],
         ['angle of reflection', 'the angle between the reflected ray and the normal'],
@@ -768,6 +781,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Electricity and Circuits', from: 'Grade 7', to: 'College',
+      figures: ['circuit'],
       facts: [
         ['current', 'the rate of flow of charge, measured in amperes'],
         ['potential difference', 'the energy transferred per unit charge, measured in volts'],
@@ -958,6 +972,7 @@ export const SCIENCE_UNITS = {
   earth: [
     {
       name: 'Rocks and the Rock Cycle', from: 'Grade 4', to: 'Grade 10',
+      figures: ['volcano'],
       facts: [
         ['igneous rock', 'rock formed when molten magma or lava cools and solidifies'],
         ['sedimentary rock', 'rock formed from compressed layers of sediment'],
@@ -989,6 +1004,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Plate Tectonics', from: 'Grade 5', to: 'Grade 10',
+      figures: ['earth-layers'],
       facts: [
         ['tectonic plate', 'a large slab of the Earth’s outer layer that moves slowly'],
         ['crust', 'the thin rocky outer layer of the Earth'],
@@ -1020,6 +1036,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Weather and Climate', from: 'Grade 4', to: 'Grade 10',
+      figures: ['water-cycle'],
       facts: [
         ['weather', 'the state of the atmosphere over hours or days'],
         ['climate', 'the average pattern of weather over decades'],
@@ -1051,6 +1068,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'The Water Cycle', from: 'Grade 4', to: 'Grade 9',
+      figures: ['water-cycle'],
       facts: [
         ['evaporation', 'the change of liquid water into vapour at the surface'],
         ['transpiration', 'the release of water vapour from plant leaves'],
@@ -1082,6 +1100,7 @@ export const SCIENCE_UNITS = {
     },
     {
       name: 'Soil, Rivers and Landforms', from: 'Grade 5', to: 'Grade 10',
+      figures: ['river'],
       facts: [
         ['humus', 'the dark decayed organic matter in soil'],
         ['topsoil', 'the upper fertile soil layer where most roots grow'],

@@ -81,6 +81,7 @@ const P = {
   'q-match':   '<rect x="3.5" y="4.5" width="6.5" height="6" rx="1.5"/><rect x="14" y="13.5" width="6.5" height="6" rx="1.5"/><path d="M10 7.5h4.5a2.5 2.5 0 0 1 2.5 2.5v3.5"/>',
   'q-order':   '<path d="M7 4.5v15"/><path d="m3.8 8 3.2-3.5L10.2 8"/><path d="M13 7h8M13 12h6M13 17h4"/>',
   'q-graph':   '<path d="M4 20V4"/><path d="M4 20h16"/><circle cx="9" cy="15" r="1.4"/><circle cx="13.5" cy="10.5" r="1.4"/><circle cx="18" cy="7" r="1.4"/>',
+  'q-label':   '<rect x="3.5" y="4.5" width="12" height="15" rx="2"/><circle cx="9.5" cy="10" r="2.4"/><path d="M11.6 11.6 20 17"/><path d="M17 20.5h4v-4"/>',
   'q-written': '<path d="M5 20.5h14"/><path d="M7 16.8 16 7.8a2 2 0 0 0-2.8-2.8l-9 9V16h2.8z"/><path d="M13 6.5 16.5 10"/>',
 
   /* ------------------------------ statuses ------------------------------ */

@@ -5,6 +5,7 @@
 
 import { el, esc, shuffle, hashCode, clamp } from './util.js';
 import { iconHtml } from './icons.js';
+import { figure } from '../data/figures.js';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -30,6 +31,7 @@ export function renderQuestion(q, { value = undefined, disabled = false, onInput
     case 'match':   return renderMatch(q, value, disabled, onInput);
     case 'order':   return renderOrder(q, value, disabled, onInput);
     case 'graph':   return renderGraph(q, value, disabled, onInput);
+    case 'label':   return renderLabel(q, value, disabled, onInput);
     case 'written': return renderWritten(q, value, disabled, onInput);
     default:        return { node: el('p', { text: 'Unsupported question type.' }), getValue: () => null, focus() {}, showResult() {} };
   }
@@ -77,7 +79,11 @@ function renderChoice(q, value, disabled, onInput, multi) {
     node: list,
     getValue,
     focus: () => buttons[0]?.focus(),
-    showResult(correct) {
+    /* Every renderer is handed the whole marking result, not just the boolean:
+       a question with eight markers needs to show which of the eight were
+       wrong, and that lives in result.detail. */
+    showResult(result) {
+      const correct = result?.correct;
       buttons.forEach((b, i) => {
         b.disabled = true;
         const isAnswer = multi ? q.answer.includes(i) : q.answer === i;
@@ -358,6 +364,93 @@ function renderGraph(q, value, disabled, onInput) {
 }
 
 /* ------------------------------ written response ------------------------------ */
+/* ------------------------------- label ------------------------------- */
+/**
+ * A diagram with numbered markers and one dropdown per marker.
+ *
+ * A dropdown rather than drag-and-drop: dragging is the obvious idea and the
+ * wrong one here, because it fails on a touch screen without a lot of custom
+ * pointer code, it is invisible to a screen reader, and it cannot be printed.
+ * A native select is one tap on a phone, gives the platform picker for free,
+ * and degrades to a blank line on paper.
+ */
+function renderLabel(q, value, disabled, onInput) {
+  const fig = figure(q.figure);
+  const chosen = Array.isArray(value) ? [...value] : q.markers.map(() => -1);
+  const rows = [];
+  let markerGroup = null;
+  let active = -1;
+
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', fig?.viewBox ?? '0 0 320 240');
+  svg.setAttribute('class', 'fig-svg');
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', fig ? `${fig.title}, with ${q.markers.length} numbered parts to label`
+                                     : 'Diagram');
+
+  function drawMarkers() {
+    const parts = q.markers.map((m, i) => {
+      const on = i === active;
+      const done = chosen[i] >= 0;
+      const fill = on ? 'var(--primary)' : done ? 'var(--fig-accent-line)' : 'var(--fig-bg)';
+      const ink = on || done ? '#fff' : 'var(--fig-text)';
+      return `<g>
+        <circle cx="${m.x}" cy="${m.y}" r="11" fill="${fill}"
+          stroke="var(--fig-accent-line)" stroke-width="${on ? 2.6 : 1.8}"/>
+        <text x="${m.x}" y="${m.y + 3.6}" text-anchor="middle" font-size="11"
+          font-weight="700" fill="${ink}" font-family="inherit">${i + 1}</text>
+      </g>`;
+    });
+    markerGroup.innerHTML = parts.join('');
+  }
+
+  svg.innerHTML = (fig?.art ?? '') + '<g class="fig-markers"></g>';
+  markerGroup = svg.querySelector('.fig-markers');
+  drawMarkers();
+
+  const list = el('ol', { class: 'label-rows' });
+  q.markers.forEach((_, i) => {
+    const select = el('select', {
+      class: 'select label-select', disabled: disabled || null,
+      'aria-label': `Label for part ${i + 1}`,
+      onfocus: () => { active = i; drawMarkers(); },
+      onblur: () => { active = -1; drawMarkers(); },
+      onchange: () => {
+        chosen[i] = Number(select.value);
+        drawMarkers();
+        onInput(getValue());
+      }
+    },
+      el('option', { value: '-1', text: 'Choose a label…' }),
+      q.options.map((opt, oi) => el('option', { value: String(oi), text: opt })));
+    select.value = String(chosen[i] ?? -1);
+    const row = el('li', { class: 'label-row' },
+      el('span', { class: 'label-num', text: String(i + 1) }), select);
+    rows.push({ row, select });
+    list.append(row);
+  });
+
+  const getValue = () => chosen.map(v => (v === undefined ? -1 : v));
+
+  return {
+    node: el('div', { class: 'label-q' },
+      el('figure', { class: 'fig-frame' }, svg,
+        fig ? el('figcaption', { class: 'fig-cap', text: fig.title }) : null),
+      list),
+    getValue,
+    focus: () => rows[0]?.select.focus(),
+    showResult(result) {
+      for (const { select } of rows) select.disabled = true;
+      const wrong = new Set(result?.detail?.wrong ?? []);
+      rows.forEach(({ row }, i) => {
+        row.classList.add(wrong.has(i) ? 'is-wrong' : 'is-right');
+      });
+      active = -1;
+      drawMarkers();
+    }
+  };
+}
+
 function renderWritten(q, value, disabled, onInput) {
   const area = el('textarea', {
     class: 'textarea', placeholder: 'Write your answer here…',

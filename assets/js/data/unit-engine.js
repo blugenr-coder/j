@@ -23,10 +23,27 @@
    response are different sheets a teacher prints for different lessons, and
    generated.js builds each of them by selecting kinds. */
 
-import { pick, sample, choice, blankQ, multiQ, matchQ, orderQ, writtenQ } from './gen-core.js';
+import { pick, sample, choice, blankQ, multiQ, matchQ, orderQ, writtenQ, labelQ } from './gen-core.js';
+import { figure } from './figures.js';
 import { proceduralMakers } from './gen-early.js';
 
 const other = (r, list, exclude, n) => sample(r, list.filter(x => x !== exclude), n);
+/* Figure titles are written as headings ("The human heart"). Inside a sentence
+   the leading article is lowered, but a title that starts with a proper noun
+   or an abbreviation is left exactly as written. */
+/* Greedily keep parts that are far enough apart to carry a numbered marker.
+   26 units is twice the marker radius plus a hair — closer than that and the
+   circles touch. */
+function spaced(parts, want, gap = 26) {
+  const out = [];
+  for (const p of parts) {
+    if (out.length >= want) break;
+    if (out.every(q => Math.hypot(q.x - p.x, q.y - p.y) >= gap)) out.push(p);
+  }
+  return out;
+}
+const lowerOpen = title => /^(?:The|A|An|Parts|Cross|Inside|Angles|Forces)\b/.test(title)
+  ? title.charAt(0).toLowerCase() + title.slice(1) : title;
 const lower = s => String(s).charAt(0).toLowerCase() + String(s).slice(1);
 
 /** Escape a term for use inside a regular expression. */
@@ -279,6 +296,38 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     });
   }
 
+  /* -------------------------------- diagram --------------------------------
+     A unit that names a figure gets a labelling question on it. Which parts
+     are asked for varies with the seed and how many with the tier, so the
+     hard sheet asks for the whole diagram and the easy one for the parts a
+     student meets first. */
+  const figIds = (unit.figures ?? (unit.figure ? [unit.figure] : []))
+    .filter(id => (figure(id)?.parts?.length ?? 0) >= 3);
+  if (figIds.length) {
+    add('label-diagram', 'diagram', 'label', 1, (r, tier = 1) => {
+      const figId = pick(r, figIds);
+      const fig = figure(figId);
+      const most = fig.parts.length;
+      const want = Math.min(most, tier >= 3 ? 6 : tier >= 2 ? 5 : 4);
+      /* Some parts genuinely occupy the same spot — a nucleolus sits inside
+         the nucleus, a proton and a neutron are both in the nucleus — so two
+         numbered markers there would overlap and point at the same pixel.
+         Parts that close are never asked for on the same diagram. */
+      const parts = spaced(sample(r, fig.parts, most), want);
+      if (parts.length < 3) return null;
+      const chosen = new Set(parts.map(p => p.id));
+      const rest = fig.parts.filter(p => !chosen.has(p.id)).map(p => p.label);
+      return labelQ(r, {
+        figure: figId,
+        parts,
+        extras: sample(r, rest, Math.min(2, rest.length)),
+        prompt: `Label the numbered parts of the diagram: ${lowerOpen(fig.title)}.`,
+        hint: 'Work from the parts you are sure of — each label is used once.',
+        explanation: parts.map((p, i) => `${i + 1} is the ${p.label}`).join('; ') + '.'
+      });
+    });
+  }
+
   /* --------------------------------- write --------------------------------- */
   if (facts.length >= 4) {
     add('define', 'write', 'written', 2, (r, tier = 2) => {
@@ -363,6 +412,16 @@ export function capacityOf(unit, makerId, maker = null) {
     case 'odd-one-out':       return f * 3;
     case 'belongs':           return Math.min(choose(f, 2) * 4, f * 4);
     case 'sequence':          return (unit.sequences ?? []).length * 2;
+    case 'label-diagram': {
+      /* Which parts are asked for is the variable, so capacity is how many
+         different selections exist across the unit's figures — capped, because
+         two selections that differ by one marker are not two lessons. */
+      const ids = unit.figures ?? (unit.figure ? [unit.figure] : []);
+      return ids.reduce((n, id) => {
+        const parts = figure(id)?.parts?.length ?? 0;
+        return n + (parts < 3 ? 0 : Math.min(choose(parts, 4), parts * 8));
+      }, 0);
+    }
     case 'apply':             return (unit.applications ?? []).length;
     default:                  return f;
   }

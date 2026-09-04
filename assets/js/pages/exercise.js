@@ -213,7 +213,7 @@ function start() {
     recordAnswer(ex.id, q.id, { value, correct: result.correct });
     checked = true;
 
-    current.showResult?.(result.correct);
+    current.showResult?.(result);
     showFeedback(q, { value, correct: result.correct }, $('#feedback-host'), { restored: false });
 
     /* Swap the check button for next, in place, so focus order stays sane. */

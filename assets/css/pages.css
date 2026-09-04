@@ -148,6 +148,15 @@
 }
 .facet:hover { background: var(--surface-2); color: var(--text); }
 .facet-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Filters take several values at once, so each option carries a real checkbox.
+   Without it "Science" and "Mathematics" both highlighted reads as a bug. */
+.facet-box {
+  width: 15px; height: 15px; flex: none; border-radius: 4px;
+  border: 1.5px solid var(--border-strong); background: var(--surface);
+  display: grid; place-items: center; color: #fff;
+}
+.facet[aria-checked="true"] .facet-box { background: var(--primary); border-color: var(--primary); }
+.facet-any .facet-box { display: none; }
 .facet-n { font-size: 11px; font-weight: 600; color: var(--text-3); font-variant-numeric: tabular-nums; flex: none; }
 .facet[aria-pressed="true"] { background: var(--primary-tint); color: var(--brand-ink); font-weight: 600; }
 .facet[aria-pressed="true"] .facet-n { color: var(--brand-ink); }
@@ -268,6 +277,33 @@
 .order-item .order-move { margin-left: auto; display: flex; gap: 4px; }
 .order-item.is-correct { border-color: var(--secondary); }
 .order-item.is-wrong { border-color: var(--danger); }
+
+/* ---------------------------- label the diagram ---------------------------- */
+/* The figure and the answer rows sit side by side where there is room and
+   stack on a phone. The figure keeps its own aspect ratio and never grows past
+   a comfortable reading size — a cell diagram at 900px wide is not clearer,
+   just further from the labels you are matching it against. */
+.label-q { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--s5); align-items: start; }
+.fig-frame { margin: 0; background: var(--fig-bg); border: 1px solid var(--border); border-radius: var(--r-md); padding: var(--s4); }
+.fig-svg { width: 100%; height: auto; display: block; max-height: 340px; }
+.fig-cap { margin-top: var(--s2); font-size: var(--step--1); color: var(--text-2); text-align: center; }
+
+.label-rows { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.label-row { display: flex; align-items: center; gap: var(--s3); }
+.label-num {
+  width: 26px; height: 26px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; font-weight: 700; font-size: var(--step--1);
+  background: var(--primary-tint); color: var(--brand-ink);
+}
+.label-select { flex: 1; min-width: 0; }
+.label-row.is-right .label-num { background: var(--secondary-light); color: var(--ok-ink); }
+.label-row.is-right .label-select { border-color: var(--secondary); }
+.label-row.is-wrong .label-num { background: var(--danger-light); color: var(--bad-ink); }
+.label-row.is-wrong .label-select { border-color: var(--danger); }
+
+@media (max-width: 720px) {
+  .label-q { grid-template-columns: minmax(0, 1fr); }
+}
 
 .feedback { border-radius: var(--r-md); padding: var(--s4) var(--s5); margin-top: var(--s4); border: 1px solid transparent; }
 .feedback h4 { margin: 0 0 4px; font-size: var(--step-1); }

@@ -868,6 +868,7 @@ export const APPLIED_UNITS = {
   anatomy: [
     {
       name: 'Skeleton and Muscles', from: 'Grade 6', to: 'College',
+      figures: ['respiratory'],
       facts: [
         ['skeleton', 'the framework of bones supporting the body'],
         ['femur', 'the thigh bone, the longest in the body'],
@@ -899,6 +900,7 @@ export const APPLIED_UNITS = {
     },
     {
       name: 'Heart, Lungs and Circulation', from: 'Grade 6', to: 'College',
+      figures: ['heart', 'respiratory'],
       facts: [
         ['heart', 'the four-chambered muscular pump'],
         ['lungs', 'the organs where gas exchange takes place'],
@@ -930,6 +932,7 @@ export const APPLIED_UNITS = {
     },
     {
       name: 'The Nervous System', from: 'Grade 7', to: 'College',
+      figures: ['neuron'],
       facts: [
         ['brain', 'the organ coordinating the whole nervous system'],
         ['spinal cord', 'the bundle of nerves running through the spine'],
@@ -961,6 +964,7 @@ export const APPLIED_UNITS = {
     },
     {
       name: 'Digestion and Excretion', from: 'Grade 6', to: 'College',
+      figures: ['digestive'],
       facts: [
         ['stomach', 'the organ where acid and enzymes begin protein digestion'],
         ['small intestine', 'the organ where most absorption happens'],
@@ -1023,6 +1027,7 @@ export const APPLIED_UNITS = {
     },
     {
       name: 'Systems of the Body', from: 'Grade 6', to: 'College',
+      figures: ['heart', 'digestive', 'respiratory'],
       facts: [
         ['organ', 'a structure of several tissues with a shared function'],
         ['tissue', 'a group of similar cells working together'],

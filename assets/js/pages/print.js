@@ -10,6 +10,7 @@ import { getExercise } from '../data/exercises.js';
 import { SUBJECT_MAP, TOPIC_MAP, DIFF_MAP, GRADE_MAP } from '../data/catalog.js';
 import { answerText } from '../core/marking.js';
 import { STANDARDS, codesFor } from '../data/standards.js';
+import { figure } from '../data/figures.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
 
@@ -164,6 +165,21 @@ function printQuestion(q, i, { withWork, withHints }) {
       wrap.append(el('div', { class: 'q-answer' }, 'Point: ( ______ , ______ )'));
       break;
     }
+    case 'label': {
+      /* On paper the diagram carries the numbers and the student writes the
+         labels beside them. The word bank is printed too — without it a
+         labelling question becomes an unaided recall question, which is a
+         different task from the one the sheet says it is setting. */
+      wrap.append(el('div', { class: 'q-figure', html: figureSvg(q) }));
+      const bank = el('div', { class: 'q-answer' },
+        el('em', {}, 'Word bank: '), q.options.join(' · '));
+      wrap.append(bank);
+      const lines = el('div', { class: 'q-labels' });
+      q.markers.forEach((_, mi) => lines.append(el('span', { class: 'lline' },
+        el('span', { class: 'lnum', text: `${mi + 1}.` }), el('span', { class: 'line' }))));
+      wrap.append(lines);
+      break;
+    }
     case 'written': {
       const lines = el('div', { class: 'q-lines' });
       for (let n = 0; n < 4; n++) lines.append(el('div', { class: 'wline' }));
@@ -183,6 +199,18 @@ function printQuestion(q, i, { withWork, withHints }) {
     wrap.append(el('div', { class: 'q-answer', style: 'font-style:italic' }, `Hint: ${q.hint}`));
   }
   return wrap;
+}
+
+/** A printed diagram: the figure's own art plus the numbered markers. */
+function figureSvg(q) {
+  const fig = figure(q.figure);
+  if (!fig) return '';
+  const marks = q.markers.map((m, i) => `
+    <circle cx="${m.x}" cy="${m.y}" r="11" fill="#fff" stroke="#334155" stroke-width="1.6"/>
+    <text x="${m.x}" y="${m.y + 3.6}" text-anchor="middle" font-size="11" font-weight="700"
+      fill="#0F172A">${i + 1}</text>`).join('');
+  return `<svg viewBox="${fig.viewBox}" class="fig-print" role="img" aria-label="${fig.title}">
+    ${fig.art}${marks}</svg><div class="fig-print-cap">${fig.title}</div>`;
 }
 
 /** A printed coordinate grid for graph questions. */

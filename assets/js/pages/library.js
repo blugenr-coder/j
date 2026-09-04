@@ -7,7 +7,7 @@ import { mountShell, href } from '../core/shell.js';
 import { exerciseCard, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES, GRADE_MAP } from '../data/catalog.js';
-import { searchExercises, parseQuery, facetCounts } from '../core/search.js';
+import { searchExercises, parseQuery, facetCounts, isSet, valuesOf } from '../core/search.js';
 import { STANDARDS } from '../data/standards.js';
 import { t, whenReady } from '../core/i18n.js';
 
@@ -23,16 +23,21 @@ let shown = PAGE_SIZE;
 
 /* ------------------------------ filter state ------------------------------ */
 const state = { text: '', sort: 'recommended' };
+/* Each filter holds a list. A comma-separated list in the URL keeps a shared
+   link readable — ?subject=science,math — and still round-trips exactly. */
+const splitParam = v => (v ? String(v).split(',').filter(Boolean) : []);
+const joinParam = list => (list && list.length ? list.join(',') : null);
+
 function readUrl() {
   const p = new URL(location.href).searchParams;
-  for (const k of FILTERS) state[k] = p.get(k) || null;
+  for (const k of FILTERS) state[k] = splitParam(p.get(k));
   state.sort = p.get('sort') || 'recommended';
   const raw = p.get('q');
   if (raw) {
     /* A raw query from the home page or a shared link: parse it once so the
        filter panel visibly reflects what the search understood. */
     const parsed = parseQuery(raw);
-    for (const k of FILTERS) state[k] ??= parsed[k] ?? null;
+    for (const k of FILTERS) if (!state[k].length && parsed[k]) state[k] = [parsed[k]];
     state.text = parsed.text;
     state.raw = raw;
   } else {
@@ -42,7 +47,7 @@ function readUrl() {
 }
 function writeUrl() {
   setQs({
-    ...Object.fromEntries(FILTERS.map(k => [k, state[k]])),
+    ...Object.fromEntries(FILTERS.map(k => [k, joinParam(state[k])])),
     q: null,
     text: state.text || null,
     sort: state.sort === 'recommended' ? null : state.sort
@@ -62,22 +67,49 @@ const openGroups = new Set(['grade', 'subject', 'level']);
 const expanded = new Set();
 const COLLAPSE_AT = 8;
 
+/* Choices in one group can strand choices in another: picking a topic implies
+   its subject, and dropping a subject leaves its topics with nothing to belong
+   to. This keeps the panel consistent without silently discarding a choice the
+   reader can still see. */
+function reconcile(key) {
+  if (key === 'topic' && state.topic.length) {
+    const subjects = new Set(state.topic.map(t => TOPIC_MAP[t]?.subject).filter(Boolean));
+    state.subject = [...new Set([...state.subject, ...subjects])];
+  }
+  if (key === 'subject') {
+    const allowed = new Set(state.subject);
+    if (allowed.size) state.topic = state.topic.filter(t => allowed.has(TOPIC_MAP[t]?.subject));
+  }
+  if (key === 'grade') {
+    const levels = new Set(state.grade.flatMap(g => GRADE_MAP[g]?.levels ?? []));
+    if (levels.size) state.level = state.level.filter(l => levels.has(l));
+  }
+  if (key === 'level' && state.level.length) {
+    const grades = new Set(state.level
+      .map(l => GRADES.find(g => g.levels.includes(l))?.id).filter(Boolean));
+    state.grade = [...new Set([...state.grade, ...grades])];
+  }
+}
+
 /* A half-width column fits about this many characters before the name has to
-   ellipsize. English level names ("Grade 1") fit; the Italian ones
+   ellipsize — fewer than it looks, because each row also carries a checkbox
+   and a count. English level names ("Grade 1") fit; the Italian ones
    ("Scuola secondaria di primo grado") do not, so the group falls back to one
    column rather than clipping every row. */
-const TWO_COL_AT = 15;
+const TWO_COL_AT = 10;
 
 function filterGroup(label, key, options, counts, { compact = false, any = null } = {}) {
-  const chosen = state[key];
-  const chosenLabel = chosen ? (options.find(o => o.id === chosen)?.label ?? chosen) : '';
-  const isOpen = openGroups.has(key) || !!chosen;
+  const chosen = valuesOf(state[key]);
+  const nameOf = id => options.find(o => o.id === id)?.label ?? id;
+  const chosenLabel = chosen.length === 1 ? nameOf(chosen[0])
+                    : chosen.length ? `${chosen.length} selected` : '';
+  const isOpen = openGroups.has(key) || chosen.length > 0;
 
   /* Drop the options with nothing behind them BEFORE deciding what to collapse.
      Slicing first hid NGSS behind "show all" and then filtered away the eleven
      empty frameworks in front of it, leaving a group that claimed there was
      nothing to narrow by while NGSS was the active filter. */
-  const live = options.filter(o => (counts?.[o.id] ?? 0) > 0 || chosen === o.id);
+  const live = options.filter(o => (counts?.[o.id] ?? 0) > 0 || chosen.includes(o.id));
   const showAll = expanded.has(key) || live.length <= COLLAPSE_AT;
   const visible = showAll ? live : live.slice(0, COLLAPSE_AT);
 
@@ -105,27 +137,28 @@ function filterGroup(label, key, options, counts, { compact = false, any = null 
     opts.append(el('button', {
       class: 'facet facet-any' + (twoCol ? ' facet-wide' : ''), type: 'button',
       'aria-pressed': String(!chosen),
-      onclick: () => { if (!chosen) return; state[key] = null; apply({ resetPage: true }); }
+      onclick: () => { if (!chosen.length) return; state[key] = []; apply({ resetPage: true }); }
     },
       el('span', { class: 'facet-name', text: any }),
-      !chosen ? el('span', { class: 'facet-tick' }, icon('check', { size: 14 })) : null));
+      !chosen.length ? el('span', { class: 'facet-tick' }, icon('check', { size: 14 })) : null));
   }
   for (const o of visible) {
     const n = counts?.[o.id] ?? 0;
-    const on = chosen === o.id;
+    const on = chosen.includes(o.id);
     opts.append(el('button', {
-      class: 'facet', type: 'button', 'aria-pressed': String(on),
+      /* A checkbox rather than a radio: clicking a second subject adds it. The
+         tick is the affordance, and clicking a ticked option removes it. */
+      class: 'facet', type: 'button', role: 'checkbox', 'aria-checked': String(on),
+      'aria-pressed': String(on),
       onclick: () => {
-        state[key] = on ? null : o.id;
-        if (key === 'topic' && state.topic) state.subject = TOPIC_MAP[state.topic].subject;
-        if (key === 'subject' && state.topic && TOPIC_MAP[state.topic]?.subject !== state.subject) state.topic = null;
-        if (key === 'grade' && state.level && !GRADE_MAP[state.grade]?.levels.includes(state.level)) state.level = null;
+        state[key] = on ? chosen.filter(v => v !== o.id) : [...chosen, o.id];
+        reconcile(key);
         apply({ resetPage: true });
       }
     },
+      el('span', { class: 'facet-box' }, on ? icon('check', { size: 12 }) : null),
       el('span', { class: 'facet-name', text: o.label }),
-      el('span', { class: 'facet-n', text: n ? n.toLocaleString() : '' }),
-      on ? el('span', { class: 'facet-tick' }, icon('check', { size: 14 })) : null));
+      el('span', { class: 'facet-n', text: n ? n.toLocaleString() : '' })));
   }
 
   if (!opts.childElementCount) opts.append(el('p', { class: 'small muted', text: 'Nothing left to narrow by.' }));
@@ -142,10 +175,11 @@ function filterGroup(label, key, options, counts, { compact = false, any = null 
 }
 
 function buildFilters(counts) {
-  const levelOptions = (state.grade ? [GRADE_MAP[state.grade]] : GRADES)
-    .flatMap(g => g.levels.map(l => ({ id: l, label: l })));
+  const gradeSource = state.grade.length ? state.grade.map(g => GRADE_MAP[g]).filter(Boolean) : GRADES;
+  const levelOptions = gradeSource.flatMap(g => g.levels.map(l => ({ id: l, label: l })));
 
-  const topicSource = state.subject ? [SUBJECT_MAP[state.subject]] : SUBJECTS;
+  const topicSource = state.subject.length
+    ? state.subject.map(id => SUBJECT_MAP[id]).filter(Boolean) : SUBJECTS;
   const topicOptions = topicSource.flatMap(s => s.topics.map(t => ({ id: t.id, label: t.name })));
 
   groupsHost.replaceChildren(
@@ -190,16 +224,23 @@ const LABELS = {
 
 function buildActiveFilters() {
   const host = $('#active-filters');
-  const active = FILTERS.filter(k => state[k]);
+  /* One chip per chosen value, not per group: with several subjects selected,
+     a single "Subject ×" chip would hide what is actually on and remove three
+     choices at one click. */
+  const active = FILTERS.flatMap(k => valuesOf(state[k]).map(v => [k, v]));
   const label = document.getElementById('filter-toggle-label');
   if (label) label.textContent = active.length ? `Filters (${active.length})` : 'Filters';
   if (!active.length && !state.text) { host.replaceChildren(); return; }
 
-  const chips = active.map(k => el('button', {
+  const chips = active.map(([k, v]) => el('button', {
     class: 'chip is-active', type: 'button',
-    'aria-label': `Remove filter ${LABELS[k](state[k])}`,
-    onclick: () => { state[k] = null; apply({ resetPage: true }); }
-  }, `${LABELS[k](state[k])}`, el('span', { 'aria-hidden': 'true', text: '×' })));
+    'aria-label': `Remove filter ${LABELS[k](v)}`,
+    onclick: () => {
+      state[k] = valuesOf(state[k]).filter(x => x !== v);
+      reconcile(k);
+      apply({ resetPage: true });
+    }
+  }, `${LABELS[k](v)}`, el('span', { 'aria-hidden': 'true', text: '×' })));
 
   if (state.text) {
     chips.unshift(el('button', {
@@ -214,7 +255,10 @@ function apply({ pushUrl = true, resetPage = false } = {}) {
   if (resetPage) shown = PAGE_SIZE;
   if (pushUrl) writeUrl();
   /* Filtering to a grade band tunes the type scale with it. */
-  document.body.dataset.band = state.grade ? (GRADE_MAP[state.grade]?.band ?? 'mid') : 'mid';
+  /* One grade selected tints the page for that band; several is no longer one
+     band, so the neutral tint is the honest answer. */
+  document.body.dataset.band = state.grade.length === 1
+    ? (GRADE_MAP[state.grade[0]]?.band ?? 'mid') : 'mid';
   buildFilters(facetCounts(state));
   buildActiveFilters();
 
@@ -249,7 +293,7 @@ function apply({ pushUrl = true, resetPage = false } = {}) {
 }
 
 function clearAll() {
-  for (const k of FILTERS) state[k] = null;
+  for (const k of FILTERS) state[k] = [];
   state.text = '';
   input.value = '';
   apply({ resetPage: true });
@@ -261,7 +305,7 @@ input.value = state.raw ?? state.text ?? '';
 
 if (state.raw && state.raw !== state.text) {
   const note = $('#parse-note');
-  const understood = FILTERS.filter(k => state[k]).map(k => LABELS[k](state[k]));
+  const understood = FILTERS.flatMap(k => valuesOf(state[k]).map(v => LABELS[k](v)));
   if (understood.length) {
     note.hidden = false;
     note.textContent = `Understood as: ${understood.join(' · ')}${state.text ? ` + “${state.text}”` : ''}`;
@@ -271,7 +315,7 @@ if (state.raw && state.raw !== state.text) {
 $('#search-form').addEventListener('submit', e => {
   e.preventDefault();
   const parsed = parseQuery(input.value);
-  for (const k of FILTERS) state[k] = parsed[k] ?? state[k];
+  for (const k of FILTERS) state[k] = parsed[k] ? [parsed[k]] : state[k];
   state.text = parsed.text;
   $('#parse-note').hidden = true;
   apply({ resetPage: true });

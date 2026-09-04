@@ -90,7 +90,13 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
-.site-header .wrap { display: flex; align-items: center; gap: var(--s5); height: var(--header-h); flex-wrap: nowrap; }
+/* The header bar is full-bleed, so its contents do not have to line up with
+   the 1200px article column — and at 1200 they genuinely do not fit: brand,
+   six nav links and five controls need about 1250. */
+.site-header .wrap {
+  display: flex; align-items: center; gap: var(--s5);
+  height: var(--header-h); flex-wrap: nowrap; max-width: 1400px;
+}
 
 .brand { display: inline-flex; align-items: center; gap: var(--s3); font-family: var(--font-head); font-weight: 700; font-size: var(--step-1); color: var(--text); }
 .brand:hover { text-decoration: none; }
@@ -119,7 +125,16 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 .lang-select:hover { color: var(--text); border-color: var(--border-strong); }
 .lang-select:focus-visible { outline: none; box-shadow: var(--ring); }
 
-.main-nav { display: flex; align-items: center; gap: var(--s1); margin-inline: auto; min-width: 0; }
+/* `flex: 1`, not `margin-inline: auto`. An auto margin on a flex item absorbs
+   ALL the free space into the margins and then lets the item itself shrink
+   below its content — so the nav sat centred in a box narrower than its own
+   links and quietly painted them over the buttons beside it. Taking the free
+   space as width and centring the content inside gets the same look and keeps
+   the items in their box. */
+.main-nav {
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--s1); flex: 1 1 auto; min-width: 0;
+}
 .main-nav a {
   padding: var(--s2) var(--s3); border-radius: var(--r-sm);
   color: var(--text-2); font-weight: 500; font-size: var(--step-0);
@@ -175,15 +190,45 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
 /* ---------------------------- mobile bottom nav ---------------------------- */
 .bottom-nav { display: none; }
 
-/* Between the mobile breakpoint and a comfortable desktop the header is tight,
-   and the translated nav labels are wider than the English ones — German runs
-   50px over at 940px. Tighten the row rather than let it overflow. */
-@media (min-width: 901px) and (max-width: 1100px) {
+/* Above the mobile breakpoint the header sheds controls before it sheds
+   space for the nav, in order of how easily each is reached elsewhere. */
+@media (min-width: 901px) and (max-width: 1320px) {
+  /* Search has its own page, its own box on that page, and a bottom-bar entry
+     on small screens. It is the first thing the header can spare. */
+  .header-actions > .icon-btn:first-child { display: none; }
+}
+@media (min-width: 901px) and (max-width: 1240px) {
   .site-header .wrap { gap: var(--s3); }
   .main-nav { gap: 0; }
   .main-nav a { padding-inline: var(--s2); }
   .lang-select { padding-right: var(--s2); }
+  /* Sign in lives one click inside Get started, so the secondary button goes
+     before the primary one does. */
+  .header-actions > .btn-ghost { display: none; }
+  .theme-btn { display: none; }
 }
+
+/* When even that is not enough the nav becomes the menu, at whatever width
+   that turns out to be. A media query cannot make this decision: the nav is
+   nine words in English and eleven longer ones in German, so the width where
+   it stops fitting is a property of the content, not of the device. shell.js
+   measures and sets `.nav-as-menu`; the rules below are shared with the
+   ≤900px block, which stays as the floor in case the script never runs. */
+.site-header.nav-as-menu .main-nav {
+  position: fixed; inset: var(--header-h) 0 auto 0; z-index: 55;
+  flex-direction: column; align-items: stretch; gap: 0; margin: 0;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: var(--s3); box-shadow: var(--shadow-2);
+}
+.site-header.nav-as-menu .main-nav[hidden] { display: none; }
+.site-header.nav-as-menu .main-nav a { padding: var(--s3) var(--s4); border-radius: var(--r-md); }
+.site-header.nav-as-menu .nav-toggle { display: grid; }
+.site-header.nav-as-menu .lang-in-header { display: none; }
+.site-header.nav-as-menu .lang-in-nav {
+  display: flex; margin-top: var(--s2); padding-top: var(--s3);
+  border-top: 1px solid var(--border);
+}
+.site-header.nav-as-menu .lang-in-nav .lang-select { width: 100%; height: 42px; }
 
 @media (max-width: 900px) {
   .app-layout { grid-template-columns: minmax(0, 1fr); }

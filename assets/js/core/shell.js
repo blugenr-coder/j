@@ -6,7 +6,7 @@ import { el, esc, $ } from './util.js';
 import { icon, iconHtml } from './icons.js';
 import { logoTile } from './logo.js';
 import { applyTheme, setTheme, getState, currentUser, signOut, isTeacher } from './store.js';
-import { LANGUAGES, currentLanguage, setLanguage, initLanguage } from './i18n.js';
+import { LANGUAGES, currentLanguage, setLanguage, initLanguage, whenReady } from './i18n.js';
 
 /* Pages inside /teacher/ set data-base=".." so every link still resolves. */
 export const base = () => document.body.dataset.base ? document.body.dataset.base.replace(/\/?$/, '/') : '';
@@ -151,10 +151,11 @@ function buildHeader(page, nav) {
   const header = el('header', { class: 'site-header' });
   const wrap = el('div', { class: 'wrap' });
 
-  wrap.append(el('a', {
+  const brandLink = el('a', {
     class: 'brand', href: href(user ? 'dashboard.html' : 'index.html'),
     html: `${logoTile({ size: 34 })}<span class="brand-word" translate="no">Worksheet<span class="brand-word-accent">Hub</span></span>`
-  }));
+  });
+  wrap.append(brandLink);
 
   const list = el('nav', { class: 'main-nav', id: 'main-nav', 'aria-label': 'Main' });
   for (const item of PUBLIC_NAV) {
@@ -214,17 +215,103 @@ function buildHeader(page, nav) {
   });
   actions.append(toggle);
 
-  /* The nav is a dropdown only on small screens; CSS handles the layout, but
-     the hidden attribute must start correct for keyboard users. */
-  const applyViewport = () => {
-    const small = window.matchMedia('(max-width: 900px)').matches;
-    list.hidden = small && toggle.getAttribute('aria-expanded') !== 'true';
-  };
-  applyViewport();
-  window.addEventListener('resize', applyViewport);
-
   wrap.append(actions);
   header.append(wrap);
+
+  /* ------------------------- does the nav still fit? -------------------------
+     A breakpoint cannot answer this. The nav is six links whose combined width
+     depends on the language — English needs about 560px, German about 710 —
+     so the width at which the row stops fitting is a property of the words,
+     not of the device. Measure the nav's natural width once, then compare it
+     against the space the brand and the buttons leave over.
+
+     Measured once because a hidden nav has no width to measure: after the
+     first collapse there is nothing left to read back. */
+  /* Collapsing the nav also changes the buttons beside it — the menu button
+     appears, the language picker moves into the panel — so "how much room is
+     there" is different depending on the answer we are trying to reach. The
+     first version compared a cached nav width against whatever room the
+     current state happened to leave, and oscillated: collapse freed 78px, so
+     it expanded, which took the room away, so it collapsed.
+
+     Both numbers are therefore read in the same configuration. The row is
+     forced to its expanded layout for the measurement and put back before the
+     browser paints, so nothing flickers and the comparison is between two
+     quantities that belong together. */
+  const measure = () => {
+    /* Two pieces of state hide the answer, and both have to be lifted: the
+       class changes which buttons share the row, and `hidden` leaves the nav
+       with no width at all to read. Restored before the browser paints. */
+    const collapsed = header.classList.contains('nav-as-menu');
+    const wasHidden = list.hidden;
+    if (collapsed) header.classList.remove('nav-as-menu');
+    if (wasHidden) list.hidden = false;
+
+    const style = getComputedStyle(wrap);
+    const gaps = (parseFloat(style.columnGap) || parseFloat(style.gap) || 0) * 2;
+    /* Reading offsetWidth forces the changes above to be applied first. */
+    const room = wrap.clientWidth
+      - (parseFloat(style.paddingLeft) || 0) - (parseFloat(style.paddingRight) || 0)
+      - brandLink.offsetWidth - actions.offsetWidth - gaps;
+    const need = list.scrollWidth;
+
+    if (wasHidden) list.hidden = true;
+    if (collapsed) header.classList.add('nav-as-menu');
+    return { room, need };
+  };
+
+  const fitNav = () => {
+    const small = window.matchMedia('(max-width: 900px)').matches;
+    if (small) {
+      header.classList.remove('nav-as-menu');
+    } else {
+      const { room, need } = measure();
+      /* Measured fresh each time. An earlier version kept the widest reading
+         ever seen, to survive measuring a hidden nav — but `measure` now lifts
+         that state, and the high-water mark had its own failure: the fallback
+         font is wider than the web font, so one reading taken before the fonts
+         arrived collapsed the nav permanently. */
+      header.classList.toggle('nav-as-menu', need > room);
+    }
+    const asMenu = small || header.classList.contains('nav-as-menu');
+    if (!asMenu) toggle.setAttribute('aria-expanded', 'false');
+    list.hidden = asMenu && toggle.getAttribute('aria-expanded') !== 'true';
+  };
+
+  let queued = false;
+  const refit = () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; fitNav(); });
+  };
+
+  requestAnimationFrame(fitNav);
+  document.fonts?.ready.then(refit).catch(() => {});
+  window.addEventListener('resize', fitNav);
+
+  /* The link text itself is what changes, and it changes late: the header is
+     inserted after the language pack has already swept the document, so the
+     translation reaches these links through the i18n MutationObserver, after
+     everything else has settled. A ResizeObserver does not see it either — the
+     nav is a clamped flex item, so its border box stays exactly the same width
+     while its content grows past it. Watching the text is the only signal that
+     actually fires. */
+  if (typeof MutationObserver !== 'undefined') {
+    new MutationObserver(refit).observe(list,
+      { childList: true, subtree: true, characterData: true });
+  }
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(refit).observe(wrap);
+
+  /* `data-nav-ready` marks the point where the header has been measured
+     against the text it will actually show. Tests wait for it instead of
+     guessing a delay, and it costs one attribute. */
+  const markReady = () => requestAnimationFrame(() => requestAnimationFrame(() => {
+    fitNav();
+    document.documentElement.dataset.navReady = '1';
+  }));
+  whenReady().then(markReady).catch(markReady);
+  fitNav();
+
   return header;
 }
 

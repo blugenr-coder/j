@@ -220,6 +220,7 @@ export const QUESTION_TYPES = [
   { id: 'match',   name: 'Matching',          icon: 'q-match' },
   { id: 'order',   name: 'Ordering',          icon: 'q-order' },
   { id: 'graph',   name: 'Graph',             icon: 'q-graph' },
+  { id: 'label',   name: 'Label the diagram',  icon: 'q-label' },
   { id: 'written', name: 'Written response',  icon: 'q-written' }
 ];
 

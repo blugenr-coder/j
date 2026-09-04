@@ -36,6 +36,22 @@
   --border:         #E2E8F0;
   --border-strong:  #CBD5E1;
 
+  /* Diagram palette. Figures are line art with flat tints so they read the
+     same on screen, in dark mode and on a printed sheet. Kept separate from
+     the brand tokens because a diagram is information, not decoration: these
+     have to stay distinguishable from one another, not match the buttons. */
+  --fig-bg:         #FFFFFF;
+  --fig-line:       #334155;
+  --fig-text:       #0F172A;
+  --fig-tint:       #EEF2FF;
+  --fig-accent:     #C7D2FE;
+  --fig-deep:       #A5B4FC;
+  --fig-warm:       #FDE68A;
+  --fig-cool:       #BAE6FD;
+  --fig-leaf:       #BBF7D0;
+  --fig-accent-line:#4F46E5;
+  --fig-cool-line:  #7DD3FC;
+
   /* Typography */
   --font-head: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
@@ -101,6 +117,21 @@
   --btn-ink-hover:  #4338CA;
   --border:         #1E293B;
   --border-strong:  #334155;
+
+  /* Dark mode keeps the same hues at the same *relative* lightness: the tints
+     become the dark end and the lines the light end, so a diagram inverts as a
+     whole rather than turning into black shapes on a dark page. */
+  --fig-bg:         #111827;
+  --fig-line:       #CBD5E1;
+  --fig-text:       #F1F5F9;
+  --fig-tint:       #1E1B4B;
+  --fig-accent:     #3730A3;
+  --fig-deep:       #4338CA;
+  --fig-warm:       #78350F;
+  --fig-cool:       #0C4A6E;
+  --fig-leaf:       #14532D;
+  --fig-accent-line:#A5B4FC;
+  --fig-cool-line:  #0369A1;
 
   --shadow-1: 0 1px 2px rgba(0, 0, 0, .4);
   --shadow-2: 0 4px 16px rgba(0, 0, 0, .45);

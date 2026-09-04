@@ -114,6 +114,25 @@ export const writtenQ = (prompt, sample_, explanation) =>
   ({ type: 'written', prompt, sample: sample_, explanation });
 
 /**
+ * A diagram-labelling question.
+ * `parts` are the figure's parts to point at, in the order the markers are
+ * numbered. Distractor labels come from the figure's remaining parts, so a
+ * wrong option is always a part of the same diagram rather than a word that
+ * obviously belongs elsewhere.
+ */
+export const labelQ = (r, { figure, parts, extras = [], prompt, hint, explanation }) => {
+  const options = sample(r, [...parts.map(p => p.label), ...extras],
+                         parts.length + extras.length);
+  return {
+    type: 'label', prompt, figure,
+    markers: parts.map(p => ({ x: p.x, y: p.y, to: p.to ?? null })),
+    options,
+    answer: parts.map(p => options.indexOf(p.label)),
+    hint, explanation
+  };
+};
+
+/**
  * Assemble a worksheet from a weighted list of question makers.
  * Each maker gets its own derived seed so adding a question type later does
  * not reshuffle every existing worksheet.
@@ -129,6 +148,7 @@ const answerIdentity = q => {
     case 'match':  return (q.pairs ?? []).map(p => p.left).sort().join('\u0001');
     case 'order':  return [...(q.items ?? [])].sort().join('\u0001');
     case 'graph':  return JSON.stringify(q.answer ?? '');
+    case 'label':  return (q.answer ?? []).map(i => q.options?.[i]).join('\u0001');
     default:       return String(q.answer ?? '');
   }
 };
