@@ -295,9 +295,11 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   line-height: 1.7; max-width: 90ch;
 }
 
-/* Separators belong to the word before them, never to the line after. */
-.subject-row-topics .topic-chip + .topic-chip::before {
-  content: '·'; color: var(--border-strong); margin: 0 .45em 0 .2em;
+/* Separators belong to the word before them, never to the line after — so the
+   dot hangs off the end of the preceding chip, and the break opportunity (a
+   zero-width space in the markup) comes after it. */
+.subject-row-topics .topic-chip:not(:last-child)::after {
+  content: '·'; color: var(--border-strong); margin: 0 .2em 0 .45em;
 }
 
 /* A grid rather than CSS columns: rows line up across the two tracks, and no

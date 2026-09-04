@@ -106,6 +106,9 @@
 
 /* ================================ LIBRARY ================================ */
 .library-layout { display: grid; grid-template-columns: 268px minmax(0, 1fr); gap: var(--s5); align-items: start; }
+/* On a phone the filter rail is a full screen of controls in front of the
+   results, so it collapses behind a button and the worksheets come first. */
+.filter-toggle { display: none; }
 .filter-panel {
   position: sticky; top: calc(var(--header-h) + var(--s4));
   max-height: calc(100vh - var(--header-h) - var(--s6));
@@ -166,8 +169,10 @@
   .hero-grid, .split { grid-template-columns: 1fr; gap: var(--s6); }
   .hero-art { order: -1; }
   .float-card { display: none; }
-  .library-layout { grid-template-columns: 1fr; }
+  .library-layout { grid-template-columns: minmax(0, 1fr); }
   .filter-panel { position: static; max-height: none; }
+  .filter-toggle { display: flex; justify-content: center; gap: var(--s2); width: 100%; }
+  .filter-panel[hidden] { display: none; }
   .teacher-band { padding: var(--s5); }
 }
 

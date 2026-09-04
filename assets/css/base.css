@@ -199,6 +199,11 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   .brand { font-size: var(--step-0); }
   /* One call to action in the header is enough when space is this tight. */
   .header-actions .btn-ghost { display: none; }
+  /* Below this width the header cannot hold brand, theme toggle, call to
+     action and menu button at once — it overflowed by 24px. The theme toggle
+     is the one that also lives in Settings, so it is the one that goes. */
+  .header-actions > .theme-btn { display: none; }
+  .site-header .wrap { gap: var(--s4); }
   .section { padding-block: var(--s6); }
   .footer-grid { grid-template-columns: 1fr; }
 }

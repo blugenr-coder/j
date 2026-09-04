@@ -190,10 +190,15 @@ export function subjectCard(subject) {
       el('span', { class: 'subject-row-count mono', text: count.toLocaleString() })),
     el('p', { class: 'subject-row-blurb', text: subject.blurb }),
     /* Each topic is its own span so the separator can hang off the word before
-       it. Joining with " · " lets a line break land before the dot, which puts
-       a stray separator at the start of the next line. */
+       it: joining with a plain " · " lets a line break land before the dot,
+       which strands a separator at the start of the next line.
+       The zero-width space after each span is what makes the line breakable at
+       all — without it the whole run is one unbreakable word, and on a phone
+       the subject list ran eight hundred pixels off the side of the screen. */
     el('p', { class: 'subject-row-topics' },
-      topics.map(name => el('span', { class: 'topic-chip', text: name })))
+      topics.flatMap((name, i) => i === topics.length - 1
+        ? [el('span', { class: 'topic-chip', text: name })]
+        : [el('span', { class: 'topic-chip', text: name }), document.createTextNode('\u200B')]))
   );
 }
 

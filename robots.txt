@@ -1,0 +1,7 @@
+# WorksheetHub — everything here is public and static.
+User-agent: *
+Allow: /
+
+# The library is a hundred thousand generated URLs off one page; there is no
+# value in a crawler walking every set, so only the real pages are listed.
+Sitemap: /sitemap.xml

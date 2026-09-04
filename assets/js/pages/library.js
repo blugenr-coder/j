@@ -164,6 +164,8 @@ const LABELS = {
 function buildActiveFilters() {
   const host = $('#active-filters');
   const active = FILTERS.filter(k => state[k]);
+  const label = document.getElementById('filter-toggle-label');
+  if (label) label.textContent = active.length ? `Filters (${active.length})` : 'Filters';
   if (!active.length && !state.text) { host.replaceChildren(); return; }
 
   const chips = active.map(k => el('button', {
@@ -258,6 +260,24 @@ input.addEventListener('input', () => {
 $('#sort').value = state.sort;
 $('#sort').addEventListener('change', e => { state.sort = e.target.value; apply({ resetPage: true }); });
 $('#clear-filters').addEventListener('click', clearAll);
+
+/* The filter rail is a screenful on a phone, so below the breakpoint it starts
+   closed and the results are the first thing you see. Above it, the button is
+   not rendered at all and the panel is always open. */
+const narrow = window.matchMedia('(max-width: 900px)');
+const panel = $('#filter-panel');
+const toggle = $('#filter-toggle');
+function syncPanel() {
+  if (!narrow.matches) { panel.hidden = false; toggle.setAttribute('aria-expanded', 'true'); return; }
+  panel.hidden = toggle.getAttribute('aria-expanded') !== 'true';
+}
+toggle.addEventListener('click', () => {
+  const open = toggle.getAttribute('aria-expanded') === 'true';
+  toggle.setAttribute('aria-expanded', String(!open));
+  syncPanel();
+});
+narrow.addEventListener('change', syncPanel);
+syncPanel();
 window.addEventListener('popstate', () => { readUrl(); input.value = state.text; apply({ pushUrl: false }); });
 
 apply({ pushUrl: false });

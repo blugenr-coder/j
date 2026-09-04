@@ -152,7 +152,7 @@ function buildHeader(page, nav) {
   }));
 
   const themeBtn = el('button', {
-    class: 'icon-btn', type: 'button', 'aria-label': 'Switch colour theme', title: 'Switch colour theme',
+    class: 'icon-btn theme-btn', type: 'button', 'aria-label': 'Switch colour theme', title: 'Switch colour theme',
     onclick: () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
       setTheme(next);

@@ -2,7 +2,7 @@
   "name": "worksheethub",
   "version": "0.1.0",
   "private": true,
-  "description": "Practice anything. Learn everything. \u2014 an exercise library that works online and on paper.",
+  "description": "Practice anything. Learn everything. — an exercise library that works online and on paper.",
   "type": "module",
   "scripts": {
     "start": "npx --yes http-server -p 8099 -c-1 .",
@@ -11,7 +11,8 @@
     "test:links": "node tools/check-links.mjs",
     "test:render": "node tools/check-render.mjs",
     "test:spacing": "node tools/check-spacing.mjs",
-    "test:all": "node tools/check-render.mjs && node tools/check-spacing.mjs && node tools/check-contrast.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs",
-    "test:contrast": "node tools/check-contrast.mjs"
+    "test:all": "node tools/check-render.mjs && node tools/check-spacing.mjs && node tools/check-contrast.mjs && node tools/check-mobile.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs",
+    "test:contrast": "node tools/check-contrast.mjs",
+    "test:mobile": "node tools/check-mobile.mjs"
   }
 }

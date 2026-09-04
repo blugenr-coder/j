@@ -257,6 +257,7 @@ npm start              # then, in another shell:
 npm run test:all       # everything below, in order
 npm run test:render    # asserts every page actually renders its content
 npm run test:contrast  # every text element against WCAG AA, in both themes
+npm run test:mobile    # nothing may scroll sideways at phone or tablet width
 npm run test:links     # crawls every page for broken internal links
 npm run test:e2e       # drives a real browser through every question type, and
                        # the teacher flows: analytics, codes, joining, the builder
@@ -269,6 +270,11 @@ Three of these exist because of bugs they caught:
 - `tools/check-render.mjs` — a page can load with no console errors and still
   render nothing, because `replaceChildren` takes varargs and quietly stringifies
   an array it is handed. This asserts the content is really on the page.
+- `tools/check-mobile.mjs` — the subject list joined topic names with no
+  whitespace between them, so the browser saw one unbreakable word and ran it
+  eight hundred pixels off the side of a phone screen. This walks every page at
+  two widths and fails anything that escapes the viewport, ignoring content
+  inside a container that is deliberately scrollable.
 - `tools/check-contrast.mjs` — a band styled `background: var(--text); color: #fff`
   inverted in dark mode and became white text on a white card. Nothing else could
   see it: the markup was correct, the page rendered, the links worked. This walks
