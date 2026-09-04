@@ -21,12 +21,14 @@ import { ELA2_UNITS } from './units-ela2.js';
 import { HIST_UNITS } from './units-hist.js';
 import { LANG2_UNITS } from './units-lang2.js';
 import { MORE2_UNITS } from './units-more2.js';
+import { ELEM_UNITS } from './units-elem.js';
+import { ELEM2_UNITS } from './units-elem2.js';
 
 /* Merged per topic: several files may contribute units to the same topic. */
 export const UNITS = (() => {
   const out = {};
   for (const src of [EARLY_UNITS, SCIENCE_UNITS, HUMANITIES_UNITS, ELA_UNITS, LANGUAGE_UNITS,
-                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS]) {
+                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS, ELEM_UNITS, ELEM2_UNITS]) {
     for (const [topic, units] of Object.entries(src)) {
       (out[topic] ??= []).push(...units);
     }

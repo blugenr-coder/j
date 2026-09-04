@@ -6,6 +6,7 @@
 
 import { FAMILIES, AUTHORED, CUSTOM, countWhere } from '../data/exercises.js';
 import { GRADES, SUBJECTS, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES } from '../data/catalog.js';
+import { UNIT_META } from '../data/generated.js';
 
 /* Level words the parser understands, mapped to {grade band, level}. */
 const LEVEL_WORDS = (() => {
@@ -122,28 +123,36 @@ const haystackCache = new Map();
 function haystack(ex) {
   let entry = haystackCache.get(ex.id);
   if (entry === undefined) {
-    /* `title` and `summary` are getters that build a string every time they
-       are read, so they are read once here and kept, rather than once per
-       query word per worksheet. */
-    const title = ex.title.toLowerCase();
-    const summary = ex.summary.toLowerCase();
-    const text = [title, summary, ex.level, ex.topic, ex.subject,
-                  ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
-      .join(' ').toLowerCase();
-    /* `stems` stays null until something actually needs it. Building a Set of
-       word stems for every family up front cost 700ms on the first search and
-       earned almost nothing: a stem is a prefix of the word it came from, so a
-       substring test over the text already finds it. Only the -ies → -y rule
-       breaks that, and it is the one case that reaches the Set. */
-    entry = { title, summary, text, stems: null };
+    /* Four separate fields, deliberately not concatenated.
+       `keywords` is the unit's own vocabulary, and it is long — a couple of
+       kilobytes. Joining it into a per-worksheet string copied it into all
+       eighty thousand of them: 3.8 seconds to build and 740MB of heap, for a
+       string that is identical across every family of the same unit. Held by
+       reference it costs nothing, because every family of a unit points at the
+       same one.
+
+       `extra` is built only if the cheaper fields all miss, which is rare. */
+    entry = {
+      ex,
+      title: ex.title.toLowerCase(),
+      summary: ex.summary.toLowerCase(),
+      keywords: ex.unit ? (UNIT_META[ex.unit]?.keywords ?? '') : '',
+      extra: null
+    };
     haystackCache.set(ex.id, entry);
   }
   return entry;
 }
 
-function stemsOf(entry) {
-  if (entry.stems === null) entry.stems = stemSet(entry.text);
-  return entry.stems;
+/** Level, topic, subject and any question text already in memory. */
+function extraOf(entry) {
+  if (entry.extra === null) {
+    const ex = entry.ex;
+    entry.extra = [ex.level, ex.topic, ex.subject,
+                   ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
+      .join(' ').toLowerCase();
+  }
+  return entry.extra;
 }
 
 /* ------------------------------- word forms -------------------------------
@@ -167,14 +176,6 @@ function stem(word) {
   return w;
 }
 
-function stemSet(text) {
-  const out = new Set();
-  for (const token of text.split(/[^a-z0-9'-]+/)) {
-    if (token.length > 1) out.add(stem(token));
-  }
-  return out;
-}
-
 /**
  * How well one query word matches one worksheet, as a score.
  * Substring first, because that is what makes a half-typed word find things;
@@ -194,16 +195,32 @@ function wordScore(entry, term) {
   const { w, st, root } = term;
   if (entry.title.includes(w)) return 12;
   if (entry.summary.includes(w)) return 6;
-  if (entry.text.includes(w)) return 2;
+  /* What the unit actually teaches. Ranked below the title and summary, so a
+     worksheet named for the thing you searched for still comes first. */
+  if (entry.keywords.includes(w)) return 5;
+  if (extraOf(entry).includes(w)) return 2;
   if (!st) return 0;
-  /* Scored below an exact hit, so an exact match still sorts first; these only
-     decide whether a worksheet appears at all. "cells" finds Cell Structure
-     and Cellular Respiration; "photosynthesise" finds photosynthesis. */
-  if (st.length > 3 && entry.text.includes(st)) return 4;
-  if (root && entry.text.includes(root)) return 2;
-  /* The one case a substring cannot reach: -ies became -y, so the stem is not
-     a prefix of the word as written. */
-  if (st !== w && stemsOf(entry).has(st)) return 3;
+  /* Scored below an exact hit; these only decide whether a worksheet appears
+     at all. "cells" finds Cell Structure and Cellular Respiration;
+     "photosynthesise" finds photosynthesis. */
+  if (st.length > 3) {
+    if (entry.title.includes(st) || entry.summary.includes(st)) return 4;
+    if (entry.keywords.includes(st)) return 4;
+    if (extraOf(entry).includes(st)) return 3;
+  }
+  if (root && (entry.keywords.includes(root) || entry.title.includes(root)
+               || entry.summary.includes(root) || extraOf(entry).includes(root))) return 2;
+  /* Every stemming rule trims the end of a word, so the substring tests above
+     already cover them — except -y → -ies, which rewrites. Searching "body"
+     has to reach a worksheet that says "bodies", and no amount of trimming
+     "body" produces "bodies". So that one form is spelled out and tested
+     directly. An earlier version built a set of word stems per worksheet for
+     this, which cost three and a half seconds on a one-word search. */
+  if (w.endsWith('y') && w.length > 3) {
+    const plural = `${w.slice(0, -1)}ies`;
+    if (entry.keywords.includes(plural) || entry.title.includes(plural)
+        || entry.summary.includes(plural) || extraOf(entry).includes(plural)) return 3;
+  }
   return 0;
 }
 

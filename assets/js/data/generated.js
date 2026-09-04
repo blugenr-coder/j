@@ -157,7 +157,22 @@ for (const [topic, units] of Object.entries(UNITS)) {
         (f.only ? gens.filter(g => f.only.includes(g.id)) : gens)
           .reduce((n, g) => n + capacityOf(unit, g.id, g), 0)])),
       kinds: new Set(gens.map(g => g.kind)),
-      ids: new Set(gens.map(g => g.id))
+      ids: new Set(gens.map(g => g.id)),
+      /* What this unit is actually about, for search. A worksheet's title and
+         summary name the unit — "Cell Structure and Function" — and say nothing
+         about osmosis, ribosomes or active transport, which is what somebody
+         is far more likely to type. The question text would carry it, but that
+         only exists once a sheet has been opened, so searching for a term
+         found only inside the questions returned nothing at all. One string per
+         unit, built once, shared by every family that uses it. */
+      keywords: [
+        unit.name,
+        ...(unit.facts ?? []).flatMap(f => f),
+        ...(unit.truths ?? []),
+        ...(unit.myths ?? []),
+        ...(unit.sequences ?? []).map(sq => sq[0]),
+        ...(unit.applications ?? []).map(a => a[1])
+      ].join(' ').toLowerCase()
     };
   }
 }
