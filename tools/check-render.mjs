@@ -40,10 +40,32 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ viewport: { width: 1400, height: 1000 } });
 await ctx.route('**://fonts.googleapis.com/**', r => r.abort());
 await ctx.route('**://fonts.gstatic.com/**', r => r.abort());
+/* A real teacher account: a class, an assignment, and one submission that
+   actually came back. The teacher pages used to be seeded with invented
+   students so they always had something to draw; now they show what happened,
+   so the check has to make something happen. */
 await ctx.addInitScript(() => {
   try {
+    const answers = {};
+    for (let i = 1; i <= 12; i++) answers[`q${i}`] = { correct: i % 3 !== 0 };
     localStorage.setItem('worksheethub:v1', JSON.stringify({
-      user: { name: 'Ana Ruiz', role: 'student', grade: 'middle', initials: 'AR', since: Date.now() }
+      user: { name: 'Ana Ruiz', role: 'student', grade: 'middle', initials: 'AR', since: Date.now() },
+      teacher: {
+        classes: [{
+          id: 'c-check', name: 'Grade 8B — Mathematics', level: 'Grade 8', grade: 'middle',
+          subject: 'math', code: 'ABC-123', created: Date.now(), archived: false,
+          students: [{ id: 'stu-1', name: 'Marcus Bell', joinedAt: Date.now(), source: 'added' }],
+          exerciseIds: ['linear-equations']
+        }],
+        assignments: [{
+          id: 'a-check', code: 'XYZ-789', classId: 'c-check',
+          exerciseId: 'linear-equations', worksheetIds: ['linear-equations'],
+          title: null, due: null, note: null, created: Date.now()
+        }]
+      },
+      submissions: {
+        'a-check': { 'stu-1': { 'linear-equations': { correct: 8, total: 12, answers, at: Date.now() } } }
+      }
     }));
   } catch {}
 });

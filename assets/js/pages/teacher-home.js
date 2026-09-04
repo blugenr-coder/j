@@ -28,27 +28,31 @@ const t = teacherData();
 
 /* --------------------------------- stats --------------------------------- */
 const students = t.classes.reduce((a, c) => a + c.students.length, 0);
-const results = t.classes.flatMap(c => c.exerciseIds.map(id => classResults(c.id, id))).filter(Boolean);
+/* Every worksheet actually set, from the assignments — the numbers on this
+   page are what students handed in, and nothing else. */
+const setIds = new Set();
+for (const a of t.assignments ?? []) for (const id of a.worksheetIds ?? [a.exerciseId]) if (id) setIds.add(`${a.classId}|${id}`);
+for (const c of t.classes) for (const id of c.exerciseIds ?? []) setIds.add(`${c.id}|${id}`);
+const results = [...setIds].map(k => { const [cid, eid] = k.split('|'); return classResults(cid, eid); }).filter(Boolean);
 const avg = results.length ? Math.round(results.reduce((a, r) => a + r.average, 0) / results.length) : 0;
 const answered = results.reduce((a, r) => a + r.answered, 0);
 
 $('#t-stats').replaceChildren(
   statTile({ label: 'Classes', value: String(t.classes.length), foot: `${students} students`, iconName: 'teacher' }),
-  statTile({ label: 'Class average', value: `${avg}%`, foot: 'Across all set work', iconName: 'progress', tone: 'green' }),
+  statTile({ label: 'Class average', value: results.length ? `${avg}%` : '—', foot: results.length ? 'Across work handed in' : 'Nothing handed in yet', iconName: 'progress', tone: 'green' }),
   statTile({ label: 'Questions answered', value: String(answered), foot: 'By your students', iconName: 'check-circle' }),
   statTile({ label: 'Assignments', value: String(t.assignments.length), foot: 'Created on this device', iconName: 'send', tone: 'orange' })
 );
 
 /* -------------------------------- classes -------------------------------- */
 $('#class-list').replaceChildren(...t.classes.filter(c => !c.archived).map(c => {
-  const r = classResults(c.id, c.exerciseIds[0]);
+  const r = results.find(x => x.class.id === c.id) ?? null;
   return el('a', { class: 'list-item', href: href(`teacher/class.html?id=${c.id}`) },
     el('span', { class: 'tile-icon' }, icon('teacher', { size: 18 })),
     el('span', { class: 'grow' },
       el('span', { class: 'list-title', style: 'display:block', text: c.name }),
       el('span', { class: 'list-sub', text: `${plural(c.students.length, 'student')} · code ${c.code}` })),
     el('span', { class: 'row', style: 'gap:8px' },
-      c.sample ? el('span', { class: 'badge', text: 'Sample' }) : null,
       el('strong', { class: 'mono small', text: r ? `${r.average}%` : '—' })));
 }));
 
@@ -74,7 +78,10 @@ $('#assignment-list').replaceChildren(...(assignments.length
 const hardest = results.flatMap(r => r.hardest.map(h => ({ ...h, exercise: r.exercise, cls: r.class })))
   .sort((a, b) => a.percent - b.percent).slice(0, 5);
 
-$('#hardest-list').replaceChildren(...hardest.map(h =>
+$('#hardest-list').replaceChildren(...(hardest.length ? hardest : [
+  el('p', { class: 'small muted', style: 'margin:0',
+            text: 'Nothing here yet. As soon as a class hands work in, the questions that caused trouble are listed here.' })
+]).map(h => h.nodeType ? h :
   el('a', { class: 'list-item', href: href(`teacher/analytics.html?class=${h.cls.id}&exercise=${h.exercise.id}`) },
     el('span', { class: `tile-icon ${h.percent < 50 ? 'red' : 'orange'}`, style: 'font-size:13px;font-weight:700',
       'aria-hidden': 'true', text: `${h.percent}%` }),

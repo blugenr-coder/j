@@ -324,12 +324,12 @@ export function createClass({ name, level, subject = null }) {
     code: makeAssignmentCode(),
     created: Date.now(),
     archived: false,
-    sample: false,
+
     students: [],
     exerciseIds: []
   };
   update(s => {
-    s.teacher ??= seedTeacher();
+    s.teacher ??= emptyTeacher();
     s.teacher.classes.unshift(cls);
   });
   return cls;
@@ -473,75 +473,60 @@ export function recordSubmission(exerciseId, result) {
 export const submissionsFor = assignmentId => state.submissions?.[assignmentId] ?? {};
 
 /* ------------------------------- teacher ------------------------------- */
-/* Teacher mode needs a class with results in it to be worth looking at.
-   On first use we seed two sample classes with deterministic pseudo-results
-   so the analytics view demonstrates real behaviour. Sample rows are marked
-   so nothing here is mistaken for live student data. */
+/* A teacher account starts empty. It used to start with two sample classes of
+   invented students and pseudo-random results, so the analytics screen had
+   something to show — which meant every number on it was fiction. A launched
+   product reports what actually happened, and shows an empty state until it
+   has. */
 export function teacherData() {
-  if (!state.teacher) update(s => { s.teacher = seedTeacher(); });
+  if (!state.teacher) update(s => { s.teacher = { classes: [], assignments: [] }; });
   return state.teacher;
 }
 
-function seedTeacher() {
-  const names = ['Ana Ruiz', 'Marcus Bell', 'Leila Haddad', 'Tom Novak', 'Sara Lindqvist',
-                 'Diego Peña', 'Mei Chen', 'Jonas Weber', 'Priya Nair', 'Owen Clarke',
-                 'Zoe Martin', 'Ibrahim Sy', 'Hanna Koch', 'Luca Rossi', 'Nina Petrova'];
-  const mk = (id, name, grade, level, size, exerciseIds) => ({
-    id, name, grade, level,
-    subject: 'math',
-    code: makeAssignmentCode(),
-    created: Date.now(),
-    archived: false,
-    sample: true,
-    students: names.slice(0, size).map((n, i) => ({
-      id: `${id}-s${i}`, name: n, joinedAt: Date.now(), source: 'added'
-    })),
-    exerciseIds
-  });
-  const classes = [
-    mk('c-7a', 'Grade 7A — Mathematics', 'middle', 'Grade 7', 12, ['percentages-real-life', 'angles-and-triangles']),
-    mk('c-8b', 'Grade 8B — Mathematics', 'middle', 'Grade 8', 15, ['linear-equations'])
-  ];
-  return { classes, assignments: [], results: {} };
-}
+const emptyTeacher = () => ({ classes: [], assignments: [] });
 
-/** Deterministic sample results so analytics is reproducible across reloads. */
+/**
+ * Results for one worksheet in one class, from what students actually
+ * submitted. Returns null when nobody has handed anything in — the caller is
+ * expected to say so rather than draw a chart of nothing.
+ */
 export function classResults(classId, exerciseId) {
   const t = teacherData();
   const cls = t.classes.find(c => c.id === classId);
-  const ex = EXERCISE_MAP[exerciseId];
-  if (!cls || !ex) return null;
+  const ex = EXERCISE_MAP[exerciseId] ? getExercise(exerciseId) : null;
+  if (!cls || !ex?.questions?.length) return null;
 
-  const rows = cls.students.map(stu => {
-    const answers = ex.questions.map((q, qi) => {
-      const seed = hashCode(`${stu.id}:${q.id}`);
-      /* Ability varies by student, difficulty varies by question position —
-         later questions are harder, which is what makes the "most difficult
-         questions" panel meaningful. */
-      const ability = 0.55 + ((hashCode(stu.id) % 40) / 100);
-      const qDifficulty = 0.12 + (qi / Math.max(1, ex.questions.length)) * 0.35;
-      const roll = (seed % 1000) / 1000;
-      return roll < (ability - qDifficulty + 0.25);
-    });
-    const correct = answers.filter(Boolean).length;
-    return {
-      student: stu,
-      answers,
-      correct,
-      total: ex.questions.length,
-      percent: Math.round((correct / ex.questions.length) * 100)
-    };
+  /* Every assignment of this worksheet to this class, and what came back. */
+  const assignments = (t.assignments ?? []).filter(
+    a => a.classId === classId && (a.worksheetIds ?? [a.exerciseId]).includes(exerciseId));
+  const submitted = new Map();          // studentId -> result
+  for (const a of assignments) {
+    for (const [studentId, sheets] of Object.entries(state.submissions?.[a.id] ?? {})) {
+      const r = sheets?.[exerciseId];
+      if (r) submitted.set(studentId, r);
+    }
+  }
+  if (!submitted.size) return null;
+
+  const rows = [...submitted.entries()].map(([studentId, r]) => {
+    const student = cls.students.find(s2 => s2.id === studentId)
+      ?? { id: studentId, name: studentId === 'me' ? 'You' : 'Student' };
+    const answers = ex.questions.map(q => Boolean(r.answers?.[q.id]?.correct));
+    const correct = r.correct ?? answers.filter(Boolean).length;
+    const total = r.total ?? ex.questions.length;
+    return { student, answers, correct, total, percent: Math.round((correct / Math.max(1, total)) * 100) };
   });
 
   const perQuestion = ex.questions.map((q, i) => {
-    const got = rows.filter(r => r.answers[i]).length;
-    return { question: q, index: i, correct: got, total: rows.length, percent: Math.round((got / rows.length) * 100) };
+    const got = rows.filter(r2 => r2.answers[i]).length;
+    return { question: q, index: i, correct: got, total: rows.length,
+             percent: Math.round((got / Math.max(1, rows.length)) * 100) };
   });
 
   return {
     class: cls, exercise: ex, rows, perQuestion,
-    average: Math.round(rows.reduce((a, r) => a + r.percent, 0) / rows.length),
-    answered: rows.reduce((a, r) => a + r.total, 0),
+    average: Math.round(rows.reduce((a, r2) => a + r2.percent, 0) / rows.length),
+    answered: rows.reduce((a, r2) => a + r2.total, 0),
     hardest: [...perQuestion].sort((a, b) => a.percent - b.percent).slice(0, 3)
   };
 }
@@ -558,7 +543,7 @@ export function createAssignment({ exerciseId, worksheetIds, classId, title, due
     created: Date.now()
   };
   update(s => {
-    s.teacher ??= seedTeacher();
+    s.teacher ??= emptyTeacher();
     s.teacher.assignments.unshift(assignment);
   });
   return assignment;

@@ -61,7 +61,7 @@ const openGroups = new Set(['grade', 'subject', 'level']);
 const expanded = new Set();
 const COLLAPSE_AT = 8;
 
-function filterGroup(label, key, options, counts, { compact = false } = {}) {
+function filterGroup(label, key, options, counts, { compact = false, any = null } = {}) {
   const chosen = state[key];
   const chosenLabel = chosen ? (options.find(o => o.id === chosen)?.label ?? chosen) : '';
   const isOpen = openGroups.has(key) || !!chosen;
@@ -79,6 +79,18 @@ function filterGroup(label, key, options, counts, { compact = false } = {}) {
   box.append(summary);
 
   const opts = el('div', { class: 'filter-options' });
+
+  /* An explicit "Any" row. Clicking the selected option again also clears the
+     filter, but that is a thing you have to know; a row that says so is not. */
+  if (any) {
+    opts.append(el('button', {
+      class: 'facet facet-any' + (compact ? ' facet-wide' : ''), type: 'button',
+      'aria-pressed': String(!chosen),
+      onclick: () => { if (!chosen) return; state[key] = null; apply({ resetPage: true }); }
+    },
+      el('span', { class: 'facet-name', text: any }),
+      !chosen ? el('span', { class: 'facet-tick' }, icon('check', { size: 14 })) : null));
+  }
   /* Drop the options with nothing behind them BEFORE deciding what to collapse.
      Slicing first hid NGSS behind "show all" and then filtered away the eleven
      empty frameworks in front of it, leaving a group that claimed there was
@@ -126,16 +138,16 @@ function buildFilters(counts) {
   const topicOptions = topicSource.flatMap(s => s.topics.map(t => ({ id: t.id, label: t.name })));
 
   groupsHost.replaceChildren(
-    filterGroup('Grade band', 'grade', GRADES.map(g => ({ id: g.id, label: g.name })), counts.grade),
-    filterGroup('Level', 'level', levelOptions, counts.level, { compact: true }),
-    filterGroup('Subject', 'subject', SUBJECTS.map(s => ({ id: s.id, label: s.name })), counts.subject),
-    filterGroup('Topic', 'topic', topicOptions, counts.topic),
-    filterGroup('Curriculum framework', 'framework', FRAMEWORKS, counts.framework),
-    filterGroup('Difficulty', 'difficulty', DIFFICULTIES.map(d => ({ id: d.id, label: d.name })), counts.difficulty, { compact: true }),
-    filterGroup('Question type', 'type', QUESTION_TYPES.map(t => ({ id: t.id, label: t.name })), counts.type),
-    filterGroup('Format', 'format', [{ id: 'online', label: 'Online' }, { id: 'printable', label: 'Printable' }], counts.format, { compact: true }),
-    filterGroup('Length', 'length', LENGTHS, counts.length),
-    filterGroup('Printed pages', 'pages', PAGE_OPTIONS, counts.pages, { compact: true })
+    filterGroup('Grade band', 'grade', GRADES.map(g => ({ id: g.id, label: g.name })), counts.grade, { any: 'Any grade band' }),
+    filterGroup('Level', 'level', levelOptions, counts.level, { compact: true, any: 'Any level' }),
+    filterGroup('Subject', 'subject', SUBJECTS.map(s => ({ id: s.id, label: s.name })), counts.subject, { any: 'Any subject' }),
+    filterGroup('Topic', 'topic', topicOptions, counts.topic, { any: 'Any topic' }),
+    filterGroup('Curriculum framework', 'framework', FRAMEWORKS, counts.framework, { any: 'Any framework' }),
+    filterGroup('Difficulty', 'difficulty', DIFFICULTIES.map(d => ({ id: d.id, label: d.name })), counts.difficulty, { compact: true, any: 'Any difficulty' }),
+    filterGroup('Question type', 'type', QUESTION_TYPES.map(t => ({ id: t.id, label: t.name })), counts.type, { any: 'Any question type' }),
+    filterGroup('Format', 'format', [{ id: 'online', label: 'Online' }, { id: 'printable', label: 'Printable' }], counts.format, { compact: true, any: 'Any format' }),
+    filterGroup('Length', 'length', LENGTHS, counts.length, { any: 'Any length' }),
+    filterGroup('Printed pages', 'pages', PAGE_OPTIONS, counts.pages, { compact: true, any: 'Any page count' })
   );
 }
 

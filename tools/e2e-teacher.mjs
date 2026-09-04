@@ -31,22 +31,56 @@ ok('teacher visual mode is applied',
   await page.evaluate(() => document.documentElement.dataset.mode === 'teacher'));
 
 /* -------------------------------- analytics -------------------------------- */
+/* A teacher account starts empty and says so. Nothing on this page is invented
+   for the sake of having something to draw. */
 await open('teacher/analytics.html');
-ok('sample data is labelled as sample',
-  (await page.locator('#sample-note').innerText()).includes('Sample class'));
+ok('an empty teacher account says there is nothing to show yet',
+  (await page.locator('#sample-note').innerText()).toLowerCase().includes('class'));
+ok('no student rows are invented before anyone hands work in',
+  await page.locator('#student-rows tr').count() === 0);
+
+/* Now give it something real: a class, work set to it, and one submission. */
+await page.evaluate(() => {
+  const raw = JSON.parse(localStorage.getItem('worksheethub:v1') ?? '{}');
+  const answers = {};
+  for (let i = 1; i <= 12; i++) answers[`q${i}`] = { correct: i % 4 !== 0 };
+  const answers2 = {};
+  for (let i = 1; i <= 12; i++) answers2[`q${i}`] = { correct: i % 3 !== 0 };
+  raw.teacher = {
+    classes: [{
+      id: 'c-e2e', name: 'Grade 8B — Mathematics', level: 'Grade 8', grade: 'middle',
+      subject: 'math', code: 'ABC-123', created: Date.now(), archived: false,
+      students: [{ id: 's1', name: 'Marcus Bell' }, { id: 's2', name: 'Leila Haddad' }],
+      exerciseIds: ['linear-equations']
+    }],
+    assignments: [{
+      id: 'a-e2e', code: 'XYZ-789', classId: 'c-e2e', exerciseId: 'linear-equations',
+      worksheetIds: ['linear-equations'], title: null, due: null, note: null, created: Date.now()
+    }]
+  };
+  raw.submissions = {
+    'a-e2e': {
+      s1: { 'linear-equations': { correct: 9, total: 12, answers, at: Date.now() } },
+      s2: { 'linear-equations': { correct: 8, total: 12, answers: answers2, at: Date.now() } }
+    }
+  };
+  localStorage.setItem('worksheethub:v1', JSON.stringify(raw));
+});
+
+await open('teacher/analytics.html');
 const hardest = await page.locator('#hardest .list-item').allInnerTexts();
 ok('the hardest questions are listed with their prompts', hardest.length === 3 && hardest[0].includes('Question'));
 const percents = await page.locator('#hardest .tile-icon').allInnerTexts();
 const nums = percents.map(p => parseInt(p, 10));
 ok('hardest questions are ordered worst first', nums.every((n, i) => i === 0 || nums[i - 1] <= n));
-const rowCount = await page.locator('#student-rows tr').count();
-ok('every student in the class has a row', rowCount === 12);
+ok('only the students who handed work in have a row',
+  await page.locator('#student-rows tr').count() === 2);
 
 /* Results must be stable across reloads, or a teacher cannot trust them. */
 const before = await page.locator('#student-rows').innerText();
 await page.reload({ waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(400);
-ok('sample results are deterministic across reloads',
+ok('results are stable across reloads',
   before === await page.locator('#student-rows').innerText());
 
 /* ------------------------- create and share an assignment ------------------------- */

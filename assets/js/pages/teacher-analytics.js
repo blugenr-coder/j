@@ -24,28 +24,52 @@ classSelect.value = classId;
 classSelect.addEventListener('change', () => { classId = classSelect.value; exerciseId = null; sync(); });
 exSelect.addEventListener('change', () => { exerciseId = exSelect.value; sync(); });
 
+/* Every worksheet this class has been set, in the order it was set. */
+function setWork(cls) {
+  const ids = [];
+  for (const a of t.assignments ?? []) {
+    if (a.classId !== cls.id) continue;
+    for (const id of a.worksheetIds ?? [a.exerciseId]) if (id && !ids.includes(id)) ids.push(id);
+  }
+  for (const id of cls.exerciseIds ?? []) if (!ids.includes(id)) ids.push(id);
+  return ids;
+}
+
 function sync() {
   const cls = t.classes.find(c => c.id === classId);
-  if (!cls) return;
-  if (!exerciseId || !cls.exerciseIds.includes(exerciseId)) exerciseId = cls.exerciseIds[0];
+  if (!cls) return emptyView('Create a class and set some work, and this page fills itself in.');
+  const work = setWork(cls);
+  if (!work.length) return emptyView(`${cls.name} has no work set yet. Set a worksheet and results appear here as they come in.`);
+  if (!exerciseId || !work.includes(exerciseId)) exerciseId = work[0];
 
-  exSelect.replaceChildren(...cls.exerciseIds.map(id =>
+  exSelect.replaceChildren(...work.map(id =>
     el('option', { value: id, text: getExercise(id)?.title ?? id })));
   exSelect.value = exerciseId;
   setQs({ class: classId, exercise: exerciseId });
-  render(classResults(classId, exerciseId));
+
+  const results = classResults(classId, exerciseId);
+  if (!results) {
+    return emptyView('Nobody in this class has handed this worksheet in yet. ' +
+      'Share the class code, and every submission lands here.');
+  }
+  render(results);
+}
+
+/* No invented rows. Until real students hand real work in, the page says so. */
+function emptyView(message) {
+  $('#sample-note').replaceChildren(
+    el('div', { class: 'banner', style: 'margin-bottom:24px' },
+      icon('info', { size: 18 }), el('p', { text: message })));
+  for (const id of ['#a-stats', '#hardest', '#question-bars', '#student-rows']) {
+    const host = $(id);
+    if (host) host.replaceChildren();
+  }
 }
 
 function render(r) {
   if (!r) return;
 
-  $('#sample-note').replaceChildren(r.class.sample
-    ? el('div', { class: 'banner warn', style: 'margin-bottom:24px' },
-        icon('alert', { size: 18 }),
-        el('p', {}, el('strong', { text: 'Sample class. ' }),
-          'These results are generated so the analytics view is usable before real students exist. ' +
-          'They are deterministic — the same every reload — and clearly not live data.'))
-    : el('span'));
+  $('#sample-note').replaceChildren(el('span'));
 
   const passing = r.rows.filter(x => x.percent >= 60).length;
   $('#a-stats').replaceChildren(

@@ -152,6 +152,8 @@
 .facet[aria-pressed="true"] { background: var(--primary-tint); color: var(--brand-ink); font-weight: 600; }
 .facet[aria-pressed="true"] .facet-n { color: var(--brand-ink); }
 .facet-tick { color: var(--brand-ink); display: inline-flex; flex: none; }
+.facet-any { font-style: italic; }
+.filter-group.is-compact .facet-any, .filter-group.is-compact .facet-wide { grid-column: 1 / -1; }
 .facet-more { color: var(--link); font-weight: 600; }
 .filter-group.is-compact .facet-more { grid-column: 1 / -1; }
 

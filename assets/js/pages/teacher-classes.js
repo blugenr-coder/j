@@ -48,7 +48,7 @@ function draw() {
             el('a', { href: href(`teacher/class.html?id=${c.id}`), style: 'color:inherit', text: c.name })),
           el('div', { class: 'small muted' },
             `${c.level}${c.subject ? ' · ' + SUBJECT_MAP[c.subject].name : ''} · created ${timeAgo(c.created)}`)),
-        c.sample ? el('span', { class: 'badge', text: 'Sample' }) : null),
+        null),
 
       el('div', { class: 'class-stats' },
         el('div', {}, el('strong', { text: String(c.students.length) }), el('span', { text: 'students' })),
@@ -60,14 +60,14 @@ function draw() {
         el('a', { class: 'btn btn-ghost btn-sm', href: href(`teacher/create.html?class=${c.id}`), text: 'Set work' }),
         el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Copy join link',
           onclick: () => copy(joinUrl, 'Join link copied') }),
-        !c.sample ? el('button', {
+        el('button', {
           class: 'btn btn-ghost btn-sm', type: 'button', text: 'Delete',
           style: 'color:var(--bad-ink)',
           onclick: () => {
             if (!confirm(`Delete "${c.name}" and its assignments? This cannot be undone.`)) return;
             deleteClass(c.id); draw(); toast('Class deleted');
           }
-        }) : null)
+        }))
     );
   }));
 
