@@ -94,8 +94,62 @@ export const STANDARDS = {
   exams:        E('Comprehension, argument and written response', ['RI', 'W.1'])
 };
 
-/** A short label for a worksheet card or page, or null if none is mapped. */
-export function alignmentFor(topic) {
+/* Which grade band a code belongs to, where the framework encodes one.
+   NGSS prefixes its codes (5-ESS1, MS-LS1, HS-PS2); Common Core maths leads
+   with a grade for K–8 and with a conceptual category for high school; CSTA
+   uses levels 1A/1B, 2 and 3A/3B. Everything else — ELA strands, C3, CEFR — is
+   written without a grade, so it applies throughout. */
+const BAND_ORDER = ['early', 'elementary', 'middle', 'high', 'advanced'];
+
+function bandOfCode(code) {
+  if (/^HS-/.test(code)) return 'high';
+  if (/^MS-/.test(code)) return 'middle';
+  if (/^\d-/.test(code)) return 'elementary';                    // NGSS 5-ESS1
+  if (/^K\./.test(code)) return 'early';                         // CCSS K.CC
+  const grade = code.match(/^(\d+)\./);                          // CCSS 6.RP
+  if (grade) {
+    const g = Number(grade[1]);
+    return g <= 5 ? 'elementary' : g <= 8 ? 'middle' : 'high';
+  }
+  if (/^[A-Z]-[A-Z]{2,3}$/.test(code)) return 'high';            // CCSS A-SSE, G-CO
+  if (/^3[AB]-/.test(code)) return 'high';                       // CSTA 3A-AP
+  if (/^2-/.test(code)) return 'middle';                         // CSTA 2-DA
+  if (/^1[AB]-/.test(code)) return 'elementary';
+  return null;                                                    // applies throughout
+}
+
+/**
+ * The codes worth showing on a worksheet at a given band.
+ * A Grade 8 quiz listing HS-LS1 alongside MS-LS1 is not alignment, it is a
+ * list of everything the topic ever touches — so codes that carry a band are
+ * filtered to the neighbouring ones, and codes that carry none always show.
+ */
+export function codesFor(topic, band) {
   const s = STANDARDS[topic];
-  return s ? `${s.framework} · ${s.codes.join(', ')}` : null;
+  if (!s) return [];
+  const want = BAND_ORDER.indexOf(band === 'advanced' ? 'high' : band);
+
+  /* Codes written without a band apply throughout and always show. */
+  const general = s.codes.filter(c => bandOfCode(c) === null);
+  const banded = s.codes.filter(c => bandOfCode(c) !== null);
+  if (want < 0 || !banded.length) return s.codes;
+
+  /* Prefer the codes written for this band; fall back to the nearest band the
+     framework actually covers, so a Grade 4 unit still shows something. */
+  const exact = banded.filter(c => BAND_ORDER.indexOf(bandOfCode(c)) === want);
+  if (exact.length) return [...general, ...exact];
+
+  let best = banded[0], bestGap = Infinity;
+  for (const c of banded) {
+    const gap = Math.abs(BAND_ORDER.indexOf(bandOfCode(c)) - want);
+    if (gap < bestGap) { bestGap = gap; best = c; }
+  }
+  const nearest = BAND_ORDER.indexOf(bandOfCode(best));
+  return [...general, ...banded.filter(c => BAND_ORDER.indexOf(bandOfCode(c)) === nearest)];
+}
+
+/** A short label for a worksheet card or page, or null if none is mapped. */
+export function alignmentFor(topic, band) {
+  const s = STANDARDS[topic];
+  return s ? `${s.framework} · ${codesFor(topic, band).join(', ')}` : null;
 }

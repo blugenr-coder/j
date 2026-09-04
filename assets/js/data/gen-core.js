@@ -118,19 +118,49 @@ export const writtenQ = (prompt, sample_, explanation) =>
  * Each maker gets its own derived seed so adding a question type later does
  * not reshuffle every existing worksheet.
  */
+/* What makes two questions the same question: what is asked, and what the
+   answer is. Not which distractors happened to be dealt alongside it — a sheet
+   that asks "how do you say breakfast" twice with different wrong options has
+   still asked it twice. */
+const answerIdentity = q => {
+  switch (q.type) {
+    case 'choice': return String(q.options?.[q.answer] ?? q.answer);
+    case 'multi':  return (q.answer ?? []).map(i => q.options?.[i]).sort().join('\u0001');
+    case 'match':  return (q.pairs ?? []).map(p => p.left).sort().join('\u0001');
+    case 'order':  return [...(q.items ?? [])].sort().join('\u0001');
+    case 'graph':  return JSON.stringify(q.answer ?? '');
+    default:       return String(q.answer ?? '');
+  }
+};
+const keyOf = q => [q.type, q.prompt, q.math ?? '', answerIdentity(q)].join('\u0000');
+
 export function build(seed, count, makers) {
   const out = [];
-  let guard = 0;
-  while (out.length < count && guard < count * 12) {
+  /* Visit every maker once before repeating any of it. Cycling by index and
+     skipping on failure sounds equivalent and is not: a maker that declines a
+     difficulty tier shifts the phase, and a twelve-question sheet ended up with
+     four matching exercises and one of everything else. A shuffled round-robin
+     keeps the mix even however many makers decline. */
+  const order = rng(seed ^ 0x9e3779b9);
+  const queue = [];
+  const rounds = Math.ceil((count * 3) / Math.max(1, makers.length)) + 1;
+  for (let i = 0; i < rounds; i++) queue.push(...sample(order, makers.map((_, j) => j), makers.length));
+
+  let guard = 0, at = 0;
+  while (out.length < count && at < queue.length && guard < count * 12) {
+    const maker = makers[queue[at++]];
     const r = rng(seed + out.length * 7919 + guard * 104729);
-    const maker = makers[(out.length + guard) % makers.length];
     guard++;
     let q;
     try { q = maker(r); } catch { continue; }
     if (!q || !q.prompt) continue;
-    /* Reject a question identical to one already on the sheet. */
-    const key = `${q.type}|${q.prompt}|${q.math ?? ''}|${JSON.stringify(q.options ?? '')}`;
-    if (out.some(o => `${o.type}|${o.prompt}|${o.math ?? ''}|${JSON.stringify(o.options ?? '')}` === key)) continue;
+    /* Reject a question identical to one already on the sheet. The key is
+       canonical — options, pairs and items are sorted before comparison —
+       because two questions that differ only in the order their options were
+       shuffled are the same question, and a sheet that asks it twice looks
+       exactly as careless as it is. */
+    const key = keyOf(q);
+    if (out.some(o => keyOf(o) === key)) continue;
     q.id = `q${out.length + 1}`;
     out.push(q);
   }

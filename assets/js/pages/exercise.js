@@ -8,7 +8,7 @@ import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { favButton, difficultyBadge, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { getExercise } from '../data/exercises.js';
-import { STANDARDS } from '../data/standards.js';
+import { STANDARDS, codesFor } from '../data/standards.js';
 import { SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
 import { renderQuestion, mathNode } from '../core/question.js';
 import { mark, answerText, isAutoMarked } from '../core/marking.js';
@@ -75,7 +75,7 @@ function start() {
       el('div', { class: 'align-row' },
         el('span', { class: 'badge badge-primary', text: std.framework }),
         el('span', { class: 'small', text: std.name }),
-        ...std.codes.map(c => el('code', { class: 'std-code', text: c }))));
+        ...codesFor(ex.topic, ex.grade).map(c => el('code', { class: 'std-code', text: c }))));
   }
 
   if (assignment && assignment.exerciseId === ex.id) {

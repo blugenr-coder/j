@@ -366,7 +366,13 @@ class Blueprint {
   get printable() { return true; }
   get online()    { return true; }
   get featured()  { return false; }
-  get autoMarked() { return Math.max(1, this.count - 1); }
+  /* How many questions the app can mark itself. Guessing "all but one" was
+     close enough when every sheet drew on a bank that included a written
+     prompt; a micro-unit quiz has none, and reported 11 of 12 before a single
+     answer. The question types are already known without building the sheet. */
+  get autoMarked() {
+    return this.types.includes('written') ? Math.max(1, this.count - 1) : this.count;
+  }
 
   get title() {
     return this._set ? `${this._focus} — Set ${setLabel(this._set)}` : this._focus;

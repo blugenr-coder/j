@@ -119,7 +119,16 @@ export function unitGenerators(unit) {
     });
   }
 
-  return gens;
+  /* Weighting, not just membership. `build` cycles the makers in order, so an
+     even list gives a twelve-question sheet four judgement questions drawn
+     from four truths — which reads as the same question asked over and over.
+     Listing the recall shapes twice puts the sheet at roughly two-thirds
+     recall, one-third judgement, which is also the balance a real quiz has. */
+  /* The three single-item recall shapes are doubled; matching is not, because
+     one matching exercise covers four items at once and three of them on a
+     twelve-question sheet is a lot of the same activity. */
+  const recall = gens.slice(0, Math.min(3, gens.length));
+  return gens.length > 4 ? [...gens, ...recall] : gens;
 }
 
 /** How many genuinely different sheets a unit can carry (see generated.js). */
