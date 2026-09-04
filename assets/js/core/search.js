@@ -120,14 +120,99 @@ export function parseQuery(input) {
    questions are already in memory contribute their question text. */
 const haystackCache = new Map();
 function haystack(ex) {
-  let s = haystackCache.get(ex.id);
-  if (s === undefined) {
-    s = [ex.title, ex.summary, ex.level, ex.topic, ex.subject,
-         ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
+  let entry = haystackCache.get(ex.id);
+  if (entry === undefined) {
+    /* `title` and `summary` are getters that build a string every time they
+       are read, so they are read once here and kept, rather than once per
+       query word per worksheet. */
+    const title = ex.title.toLowerCase();
+    const summary = ex.summary.toLowerCase();
+    const text = [title, summary, ex.level, ex.topic, ex.subject,
+                  ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
       .join(' ').toLowerCase();
-    haystackCache.set(ex.id, s);
+    /* `stems` stays null until something actually needs it. Building a Set of
+       word stems for every family up front cost 700ms on the first search and
+       earned almost nothing: a stem is a prefix of the word it came from, so a
+       substring test over the text already finds it. Only the -ies → -y rule
+       breaks that, and it is the one case that reaches the Set. */
+    entry = { title, summary, text, stems: null };
+    haystackCache.set(ex.id, entry);
   }
-  return s;
+  return entry;
+}
+
+function stemsOf(entry) {
+  if (entry.stems === null) entry.stems = stemSet(entry.text);
+  return entry.stems;
+}
+
+/* ------------------------------- word forms -------------------------------
+   Searching for "cells" returned one worksheet and "cell" returned four
+   thousand, because the match was a plain substring test and no title contains
+   the word "cells". Nobody types the exact inflection a title happens to use,
+   so both sides of the comparison are reduced to a stem first.
+
+   This is deliberately a small suffix stripper rather than a real stemmer. It
+   does not have to be linguistically right — it has to be the SAME on both
+   sides, so "cells" and "cell" meet in the middle. It is conservative about
+   short words, where chopping a letter changes the word ("gas", "bus", "is"). */
+function stem(word) {
+  const w = word.toLowerCase().replace(/[^a-z0-9'-]/g, '');
+  if (w.length <= 3) return w;
+  if (w.endsWith('ies') && w.length > 4) return w.slice(0, -3) + 'y';
+  if (/(?:ss|sh|ch|x|z)es$/.test(w)) return w.slice(0, -2);
+  if (w.endsWith('s') && !w.endsWith('ss') && !w.endsWith('us') && !w.endsWith('is')) return w.slice(0, -1);
+  if (w.endsWith('ing') && w.length > 5) return w.slice(0, -3);
+  if (w.endsWith('ed') && w.length > 4 && !w.endsWith('eed')) return w.slice(0, -2);
+  return w;
+}
+
+function stemSet(text) {
+  const out = new Set();
+  for (const token of text.split(/[^a-z0-9'-]+/)) {
+    if (token.length > 1) out.add(stem(token));
+  }
+  return out;
+}
+
+/**
+ * How well one query word matches one worksheet, as a score.
+ * Substring first, because that is what makes a half-typed word find things;
+ * then the stem, which is what makes a plural find a singular. 0 means no
+ * match at all, and one such word rules the worksheet out.
+ */
+/**
+ * How well one query term matches one worksheet, as a score.
+ *
+ * A term is prepared once per search — its stem and truncated root — rather
+ * than recomputed for each of seventy thousand families. Substring first,
+ * because that is what makes a half-typed word find things; then the stem,
+ * which is what makes a plural find a singular. 0 means no match at all, and
+ * one such term rules the worksheet out.
+ */
+function wordScore(entry, term) {
+  const { w, st, root } = term;
+  if (entry.title.includes(w)) return 12;
+  if (entry.summary.includes(w)) return 6;
+  if (entry.text.includes(w)) return 2;
+  if (!st) return 0;
+  /* Scored below an exact hit, so an exact match still sorts first; these only
+     decide whether a worksheet appears at all. "cells" finds Cell Structure
+     and Cellular Respiration; "photosynthesise" finds photosynthesis. */
+  if (st.length > 3 && entry.text.includes(st)) return 4;
+  if (root && entry.text.includes(root)) return 2;
+  /* The one case a substring cannot reach: -ies became -y, so the stem is not
+     a prefix of the word as written. */
+  if (st !== w && stemsOf(entry).has(st)) return 3;
+  return 0;
+}
+
+/** Prepare the query once: the word, its stem, and a truncated root. */
+function termsFrom(words) {
+  return words.map(w => {
+    const st = stem(w);
+    return { w, st, root: st.length >= 7 ? st.slice(0, st.length - 2) : null };
+  });
 }
 
 /**
@@ -198,14 +283,14 @@ function passesAll(ex, f, except = null) {
  */
 export function facetCounts(f = {}) {
   const text = (f.text ?? '').trim().toLowerCase();
-  const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
+  const terms = termsFrom(text ? text.split(/\s+/).filter(w => w.length > 1) : []);
   const out = Object.fromEntries(FACET_KEYS.map(k => [k, Object.create(null)]));
   let weight = 1;
   const bump = (k, v) => { out[k][v] = (out[k][v] ?? 0) + weight; };
 
   for (const ex of catalogue()) {
     weight = ex.sets ?? 1;
-    if (words.length && !matchesText(ex, words)) continue;
+    if (terms.length && !matchesText(ex, terms)) continue;
     /* Which single filter, if any, this worksheet fails. */
     let failed = null, failures = 0;
     for (const k of FACET_KEYS) {
@@ -231,29 +316,27 @@ export function facetCounts(f = {}) {
   return out;
 }
 
-function matchesText(ex, words) {
-  const hay = haystack(ex);
-  for (const w of words) if (!hay.includes(w)) return false;
+function matchesText(ex, terms) {
+  const entry = haystack(ex);
+  for (const t of terms) if (!wordScore(entry, t)) return false;
   return true;
 }
 
 export function searchExercises(f = {}) {
   const text = (f.text ?? '').trim().toLowerCase();
-  const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
+  const terms = termsFrom(text ? text.split(/\s+/).filter(w => w.length > 1) : []);
 
   const scored = [];
   for (const ex of catalogue()) {
     if (!passesAll(ex, f)) continue;
 
     let score = 0;
-    if (words.length) {
-      const hay = haystack(ex);
-      const title = ex.title.toLowerCase();
-      for (const w of words) {
-        if (title.includes(w)) score += 12;
-        else if (ex.summary.toLowerCase().includes(w)) score += 6;
-        else if (hay.includes(w)) score += 2;
-        else { score = -1; break; }   // every word must appear somewhere
+    if (terms.length) {
+      const entry = haystack(ex);
+      for (const t of terms) {
+        const s = wordScore(entry, t);
+        if (!s) { score = -1; break; }   // every word must appear somewhere
+        score += s;
       }
       if (score < 0) continue;
     }
@@ -261,7 +344,7 @@ export function searchExercises(f = {}) {
     scored.push({ ex, score });
   }
 
-  const sort = f.sort ?? (words.length ? 'relevance' : 'recommended');
+  const sort = f.sort ?? (terms.length ? 'relevance' : 'recommended');
   const cmp = {
     relevance:  (a, b) => b.score - a.score || a.ex.title.localeCompare(b.ex.title),
     recommended:(a, b) => b.score - a.score || GRADES.findIndex(g => g.id === a.ex.grade) - GRADES.findIndex(g => g.id === b.ex.grade),

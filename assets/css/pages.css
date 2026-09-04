@@ -73,7 +73,15 @@
 }
 .step h4 { margin-top: var(--s5); }
 
-.split { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s7); align-items: center; }
+/* minmax(0, …) so a long child cannot push the column wider than its share:
+   a bare 1fr takes its minimum from its widest content. */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s7); align-items: center; }
+
+/* Generous padding, until the screen is narrow enough that the padding is
+   taking the space the words need. This was an inline style, which no media
+   query could reach. */
+.card-roomy { padding: var(--s7); }
+@media (max-width: 560px) { .card-roomy { padding: var(--s4); } }
 .teacher-band {
   background: linear-gradient(140deg, var(--band-from), var(--band-to));
   color: var(--band-text); border-radius: var(--r-xl); padding: var(--s7);
@@ -138,7 +146,7 @@
 .filter-group[open] > .filter-summary .filter-chosen { display: none; }
 
 .filter-options { display: grid; gap: 2px; padding-bottom: var(--s3); }
-.filter-group.is-compact .filter-options { grid-template-columns: 1fr 1fr; }
+.filter-group.is-compact .filter-options { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 
 .facet {
   display: flex; align-items: center; gap: var(--s2); width: 100%;
@@ -177,7 +185,7 @@
 
 @media (max-width: 900px) {
   .hero { padding-block: var(--s7) var(--s6); }
-  .hero-grid, .split { grid-template-columns: 1fr; gap: var(--s6); }
+  .hero-grid, .split { grid-template-columns: minmax(0, 1fr); gap: var(--s6); }
   .hero-art { order: -1; }
   .float-card { display: none; }
   .library-layout { grid-template-columns: minmax(0, 1fr); }
@@ -256,7 +264,7 @@
 .answer-inline { display: inline-flex; align-items: baseline; gap: var(--s2); }
 .input-blank { width: 160px; text-align: center; font-family: var(--font-math); font-size: var(--step-2); }
 
-.match-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+.match-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s4); }
 .match-col { display: grid; gap: var(--s2); }
 .match-item {
   padding: var(--s3) var(--s4); border: 1.5px solid var(--border); border-radius: var(--r-md);
@@ -325,7 +333,7 @@
 }
 .mathpad button:hover { border-color: var(--primary); color: var(--link); }
 
-.mode-choice { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+.mode-choice { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s4); }
 .mode-option { text-align: center; padding: var(--s6) var(--s5); }
 .mode-option .tile-icon { margin-inline: auto; }
 
@@ -354,7 +362,7 @@
   .ex-topbar #prev-btn, .ex-topbar #next-btn { display: none; }
   .ex-topbar .wrap { gap: var(--s3); }
   .question-card { padding: var(--s4); }
-  .mode-choice, .match-grid { grid-template-columns: 1fr; }
+  .mode-choice, .match-grid { grid-template-columns: minmax(0, 1fr); }
   .legend { grid-auto-flow: row; }
   /* Keep the exercise name legible: the question counter is already in the
      drawer summary below, so it is the one that goes. */

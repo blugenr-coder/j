@@ -279,7 +279,10 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   text-decoration: none; background: var(--surface);
   padding-left: var(--s4); padding-right: var(--s4);
 }
-.subject-row-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); }
+/* Wraps rather than overflowing: on a 320px screen the title and
+   "99,579 worksheets" do not fit on one line, and the count belongs under the
+   title rather than off the side of the phone. */
+.subject-row-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2) var(--s4); }
 .subject-row-title {
   margin: 0; font-size: var(--step-2); font-weight: 600; letter-spacing: -.015em;
 }
@@ -332,3 +335,13 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md);
 }
 .assigned-overdue { border-color: var(--danger); }
+
+/* On the narrowest phones a button label is allowed to wrap. `nowrap` is right
+   almost everywhere — a two-line button reads as a mistake — but at 320px
+   "See a printable worksheet" is wider than the screen, and a button running
+   off the side is worse than a button on two lines.
+   This lives here, not in base.css, because components.css loads later and the
+   two rules have the same specificity. */
+@media (max-width: 380px) {
+  .btn { white-space: normal; }
+}

@@ -256,7 +256,7 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
      header keeps only what cannot be reached another way. */
   .header-actions > .icon-btn:first-child { display: none; }
   .user-chip .name { display: none; }
-  .footer-grid { grid-template-columns: 1fr 1fr; gap: var(--s5); }
+  .footer-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--s5); }
 
   .bottom-nav {
     display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -272,8 +272,19 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   .bottom-nav a[aria-current="page"] { color: var(--link); }
   .bottom-nav .ico { font-size: 18px; line-height: 1.2; }
   .bottom-nav a > span:last-child { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* Five equal columns only work if each is allowed to be narrower than its
+     label. Without min-width:0 a grid track never shrinks below its content,
+     so the bar ran 18px off a 320px screen. */
+  .bottom-nav a { min-width: 0; }
   body { padding-bottom: 62px; }
 }
+/* The narrowest phones still in use. Labels shrink rather than the bar
+   overflowing, and long single words are allowed to break. */
+@media (max-width: 380px) {
+  .bottom-nav a { font-size: 10px; }
+  .bottom-nav a > span:last-child { letter-spacing: -.01em; }
+}
+
 @media (max-width: 560px) {
   .wrap { padding-inline: var(--s4); }
   .brand { font-size: var(--step-0); }
@@ -285,5 +296,5 @@ ul, ol { margin: 0 0 var(--s4); padding-left: var(--s5); color: var(--text-2); }
   .header-actions > .theme-btn { display: none; }
   .site-header .wrap { gap: var(--s4); }
   .section { padding-block: var(--s6); }
-  .footer-grid { grid-template-columns: 1fr; }
+  .footer-grid { grid-template-columns: minmax(0, 1fr); }
 }

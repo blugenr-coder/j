@@ -21,7 +21,11 @@ const PAGES = [
 ];
 
 /* A narrow modern phone and a small tablet. */
-const SIZES = [[390, 844], [768, 1024]];
+/* The widths real devices actually report, plus the awkward gaps between the
+   families. 320 is the narrowest phone still in use; 1024 is an iPad in
+   landscape, which is where a "tablet" layout stops being one. */
+const SIZES = [[320, 568], [360, 800], [390, 844], [414, 896], [430, 932],
+               [600, 960], [768, 1024], [820, 1180], [1024, 768]];
 
 const browser = await chromium.launch();
 let fail = 0;

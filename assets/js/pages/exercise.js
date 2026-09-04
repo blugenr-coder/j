@@ -177,7 +177,7 @@ function start() {
     /* Tips panel: the hint plus the type-specific nudge. */
     $('#tips-list').replaceChildren(
       ...(q.hint ? [el('li', { text: q.hint })] : []),
-      el('li', { text: tipFor(q.type) })
+      ...(tipFor(q.type) ? [el('li', { text: tipFor(q.type) })] : [])
     );
 
     $('#hint-btn').disabled = !q.hint;
@@ -198,6 +198,7 @@ function start() {
     match: 'Start with the pairs you are sure of; the rest narrow down.',
     order: 'Place the first and last items first, then fill the middle.',
     graph: 'Read along the x-axis first, then up the y-axis.',
+    label: 'Every label is used exactly once, so placing the ones you are sure of narrows the rest.',
     written: 'Write in full sentences, then compare against the sample answer.'
   }[type] ?? '');
 
