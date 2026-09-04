@@ -4,7 +4,7 @@ import { $, el } from '../core/util.js';
 import { mountShell } from '../core/shell.js';
 import { icon } from '../core/icons.js';
 import { QUESTION_TYPES } from '../data/catalog.js';
-import { EXERCISES } from '../data/exercises.js';
+import { countByType } from '../data/exercises.js';
 
 mountShell({ page: 'how', nav: 'public' });
 
@@ -20,7 +20,7 @@ const EXAMPLES = {
 };
 
 $('#type-list').replaceChildren(...QUESTION_TYPES.map(t => {
-  const n = EXERCISES.filter(e => e.types.includes(t.id)).length;
+  const n = countByType(t.id);
   return el('div', { class: 'row', style: 'gap:12px;align-items:flex-start' },
     el('span', { class: 'tile-icon', style: 'width:34px;height:34px' }, icon(t.icon, { size: 17 })),
     el('div', {},

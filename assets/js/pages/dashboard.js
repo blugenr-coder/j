@@ -5,7 +5,7 @@ import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
 import { statTile, exerciseRow, exerciseCard, emptyState, subjectIcon, subjectTone } from '../core/cards.js';
 import { GRADE_MAP, SUBJECT_MAP, ACHIEVEMENTS } from '../data/catalog.js';
 import { icon } from '../core/icons.js';
-import { EXERCISES, getExercise } from '../data/exercises.js';
+import { takeWhere, getExercise } from '../data/exercises.js';
 import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor,
          assignedToMe, enrollments } from '../core/store.js';
 
@@ -98,7 +98,11 @@ function render() {
     if (weakest && ex.subject === weakest) n += 4;
     return n;
   };
-  const recommended = [...EXERCISES].sort((a, b) => scoreRec(b) - scoreRec(a)).slice(0, 3);
+  /* Scoring every worksheet in the library to pick three would be a million
+     comparisons; the candidates that could win are the ones in the student's
+     own band, so those are the ones ranked. */
+  const candidates = takeWhere(ex => GRADE_MAP[ex.grade]?.band === GRADE_MAP[band]?.band, 400);
+  const recommended = candidates.sort((a, b) => scoreRec(b) - scoreRec(a)).slice(0, 3);
   $('#recommended').replaceChildren(...recommended.map(ex => exerciseCard(ex)));
 
   /* ----------------------------- subject progress ----------------------------- */

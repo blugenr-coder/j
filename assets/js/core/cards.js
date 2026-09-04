@@ -6,7 +6,7 @@ import { el, esc, pct } from './util.js';
 import { href } from './shell.js';
 import { icon, iconHtml } from './icons.js';
 import { DIFF_MAP, SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
-import { EXERCISES, previewQuestions } from '../data/exercises.js';
+import { countByGrade, countBySubject, previewQuestions } from '../data/exercises.js';
 import { isFavorite, toggleFavorite, scoreFor, statusFor } from './store.js';
 
 const STATUS = {
@@ -166,7 +166,7 @@ export function statTile({ label, value, foot = null, iconName = null, tone = ''
 }
 
 export function gradeCard(grade) {
-  const count = EXERCISES.filter(e => e.grade === grade.id).length;
+  const count = countByGrade(grade.id);
   return el('a', { class: 'card grade-card', href: href(`library.html?grade=${grade.id}`) },
     el('span', { class: 'tile-icon lg' }, icon(grade.icon, { size: 24 })),
     el('h3', { text: grade.name }),
@@ -182,7 +182,7 @@ export function gradeCard(grade) {
  * it than any pictogram could.
  */
 export function subjectCard(subject) {
-  const count = EXERCISES.filter(e => e.subject === subject.id).length;
+  const count = countBySubject(subject.id);
   const topics = subject.topics.map(t => t.name);
   return el('a', { class: 'subject-row-card', href: href(`subjects.html?subject=${subject.id}`) },
     el('div', { class: 'subject-row-head' },

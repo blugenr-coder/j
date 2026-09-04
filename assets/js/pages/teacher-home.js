@@ -5,7 +5,7 @@ import { $, el, timeAgo, plural } from '../core/util.js';
 import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { statTile, exerciseCard, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
-import { EXERCISES, getExercise } from '../data/exercises.js';
+import { takeWhere, getExercise } from '../data/exercises.js';
 import { currentUser, teacherData, classResults, getState } from '../core/store.js';
 
 mountShell({ page: 'teachers', nav: 'app', mode: 'teacher', footer: false });
@@ -85,6 +85,6 @@ $('#hardest-list').replaceChildren(...hardest.map(h =>
 
 /* ------------------------------- suggestions ------------------------------- */
 const levels = new Set(t.classes.map(c => c.level));
-const suggested = EXERCISES.filter(e => levels.has(e.level)).slice(0, 3);
-$('#suggested').replaceChildren(...(suggested.length ? suggested : EXERCISES.slice(0, 3))
+const suggested = takeWhere(e => levels.has(e.level), 3);
+$('#suggested').replaceChildren(...(suggested.length ? suggested : takeWhere(null, 3))
   .map(ex => exerciseCard(ex, { showProgress: false })));

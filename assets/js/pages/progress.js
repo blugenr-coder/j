@@ -6,7 +6,7 @@ import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
 import { statTile, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { SUBJECT_MAP, TOPIC_MAP } from '../data/catalog.js';
-import { EXERCISES, getExercise } from '../data/exercises.js';
+import { findWhere, getExercise } from '../data/exercises.js';
 import { summary, getState, scoreFor, statusFor } from '../core/store.js';
 
 mountShell({ page: 'progress', nav: 'app', footer: false });
@@ -21,7 +21,7 @@ function nothingWeak(assessed) {
       text: 'Answer at least two questions in a topic and it will be assessed here.' });
   }
   const strongest = assessed[assessed.length - 1];
-  const next = EXERCISES.find(e => statusFor(e.id) === 'not-started');
+  const next = findWhere(e => statusFor(e.id) === 'not-started');
   return el('div', { class: 'row', style: 'gap:16px;align-items:flex-start;padding:8px 0' },
     el('span', { class: 'tile-icon green' }, icon('check', { size: 18 })),
     el('span', { class: 'grow' },
@@ -107,8 +107,8 @@ function render() {
 
   $('#weak-topics').replaceChildren(...(weak.length
     ? weak.map(t => {
-        const fix = EXERCISES.find(e => e.topic === t.id && statusFor(e.id) !== 'completed')
-                 ?? EXERCISES.find(e => e.topic === t.id);
+        const fix = findWhere(e => e.topic === t.id && statusFor(e.id) !== 'completed')
+                 ?? findWhere(e => e.topic === t.id);
         return el('div', { class: 'list-item' },
           el('span', { class: `tile-icon ${t.percent >= 70 ? 'green' : t.percent >= 50 ? 'orange' : 'red'}`,
             'aria-hidden': 'true', text: `${t.percent}%` , style: 'font-size:13px;font-weight:700' }),

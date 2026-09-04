@@ -2,7 +2,7 @@
    Catches the mistakes that are easy to make when authoring exercises by hand:
    dangling answer indexes, missing answers, unknown subjects or topics. */
 
-import { AUTHORED, GENERATED, getExercise } from '../assets/js/data/exercises.js';
+import { AUTHORED, FAMILIES, TOTAL, getExercise } from '../assets/js/data/exercises.js';
 import { SUBJECT_MAP, TOPIC_MAP, GRADE_MAP, DIFF_MAP, QTYPE_MAP } from '../assets/js/data/catalog.js';
 
 const errors = [];
@@ -18,25 +18,28 @@ let genNoExplain = 0;
    for a fraction of the time. Pass --full to check every one. */
 const FULL = process.argv.includes('--full');
 const seenCombo = new Set();
-const sample = GENERATED.filter(b => {
-  if (FULL) return true;
-  const key = `${b.topic}|${b.title.replace(/ — Set .*/, '')}|${b.pages}|${b.level}`;
-  if (seenCombo.has(key)) return false;
+/* One sheet per family is the whole point of a family: its members differ only
+   in which items the seed deals. `--full` walks a few sets of each instead. */
+const sample = [];
+for (const f of FAMILIES) {
+  const key = `${f.topic}|${f.unit ?? ''}|${f.format ?? ''}|${f.pages}|${f.level}`;
+  if (!FULL && seenCombo.has(key)) continue;
   seenCombo.add(key);
-  return true;
-});
+  sample.push(f.at(0));
+  if (FULL) for (let i = 1; i < Math.min(f.sets, 4); i++) sample.push(f.at(i));
+}
 
 /* Ids must be unique across the whole library: the runtime index is a Map
    built from them, so a collision silently hides a worksheet. Checked here
    rather than at load, where it would cost a tenth of a second every time. */
 const allIds = new Set();
-for (const b of [...AUTHORED, ...GENERATED]) {
+for (const b of [...AUTHORED, ...FAMILIES]) {
   if (allIds.has(b.id)) errors.push(`${b.id}: duplicate worksheet id`);
   allIds.add(b.id);
 }
 
-/* Metadata on every blueprint, questions on the sample. */
-for (const b of GENERATED) {
+/* Metadata on every family, questions on the sample. */
+for (const b of FAMILIES) {
   if (!SUBJECT_MAP[b.subject]) errors.push(`${b.id}: unknown subject "${b.subject}"`);
   if (!TOPIC_MAP[b.topic])     errors.push(`${b.id}: unknown topic "${b.topic}"`);
   if (!GRADE_MAP[b.grade])     errors.push(`${b.id}: unknown grade band "${b.grade}"`);
@@ -112,10 +115,11 @@ for (const ex of EXERCISES) {
 }
 
 const totalQ = EXERCISES.reduce((a, e) => a + e.questions.length, 0);
-console.log(`Library: ${(AUTHORED.length + GENERATED.length).toLocaleString()} worksheets ` +
-  `(${AUTHORED.length} authored, ${GENERATED.length.toLocaleString()} generated).`);
-console.log(`Metadata checked on all of them; questions materialised and checked on ` +
-  `${EXERCISES.length.toLocaleString()} (${totalQ.toLocaleString()} questions).`);
+console.log(`Library: ${TOTAL.toLocaleString()} worksheets ` +
+  `(${AUTHORED.length} authored, ${(TOTAL - AUTHORED.length).toLocaleString()} generated) ` +
+  `in ${FAMILIES.length.toLocaleString()} families.`);
+console.log(`Metadata checked on every family; questions materialised and checked on ` +
+  `${EXERCISES.length.toLocaleString()} sheets (${totalQ.toLocaleString()} questions).`);
 if (genNoExplain) warn.push(`${genNoExplain} generated question(s) have no explanation`);
 if (warn.length)   console.log(`\n${warn.length} warning(s):\n  ` + warn.join('\n  '));
 if (errors.length) { console.error(`\n${errors.length} error(s):\n  ` + errors.join('\n  ')); process.exit(1); }

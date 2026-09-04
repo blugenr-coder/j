@@ -71,13 +71,14 @@ function refreshMatches() {
     topic: $('#f-topic').value || null,
     difficulty: $('#f-difficulty').value || null,
     length: $('#f-length').value || null
-  }).slice(0, 60);
+  });
+  const shown = results.slice(0, 60);
 
-  $('#match-count').textContent = results.length
-    ? `${plural(results.length, 'worksheet')} match. Tick the ones to set.`
+  $('#match-count').textContent = results.total
+    ? `${plural(results.total, 'worksheet')} match — the first ${shown.length} are listed. Tick the ones to set.`
     : 'Nothing matches those choices — widen one of them.';
 
-  $('#match-list').replaceChildren(...results.map(ex => {
+  $('#match-list').replaceChildren(...shown.map(ex => {
     const on = chosen.has(ex.id);
     const row = el('button', {
       class: 'list-item', type: 'button',

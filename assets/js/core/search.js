@@ -4,7 +4,7 @@
    query first (grade, subject, topic, difficulty), and only what is left over
    is matched as free text. */
 
-import { EXERCISES } from '../data/exercises.js';
+import { FAMILIES, AUTHORED, CUSTOM, countWhere } from '../data/exercises.js';
 import { GRADES, SUBJECTS, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES } from '../data/catalog.js';
 
 /* Level words the parser understands, mapped to {grade band, level}. */
@@ -141,6 +141,15 @@ function haystack(ex) {
  * counts beside each option. Written once: a facet count that disagrees with
  * the filter it labels is worse than no count at all.
  */
+/* One pass over the catalogue: the authored sheets, then the families. A
+   family stands in for every sheet it holds, because they share every
+   attribute anything here filters or sorts on. */
+function* catalogue() {
+  yield* AUTHORED;
+  yield* CUSTOM;
+  yield* FAMILIES;
+}
+
 const MATCH = {
   grade:      (ex, v) => ex.grade === v,
   level:      (ex, v) => ex.level === v,
@@ -176,9 +185,11 @@ export function facetCounts(f = {}) {
   const text = (f.text ?? '').trim().toLowerCase();
   const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
   const out = Object.fromEntries(FACET_KEYS.map(k => [k, Object.create(null)]));
-  const bump = (k, v) => { out[k][v] = (out[k][v] ?? 0) + 1; };
+  let weight = 1;
+  const bump = (k, v) => { out[k][v] = (out[k][v] ?? 0) + weight; };
 
-  for (const ex of EXERCISES) {
+  for (const ex of catalogue()) {
+    weight = ex.sets ?? 1;
     if (words.length && !matchesText(ex, words)) continue;
     /* Which single filter, if any, this worksheet fails. */
     let failed = null, failures = 0;
@@ -216,7 +227,7 @@ export function searchExercises(f = {}) {
   const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
 
   const scored = [];
-  for (const ex of EXERCISES) {
+  for (const ex of catalogue()) {
     if (!passesAll(ex, f)) continue;
 
     let score = 0;
@@ -246,7 +257,31 @@ export function searchExercises(f = {}) {
   }[sort] ?? cmp_default;
   function cmp_default(a, b) { return b.score - a.score; }
 
-  return scored.sort(cmp).map(s => s.ex);
+  const families = scored.sort(cmp).map(s => s.ex);
+
+  /* The result is a lazy list. `total` counts every sheet in every matching
+     family; `slice` expands only the ones about to be rendered. A search that
+     matches half the library must not build half a million objects to say so. */
+  let total = 0;
+  for (const fam of families) total += fam.sets ?? 1;
+  return {
+    total,
+    families,
+    slice(offset, n) {
+      const out = [];
+      let seen = 0;
+      for (const fam of families) {
+        const sets = fam.sets ?? 1;
+        if (seen + sets <= offset) { seen += sets; continue; }
+        for (let i = Math.max(0, offset - seen); i < sets && out.length < n; i++) {
+          out.push(fam.at ? fam.at(i) : fam);
+        }
+        seen += sets;
+        if (out.length >= n) break;
+      }
+      return out;
+    }
+  };
 }
 
 /** Suggestions for the search box: exercises, then topics that exist. */

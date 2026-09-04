@@ -13,7 +13,7 @@ import upper  from './exercises-upper.js';
 import { GRADE_MAP } from './catalog.js';
 import { STANDARDS } from './standards.js';
 import { STORAGE_KEY } from '../core/storage-key.js';
-import { buildBlueprints, generateQuestions } from './generated.js';
+import { buildFamilies, generateQuestions } from './generated.js';
 
 /* Everything the UI needs but a content author should not have to repeat. */
 function decorate(ex) {
@@ -49,40 +49,105 @@ function loadCustom() {
 }
 
 export const AUTHORED = [...early, ...middle, ...upper].map(decorate);
-
-/* Blueprints are NOT passed through decorate: they already answer every field
-   it would add, and spreading one evaluates every getter — which is exactly
-   the eager string building the lazy type exists to avoid. */
-export const GENERATED = buildBlueprints();
 export const CUSTOM = loadCustom().map(decorate);
 
-/* Authored worksheets come first: they are the deepest and set the tone. */
-export const EXERCISES = [...AUTHORED, ...CUSTOM, ...GENERATED];
+/* Families, not sheets. Every worksheet in a family shares each attribute the
+   library filters on and differs only in which items its seed deals, so the
+   catalogue holds thirty-odd thousand families rather than a million sheets.
+   Filtering runs over the families; only the page being rendered is expanded.
+   Families are NOT passed through decorate: they already answer every field it
+   would add, and spreading one evaluates every getter — the eager string
+   building the lazy type exists to avoid. */
+export const FAMILIES = buildFamilies();
 
-/* The id index is built on first lookup, not at load.
-   Every id is a computed string, so materialising a hundred thousand of them
-   costs a fifth of a second — and the pages that only browse or filter the
-   library (home, subjects, grades, the library itself) never look one up. */
-let idIndex = null;
+/* Authored and custom worksheets are one-sheet families. */
+const SINGLES = [...AUTHORED, ...CUSTOM];
+
+/** How many worksheets the library actually holds. */
+export const TOTAL = SINGLES.length + FAMILIES.reduce((n, f) => n + f.sets, 0);
+
+/* -------------------------------- traversal -------------------------------- */
+/**
+ * Every worksheet matching a predicate, lazily.
+ * The predicate is applied to the family — which is safe, because a family's
+ * members differ only in id, title and seed — so filtering a million sheets
+ * costs thirty thousand tests, not a million.
+ */
+export function* iterate(pred = null) {
+  for (const ex of SINGLES) if (!pred || pred(ex)) yield ex;
+  for (const f of FAMILIES) {
+    if (pred && !pred(f)) continue;
+    for (let i = 0; i < f.sets; i++) yield f.at(i);
+  }
+}
+
+/** How many worksheets match, without building any of them. */
+export function countWhere(pred = null) {
+  let n = 0;
+  for (const ex of SINGLES) if (!pred || pred(ex)) n++;
+  for (const f of FAMILIES) if (!pred || pred(f)) n += f.sets;
+  return n;
+}
+
+/** The first n matching worksheets, skipping the first `offset`. */
+export function takeWhere(pred = null, n = 24, offset = 0) {
+  const out = [];
+  let skipped = 0;
+  for (const ex of iterate(pred)) {
+    if (skipped < offset) { skipped++; continue; }
+    out.push(ex);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+
+/** The first matching worksheet, or null. */
+export const findWhere = pred => takeWhere(pred, 1)[0] ?? null;
+
+/* --------------------------------- lookup --------------------------------- */
+/* Ids are structured: `<topic>-<level>-<focus>[-set-<label>]`. The index maps a
+   family's base id to the family, so looking a worksheet up means one map hit
+   and one small object — not an index of a million strings. */
+let familyIndex = null;
 function index() {
-  if (idIndex) return idIndex;
-  idIndex = new Map();
-  for (const e of EXERCISES) idIndex.set(e.id, e);
-  return idIndex;
+  if (familyIndex) return familyIndex;
+  familyIndex = new Map();
+  for (const ex of SINGLES) familyIndex.set(ex.id, ex);
+  for (const f of FAMILIES) familyIndex.set(f.baseId, f);
+  return familyIndex;
+}
+
+/** Set labels run A…Z then AA, AB…, matching generated.js. */
+function setNumber(label) {
+  let n = 0;
+  for (const ch of label.toUpperCase()) {
+    const v = ch.charCodeAt(0) - 65;
+    if (v < 0 || v > 25) return -1;
+    n = n * 26 + v + 1;
+  }
+  return n - 1;
 }
 
 /** Look one worksheet up by id. Metadata only — see getExercise for questions. */
-export const byId = id => index().get(id) ?? null;
+export function byId(id) {
+  if (typeof id !== 'string') return null;
+  const map = index();
+  const direct = map.get(id);
+  if (direct) return direct.sets === undefined ? direct : direct.at(0);
+
+  const m = id.match(/^(.*)-set-([a-z]+)$/);
+  if (!m) return null;
+  const family = map.get(m[1]);
+  if (!family || family.sets === undefined) return null;
+  const n = setNumber(m[2]);
+  return n >= 1 && n < family.sets ? family.at(n) : null;
+}
 
 /* Kept as a Proxy so `EXERCISE_MAP[id]` still reads naturally at the call
-   sites, while the index behind it is still built lazily. */
+   sites, while nothing is materialised until something is asked for. */
 export const EXERCISE_MAP = new Proxy({}, {
-  get: (_, id) => typeof id === 'string' ? index().get(id) : undefined,
-  has: (_, id) => typeof id === 'string' && index().has(id),
-  ownKeys: () => [...index().keys()],
-  getOwnPropertyDescriptor: (_, id) => index().has(id)
-    ? { value: index().get(id), enumerable: true, configurable: true }
-    : undefined
+  get: (_, id) => typeof id === 'string' ? (byId(id) ?? undefined) : undefined,
+  has: (_, id) => typeof id === 'string' && byId(id) !== null
 });
 
 /* --------------------------------- access --------------------------------- */
@@ -115,11 +180,43 @@ export function getExercise(id) {
 /** Metadata only — safe to call for every card in a list. */
 export const getMeta = id => byId(id);
 
-export const exercisesBy = pred => EXERCISES.filter(pred);
-export const countByGrade = grade => EXERCISES.filter(e => e.grade === grade).length;
-export const countBySubject = subject => EXERCISES.filter(e => e.subject === subject).length;
-export const topicsInUse = subject =>
-  [...new Set(EXERCISES.filter(e => e.subject === subject).map(e => e.topic))];
+export const exercisesBy = pred => takeWhere(pred, 48);
+
+/* Counts by grade, subject, level, topic and question type, tallied in one
+   pass. Twenty cards on the home page each running their own predicate over
+   thirty-four thousand families was six hundred thousand tests to render a
+   handful of numbers, and it showed: half a second before anything appeared. */
+const TALLY = (() => {
+  const t = { grade: {}, subject: {}, level: {}, topic: {}, type: {} };
+  const add = (bucket, key, n) => { if (key != null) bucket[key] = (bucket[key] ?? 0) + n; };
+  const count = (ex, n) => {
+    add(t.grade, ex.grade, n);
+    add(t.subject, ex.subject, n);
+    add(t.level, ex.level, n);
+    add(t.topic, ex.topic, n);
+    for (const ty of ex.types ?? []) add(t.type, ty, n);
+  };
+  for (const ex of SINGLES) count(ex, 1);
+  for (const f of FAMILIES) count(f, f.sets);
+  return t;
+})();
+
+export const countByGrade = grade => TALLY.grade[grade] ?? 0;
+export const countBySubject = subject => TALLY.subject[subject] ?? 0;
+export const countByLevel = level => TALLY.level[level] ?? 0;
+export const countByTopic = topic => TALLY.topic[topic] ?? 0;
+export const countByType = type => TALLY.type[type] ?? 0;
+export const topicsInUse = subject => {
+  const seen = new Set();
+  for (const ex of SINGLES) if (ex.subject === subject) seen.add(ex.topic);
+  for (const f of FAMILIES) if (f.subject === subject) seen.add(f.topic);
+  return [...seen];
+};
+
+/** Total questions across the library, counted from the families. */
+export const TOTAL_QUESTIONS =
+  SINGLES.reduce((n, e) => n + e.count, 0) +
+  FAMILIES.reduce((n, f) => n + f.count * f.sets, 0);
 
 /** Featured shelf: the flagship first, then a spread across bands. */
 export function featuredExercises(n = 6) {
@@ -130,7 +227,7 @@ export function featuredExercises(n = 6) {
     const next = AUTHORED.find(e => e.band === band && !seen.has(e.id));
     if (next) { picked.push(next); seen.add(next.id); }
   }
-  for (const ex of EXERCISES) {
+  for (const ex of iterate()) {
     if (picked.length >= n) break;
     if (!seen.has(ex.id)) { picked.push(ex); seen.add(ex.id); }
   }

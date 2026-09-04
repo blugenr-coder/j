@@ -4,7 +4,7 @@ import { mountShell, href } from '../core/shell.js';
 import { gradeCard } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { GRADES } from '../data/catalog.js';
-import { EXERCISES } from '../data/exercises.js';
+import { countByLevel } from '../data/exercises.js';
 
 mountShell({ page: 'grades', nav: 'public' });
 
@@ -12,7 +12,7 @@ $('#grade-cards').replaceChildren(...GRADES.map(gradeCard));
 
 $('#level-groups').replaceChildren(...GRADES.map(g => {
   const chips = g.levels.map(level => {
-    const n = EXERCISES.filter(e => e.level === level).length;
+    const n = countByLevel(level);
     return el('a', {
       class: 'chip',
       href: href(`library.html?grade=${g.id}&level=${encodeURIComponent(level)}`),

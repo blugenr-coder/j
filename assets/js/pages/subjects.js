@@ -5,7 +5,7 @@ import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { subjectCard, exerciseCard, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { SUBJECTS, SUBJECT_MAP } from '../data/catalog.js';
-import { EXERCISES } from '../data/exercises.js';
+import { countByTopic, takeWhere } from '../data/exercises.js';
 
 mountShell({ page: 'subjects', nav: 'public' });
 
@@ -29,10 +29,8 @@ if (!subject) {
   $('#subject-blurb').textContent = subject.blurb;
   $('#subject-all-link').href = href(`library.html?subject=${subject.id}`);
 
-  const inSubject = EXERCISES.filter(e => e.subject === subject.id);
-
   $('#topic-cards').replaceChildren(...subject.topics.map(t => {
-    const n = inSubject.filter(e => e.topic === t.id).length;
+    const n = countByTopic(t.id);
     return el('a', {
       class: 'card card-pad-sm',
       href: href(`library.html?subject=${subject.id}&topic=${t.id}`),
@@ -43,9 +41,10 @@ if (!subject) {
     );
   }));
 
+  const shelf = takeWhere(e => e.subject === subject.id, 12);
   fill($('#subject-exercises'),
-    inSubject.length
-      ? inSubject.map(ex => exerciseCard(ex, { showProgress: false }))
+    shelf.length
+      ? shelf.map(ex => exerciseCard(ex, { showProgress: false }))
       : emptyState('compass', 'Nothing here yet',
           'This subject is in the taxonomy but has no worksheets written for it yet.',
           el('a', { class: 'btn btn-secondary', href: href('library.html'), text: 'Browse the whole library' }))

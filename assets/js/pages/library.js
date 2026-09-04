@@ -196,13 +196,14 @@ function apply({ pushUrl = true, resetPage = false } = {}) {
   buildActiveFilters();
 
   const results = searchExercises({ ...state, sort: state.sort });
-  $('#result-count').textContent = results.length
-    ? `${results.length.toLocaleString()} worksheet${results.length === 1 ? '' : 's'}`
+  const total = results.total;
+  $('#result-count').textContent = total
+    ? `${total.toLocaleString()} worksheet${total === 1 ? '' : 's'}`
     : 'No worksheets match';
 
   const page = results.slice(0, shown);
   fill(resultsHost,
-    results.length
+    total
       ? page.map(ex => exerciseCard(ex))
       : emptyState('search', 'Nothing matches those filters',
           'Try removing a filter, or search for a topic like “fractions” or “photosynthesis”.',
@@ -211,11 +212,11 @@ function apply({ pushUrl = true, resetPage = false } = {}) {
   );
 
   const more = $('#load-more');
-  const remaining = results.length - page.length;
+  const remaining = total - page.length;
   more.hidden = remaining <= 0;
   if (remaining > 0) {
     fill(more,
-      el('p', { class: 'small muted', text: `Showing ${page.length.toLocaleString()} of ${results.length.toLocaleString()}` }),
+      el('p', { class: 'small muted', text: `Showing ${page.length.toLocaleString()} of ${total.toLocaleString()}` }),
       el('button', {
         class: 'btn btn-secondary', type: 'button',
         text: `Show ${Math.min(PAGE_SIZE, remaining)} more`,
