@@ -223,13 +223,23 @@ function stem(word) {
  * one such term rules the worksheet out.
  */
 function wordScore(entry, term) {
-  const { w, st, root } = term;
+  const { w, st, root, alt } = term;
   if (entry.title.includes(w)) return 12;
   if (entry.summary.includes(w)) return 6;
   /* What the unit actually teaches. Ranked below the title and summary, so a
      worksheet named for the thing you searched for still comes first. */
   if (entry.keywords.includes(w)) return 5;
   if (extraOf(entry).includes(w)) return 2;
+  /* Hyphens are a spelling choice, not a meaning. The library says
+     "transatlantic" and a teacher types "trans-atlantic"; neither is wrong and
+     neither should return nothing. The joined form is tested at the same
+     tiers, one point below the exact spelling. */
+  if (alt) {
+    if (entry.title.includes(alt)) return 11;
+    if (entry.summary.includes(alt)) return 5;
+    if (entry.keywords.includes(alt)) return 4;
+    if (extraOf(entry).includes(alt)) return 2;
+  }
   if (!st) return 0;
   /* Scored below an exact hit; these only decide whether a worksheet appears
      at all. "cells" finds Cell Structure and Cellular Respiration;
@@ -259,7 +269,12 @@ function wordScore(entry, term) {
 function termsFrom(words) {
   return words.map(w => {
     const st = stem(w);
-    return { w, st, root: st.length >= 7 ? st.slice(0, st.length - 2) : null };
+    const joined = w.replace(/[-']/g, '');
+    return {
+      w, st,
+      root: st.length >= 7 ? st.slice(0, st.length - 2) : null,
+      alt: joined !== w && joined.length > 2 ? joined : null
+    };
   });
 }
 

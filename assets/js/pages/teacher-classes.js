@@ -25,12 +25,31 @@ $('#cancel-class-btn').addEventListener('click', () => { $('#new-class-panel').h
 $('#create-class-btn').addEventListener('click', () => {
   const name = $('#c-name').value.trim();
   if (!name) { toast('Give the class a name first'); $('#c-name').focus(); return; }
-  createClass({ name, level: $('#c-level').value, subject: $('#c-subject').value || null });
+  const cls = createClass({ name, level: $('#c-level').value, subject: $('#c-subject').value || null });
   $('#c-name').value = '';
   $('#new-class-panel').hidden = true;
   toast('Class created');
+  showNewClass(cls);
   draw();
 });
+
+/* The join code is the whole point of creating a class, so it is put in front
+   of the teacher at the moment it exists rather than left to be hunted for. */
+function showNewClass(cls) {
+  const joinUrl = new URL(href(`join.html?c=${encodeClass(cls)}`), location.href).href;
+  const host = $('#new-class-result');
+  host.hidden = false;
+  host.replaceChildren(el('div', { class: 'banner', style: 'margin-bottom:24px' },
+    icon('check-circle', { size: 18 }),
+    el('div', { class: 'grow' },
+      el('p', {}, el('strong', { text: cls.name }), ' is ready. Students join with this code:'),
+      el('div', { class: 'row', style: 'gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px' },
+        el('span', { class: 'code-display', text: cls.code }),
+        el('button', { class: 'btn btn-secondary btn-sm', type: 'button', text: 'Copy join link',
+          onclick: () => copy(joinUrl, 'Join link copied') }),
+        el('a', { class: 'btn btn-ghost btn-sm', href: href(`teacher/create.html?class=${cls.id}`),
+          text: 'Set work for it' })))));
+}
 
 function draw() {
   const t = teacherData();

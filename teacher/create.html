@@ -41,6 +41,29 @@
             <select class="select" id="f-class"></select>
           </label>
 
+          <p class="small muted" id="f-class-empty" hidden>
+            You have no classes yet. Create one and share its join code with your students.
+          </p>
+          <div class="row" style="gap:8px;flex-wrap:wrap;margin:-8px 0 16px">
+            <button class="btn btn-ghost btn-sm" type="button" id="new-class-btn">Create class</button>
+            <span class="small muted" id="f-class-code"></span>
+          </div>
+
+          <div class="card" id="quick-class" hidden style="margin-bottom:16px;background:var(--surface-2)">
+            <label class="field">
+              <span class="label">Class name</span>
+              <input class="input" id="q-name" type="text" placeholder="e.g. Grade 8 Science — Period 3" autocomplete="off">
+            </label>
+            <label class="field">
+              <span class="label">Level</span>
+              <select class="select" id="q-level"></select>
+            </label>
+            <div class="row" style="gap:8px">
+              <button class="btn btn-primary btn-sm" type="button" id="q-create">Create class</button>
+              <button class="btn btn-ghost btn-sm" type="button" id="q-cancel">Cancel</button>
+            </div>
+          </div>
+
           <label class="field">
             <span class="label">Grade band</span>
             <select class="select" id="f-grade"></select>

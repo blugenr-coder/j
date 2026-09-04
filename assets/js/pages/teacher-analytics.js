@@ -19,8 +19,14 @@ let exerciseId = qs('exercise');
 const classSelect = $('#pick-class');
 const exSelect = $('#pick-exercise');
 
-classSelect.replaceChildren(...t.classes.map(c => el('option', { value: c.id, text: c.name })));
-classSelect.value = classId;
+/* With no classes the select was simply blank, which reads as a broken page
+   rather than an empty one. Say so, and disable it. */
+const live = t.classes.filter(c => !c.archived);
+classSelect.replaceChildren(...(live.length
+  ? live.map(c => el('option', { value: c.id, text: c.name }))
+  : [el('option', { value: '', text: 'No classes yet' })]));
+classSelect.disabled = !live.length;
+if (classId) classSelect.value = classId;
 classSelect.addEventListener('change', () => { classId = classSelect.value; exerciseId = null; sync(); });
 exSelect.addEventListener('change', () => { exerciseId = exSelect.value; sync(); });
 
@@ -59,7 +65,14 @@ function sync() {
 function emptyView(message) {
   $('#sample-note').replaceChildren(
     el('div', { class: 'banner', style: 'margin-bottom:24px' },
-      icon('info', { size: 18 }), el('p', { text: message })));
+      icon('info', { size: 18 }),
+      el('div', {},
+        el('p', { text: message }),
+        el('a', {
+          class: 'btn btn-primary btn-sm', style: 'margin-top:10px',
+          href: href(live.length ? 'teacher/create.html' : 'teacher/classes.html'),
+          text: live.length ? 'Set some work' : 'Create a class'
+        }))));
   for (const id of ['#a-stats', '#hardest', '#question-bars', '#student-rows']) {
     const host = $(id);
     if (host) host.replaceChildren();

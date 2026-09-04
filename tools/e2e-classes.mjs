@@ -168,6 +168,65 @@ ok('the student now appears on the roster as joined',
   (await page.locator('#roster').innerText()).includes('Joined with the code'));
 ok('the result reaches the teacher’s grid', /%/.test(matrix));
 
+/* ------------------- setting work with no class at all ------------------- */
+/* A fresh teacher landing on "Set work" has nothing in the class select. That
+   used to be a blank dropdown and no way forward, so it is checked here on a
+   context with empty storage rather than on the one that already has a class. */
+const fresh = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+await fresh.route('**://fonts.googleapis.com/**', r => r.abort());
+await fresh.route('**://fonts.gstatic.com/**', r => r.abort());
+const blank = await fresh.newPage();
+blank.on('pageerror', e => errors.push(e.message));
+
+await blank.goto(`${BASE}/signin.html`, { waitUntil: 'domcontentloaded' });
+await blank.waitForTimeout(500);
+await blank.fill('#name', 'Dana Iqbal');
+await blank.click('button[data-role="teacher"]');
+await blank.click('button[type="submit"]');
+await blank.waitForTimeout(500);
+
+await blank.goto(`${BASE}/teacher/create.html`, { waitUntil: 'domcontentloaded' });
+await blank.waitForTimeout(700);
+ok('with no classes the select says so instead of being blank',
+  (await blank.locator('#f-class').inputValue()) === '' &&
+  (await blank.locator('#f-class option').first().innerText()).includes('No classes yet'));
+ok('a teacher with no classes is told why', await blank.locator('#f-class-empty').isVisible());
+ok('there is a create class button on the set-work page',
+  await blank.locator('#new-class-btn').isVisible());
+
+await blank.click('#new-class-btn');
+await blank.waitForTimeout(250);
+ok('the create class panel opens', await blank.locator('#quick-class').isVisible());
+await blank.fill('#q-name', 'Grade 7 Science');
+await blank.selectOption('#q-level', 'Grade 7');
+await blank.click('#q-create');
+await blank.waitForTimeout(600);
+
+ok('the new class is selected in the dropdown',
+  (await blank.locator('#f-class option').first().innerText()).includes('Grade 7 Science') &&
+  (await blank.locator('#f-class').inputValue()).startsWith('c-'));
+ok('its join code is shown next to the class',
+  /[A-Z0-9]{3}-[A-Z0-9]{3}/.test(await blank.locator('#f-class-code').innerText()));
+ok('the class select is usable again', !(await blank.locator('#f-class').isDisabled()));
+ok('the empty message is gone', !(await blank.locator('#f-class-empty').isVisible()));
+
+/* And the class it created is a real one, visible on the class list. */
+await blank.goto(`${BASE}/teacher/classes.html`, { waitUntil: 'domcontentloaded' });
+await blank.waitForTimeout(600);
+ok('the class created from the set-work page is a real class',
+  (await blank.locator('.class-card').innerText()).includes('Grade 7 Science'));
+
+/* Creating one from the class page puts the join code straight in front. */
+await blank.click('#new-class-btn');
+await blank.fill('#c-name', 'Grade 9 History');
+await blank.selectOption('#c-level', 'Grade 9');
+await blank.click('#create-class-btn');
+await blank.waitForTimeout(500);
+ok('creating a class shows its join code immediately',
+  /[A-Z0-9]{3}-[A-Z0-9]{3}/.test(await blank.locator('#new-class-result .code-display').innerText()));
+
+await fresh.close();
+
 ok('no uncaught page errors', errors.length === 0);
 if (errors.length) console.log(errors);
 

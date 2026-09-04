@@ -7,7 +7,7 @@ import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, DIFFICULTIES, TOPIC_MAP } from '../data/catalog.js';
 import { searchExercises } from '../core/search.js';
 import { getExercise } from '../data/exercises.js';
-import { teacherData, createAssignment } from '../core/store.js';
+import { teacherData, createAssignment, createClass, encodeClass } from '../core/store.js';
 
 mountShell({ page: 'teachers', nav: 'app', mode: 'teacher', footer: false });
 mountSideNav($('#side-nav-host'), 't-create');
@@ -20,9 +20,73 @@ const chosen = new Set();
 /* ------------------------------- the selects ------------------------------- */
 const opt = (value, label) => el('option', { value, text: label });
 
+/* Mutable, because a class can be created from this page. Setting work with
+   no class to set it for was previously a dead end: the select was simply
+   empty, with nothing on the page explaining why or offering a way out. */
 const liveClasses = t.classes.filter(c => !c.archived);
-$('#f-class').replaceChildren(...liveClasses.map(c => opt(c.id, c.name)));
-if (qs('class') && liveClasses.some(c => c.id === qs('class'))) $('#f-class').value = qs('class');
+
+function drawClasses(selectId = null) {
+  const empty = liveClasses.length === 0;
+  $('#f-class').replaceChildren(...(empty
+    ? [opt('', 'No classes yet')]
+    : liveClasses.map(c => opt(c.id, c.name))));
+  $('#f-class').disabled = empty;
+  $('#f-class-empty').hidden = !empty;
+  if (selectId) $('#f-class').value = selectId;
+  showCode();
+}
+
+/* The join code is the thing a teacher actually needs in front of them, so it
+   sits next to the class rather than only on the class page. */
+function showCode() {
+  const cls = liveClasses.find(c => c.id === $('#f-class').value);
+  const host = $('#f-class-code');
+  if (!cls) { host.replaceChildren(); return; }
+  host.replaceChildren(
+    el('span', { text: 'Join code ' }),
+    el('strong', { class: 'mono', text: cls.code }),
+    el('button', {
+      class: 'btn btn-ghost btn-sm', type: 'button', text: 'Copy join link',
+      style: 'margin-left:8px',
+      onclick: async () => {
+        const url = new URL(href(`join.html?c=${encodeClass(cls)}`), location.href).href;
+        try { await navigator.clipboard.writeText(url); toast('Join link copied'); }
+        catch { prompt('Copy this:', url); }
+      }
+    }));
+}
+
+drawClasses();
+if (qs('class') && liveClasses.some(c => c.id === qs('class'))) {
+  $('#f-class').value = qs('class');
+  showCode();
+}
+
+/* ----------------------------- create a class ----------------------------- */
+$('#q-level').replaceChildren(...GRADES.flatMap(g => g.levels.map(l => opt(l, l))));
+$('#q-level').value = 'Grade 8';
+
+const openQuickClass = (open = true) => {
+  $('#quick-class').hidden = !open;
+  if (open) $('#q-name').focus();
+};
+$('#new-class-btn').addEventListener('click', () => openQuickClass($('#quick-class').hidden));
+$('#q-cancel').addEventListener('click', () => openQuickClass(false));
+$('#q-name').addEventListener('keydown', e => { if (e.key === 'Enter') $('#q-create').click(); });
+
+$('#q-create').addEventListener('click', () => {
+  const name = $('#q-name').value.trim();
+  if (!name) { toast('Give the class a name first'); $('#q-name').focus(); return; }
+  const cls = createClass({ name, level: $('#q-level').value, subject: $('#f-subject').value || null });
+  liveClasses.unshift(cls);
+  t.classes.unshift(cls);
+  $('#q-name').value = '';
+  openQuickClass(false);
+  drawClasses(cls.id);
+  applyClassDefaults();
+  refreshMatches();
+  toast(`Class created — join code ${cls.code}`);
+});
 $('#f-grade').replaceChildren(opt('', 'Any grade band'), ...GRADES.map(g => opt(g.id, `${g.name} — ${g.range}`)));
 
 /** Levels shown depend on the band, so the two selects cannot contradict. */
@@ -43,21 +107,20 @@ function refreshTopics() {
 refreshTopics();
 
 /* Default to the chosen class's own level so the first list is relevant. */
-const startClass = liveClasses.find(c => c.id === $('#f-class').value) ?? liveClasses[0];
-if (startClass?.grade) $('#f-grade').value = startClass.grade;
-if (startClass?.subject) { $('#f-subject').value = startClass.subject; refreshTopics(); }
-refreshLevels(startClass?.level);
+function applyClassDefaults() {
+  const cls = liveClasses.find(c => c.id === $('#f-class').value) ?? liveClasses[0];
+  if (cls?.grade) $('#f-grade').value = cls.grade;
+  if (cls?.subject) { $('#f-subject').value = cls.subject; refreshTopics(); }
+  refreshLevels(cls?.level);
+  showCode();
+}
+applyClassDefaults();
 
 for (const id of ['#f-class', '#f-grade', '#f-level', '#f-subject', '#f-topic', '#f-difficulty', '#f-length']) {
   $(id).addEventListener('change', () => {
     if (id === '#f-subject') refreshTopics();
     if (id === '#f-grade') refreshLevels();
-    if (id === '#f-class') {
-      const cls = liveClasses.find(c => c.id === $('#f-class').value);
-      if (cls?.grade) $('#f-grade').value = cls.grade;
-      if (cls?.subject) { $('#f-subject').value = cls.subject; refreshTopics(); }
-      refreshLevels(cls?.level);
-    }
+    if (id === '#f-class') applyClassDefaults();
     refreshMatches();
   });
 }
@@ -125,6 +188,11 @@ drawSelected();
 /* -------------------------------- creation -------------------------------- */
 $('#create-btn').addEventListener('click', () => {
   if (!chosen.size) return;
+  if (!$('#f-class').value) {
+    toast('Create a class first — an assignment has to be set for someone');
+    openQuickClass(true);
+    return;
+  }
   const ids = [...chosen];
   const first = getExercise(ids[0]);
   const assignment = createAssignment({

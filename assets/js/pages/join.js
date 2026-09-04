@@ -74,7 +74,9 @@ function drawMine() {
 
   if (!mine.length) {
     $('#my-classes').replaceChildren(emptyState('users', 'You have not joined a class yet',
-      'Once you join, everything your teacher sets shows up here and on your dashboard.'));
+      'Once you join, everything your teacher sets shows up here and on your dashboard. ' +
+      'Teaching rather than studying? Create a class and share its join code.',
+      el('a', { class: 'btn btn-secondary', href: href('teacher/classes.html'), text: 'Create a class' })));
     return;
   }
 

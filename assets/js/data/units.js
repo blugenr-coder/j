@@ -25,12 +25,17 @@ import { ELEM_UNITS } from './units-elem.js';
 import { ELEM2_UNITS } from './units-elem2.js';
 import { NATION_UNITS } from './units-nations.js';
 import { WORLD_UNITS } from './units-world.js';
+import { SCI2_UNITS } from './units-sci2.js';
+import { PRIMARY_UNITS } from './units-primary.js';
+import { CULTURE_UNITS } from './units-culture.js';
+import { HIST2_UNITS } from './units-hist2.js';
+import { GAP_UNITS } from './units-gaps.js';
 
 /* Merged per topic: several files may contribute units to the same topic. */
 export const UNITS = (() => {
   const out = {};
   for (const src of [EARLY_UNITS, SCIENCE_UNITS, HUMANITIES_UNITS, ELA_UNITS, LANGUAGE_UNITS,
-                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS, ELEM_UNITS, ELEM2_UNITS, NATION_UNITS, WORLD_UNITS]) {
+                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS, ELEM_UNITS, ELEM2_UNITS, NATION_UNITS, WORLD_UNITS, SCI2_UNITS, PRIMARY_UNITS, CULTURE_UNITS, HIST2_UNITS, GAP_UNITS]) {
     for (const [topic, units] of Object.entries(src)) {
       (out[topic] ??= []).push(...units);
     }

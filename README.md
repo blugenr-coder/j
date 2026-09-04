@@ -2,7 +2,7 @@
 
 **Practice anything. Learn everything.**
 
-A library of **1,033,046 worksheets** across **17 subjects**, for every grade from
+A library of **1,748,955 worksheets** across **17 subjects**, for every grade from
 Pre-K to college, where the same worksheet works online *and* on paper —
 including multi-page packs of up to ten printed pages and 100 questions, and
 labelled diagrams that work both on screen and in print. Search it, practise it
@@ -68,6 +68,18 @@ A teacher creates a class and gets two ways to share it: a six-character join
 code, and a link. Students join, see the work on their dashboard with its due
 date, complete it, and the result lands in the teacher's grid.
 
+**A teacher with no classes yet is not left at a dead end.** "Set work" opens
+with a class dropdown, and on a fresh account that dropdown was simply empty —
+no explanation, and nothing to click. Now it says *No classes yet*, explains
+why, and carries a **Create class** button that takes a name and a level and
+makes the class in place: the new class is selected, its join code appears
+beside it with a copy-link button, and the level filters below reset to match.
+The same code is put in front of the teacher the moment a class is created on
+the class list page, because the join code is the whole point of having one.
+Analytics does the same thing with its class picker rather than showing a blank
+select, and the student join page offers the teacher route to anyone who landed
+there without a code.
+
 The honest boundary: **a code resolves only on the device the class was created
 on; the link works anywhere**, because the class details travel inside the URL.
 What no link can do is send results back without a server, so a student working
@@ -79,24 +91,24 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**1,033,046 worksheets** across 511 curriculum micro-units, 70 topics, 17
+**1,748,955 worksheets** across 588 curriculum micro-units, 70 topics, 17
 subjects and every level from Pre-K to college — from letter sounds to the
 Krebs cycle, and from nutrition and personal finance to cyber security,
-philosophy and world religions. Sheets run from 6 to 100 questions; 464,810 are
-multi-page packs and 129,609 run to 40 questions or more. Together they hold
-about 20 million questions.
+philosophy and world religions. Sheets run from 6 to 100 questions; 686,114 are
+multi-page packs and 153,130 run to 40 questions or more. Together they hold
+about 29.7 million questions.
 
 | Subject | Worksheets | | Subject | Worksheets |
 |---|--:|---|---|--:|
-| Science | 147,554 | | Life Skills & Careers | 39,532 |
-| Languages | 136,854 | | Art & Music | 36,958 |
-| English / Language Arts | 119,338 | | Business & Finance | 33,164 |
-| Social Studies | 119,231 | | Engineering & Design | 32,528 |
-| Mathematics | 112,959 | | Study Skills | 24,518 |
-| Computer Science | 64,073 | | Environment & Sustainability | 21,527 |
-| Health & Physical Education | 52,870 | | Philosophy & Religion | 18,934 |
-| Early Learning | 45,996 | | Psychology & Sociology | 16,306 |
-| | | | Media & Film | 10,704 |
+| Science | 268,231 | | Computer Science | 110,077 |
+| Social Studies | 261,334 | | Health & Physical Education | 81,704 |
+| Languages | 193,782 | | Early Learning | 77,948 |
+| Mathematics | 184,422 | | Art & Music | 69,814 |
+| English / Language Arts | 183,321 | | Life Skills & Careers | 66,050 |
+| Business & Finance | 46,201 | | Engineering & Design | 45,842 |
+| Study Skills | 38,015 | | Philosophy & Religion | 36,416 |
+| Environment & Sustainability | 36,644 | | Psychology & Sociology | 28,967 |
+| | | | Media & Film | 20,161 |
 
 ### Families, not worksheets
 
@@ -119,7 +131,7 @@ paint under half a second.
 A subject is not one thing you practise; it is thirty. Biology is *Cell
 Structure*, *Photosynthesis*, *Cellular Respiration and the Krebs Cycle*,
 *Homeostasis* — the units a scheme of work is actually built from, and the
-units a student is actually weak at. So **511 curriculum micro-units** each
+units a student is actually weak at. So **588 curriculum micro-units** each
 carry their own item bank and their own level range, in
 `assets/js/data/units-*.js`:
 
@@ -234,7 +246,7 @@ not make it.
 
 - **26 authored worksheets**, written by hand — the deepest content, and what
   sets the tone for everything else.
-- **1,033,020 generated worksheets**, expanded from a curriculum plan and the
+- **1,748,929 generated worksheets**, expanded from a curriculum plan and the
   micro-unit banks. These are deterministic (the same worksheet always contains
   the same questions) and their answers are *computed*, not transcribed, so a
   sheet cannot disagree with its own answer key. Questions materialise only when
@@ -380,7 +392,7 @@ assets/css/     tokens → base → components → pages → print
 assets/js/
   core/         store, marking, search, i18n, question renderers, app shell,
                 cards, icons
-  data/         taxonomy, authored content, 511 micro-unit banks, the figure
+  data/         taxonomy, authored content, 588 micro-unit banks, the figure
                 library, the unit engine and the family catalogue
   i18n/         one dictionary per language
   pages/        one module per page
