@@ -24,6 +24,7 @@
    generated.js builds each of them by selecting kinds. */
 
 import { pick, sample, choice, blankQ, multiQ, matchQ, orderQ, writtenQ } from './gen-core.js';
+import { proceduralMakers } from './gen-early.js';
 
 const other = (r, list, exclude, n) => sample(r, list.filter(x => x !== exclude), n);
 const lower = s => String(s).charAt(0).toLowerCase() + String(s).slice(1);
@@ -70,6 +71,12 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
   const sequences = unit.sequences ?? [];
   const applications = unit.applications ?? [];
   const lexicon = unit.kind === 'lexicon';
+  /* Early-years units read to a five-year-old, so their question wording is
+     shorter and names the kind of thing being asked for: "Which letter makes
+     the sound at the start of ball?" rather than "Which term matches this
+     description?" */
+  const early = unit.kind === 'early';
+  const noun = unit.noun ?? 'one';
   const lang = unit.lang ?? '';
   const terms = facts.map(f => f[0]);
   const meanings = facts.map(f => f[1]);
@@ -88,9 +95,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('term-from-meaning', 'recognise', 'choice', 1, r => {
       const [term, meaning] = pick(r, facts);
       return choice(r, {
-        prompt: lexicon
-          ? `How do you say “${meaning}” in ${lang}?`
-          : `Which term matches this description? “${meaning}”`,
+        prompt: lexicon ? `How do you say “${meaning}” in ${lang}?`
+              : early   ? `Which ${noun} ${meaning}?`
+              :           `Which term matches this description? “${meaning}”`,
         correct: term,
         distractors: other(r, terms, term, 3),
         explanation: lexicon ? `“${meaning}” is ${term}.` : `${term} — ${meaning}.`
@@ -100,9 +107,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('meaning-from-term', 'recognise', 'choice', 1, r => {
       const [term, meaning] = pick(r, facts);
       return choice(r, {
-        prompt: lexicon
-          ? `What does “${term}” mean in English?`
-          : `Which of these best describes “${term}”?`,
+        prompt: lexicon ? `What does “${term}” mean in English?`
+              : early   ? `Pick the one that matches “${term}”.`
+              :           `Which of these best describes “${term}”?`,
         correct: meaning,
         distractors: other(r, meanings, meaning, 3),
         explanation: `${term} — ${meaning}.`
@@ -116,7 +123,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       if (tier < 2) return null;
       const [term, meaning] = pick(r, facts);
       return blankQ(
-        lexicon ? `Write the ${lang} for “${meaning}”.` : `Name the term: ${meaning}.`,
+        lexicon ? `Write the ${lang} for “${meaning}”.`
+        : early ? `Write the ${noun} that ${meaning}.`
+        :         `Name the term: ${meaning}.`,
         term,
         { hint: `It begins with “${String(term)[0]}”.`, explanation: `${term} — ${meaning}.` });
     });
@@ -128,9 +137,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       const t = String(term);
       const shown = t.slice(0, Math.max(1, Math.round(t.length / 3)));
       return blankQ(
-        lexicon
-          ? `Finish the ${lang} for “${meaning}”: ${shown}…`
-          : `Finish the term: ${shown}… — ${meaning}`,
+        lexicon ? `Finish the ${lang} for “${meaning}”: ${shown}…`
+        : early ? `Finish it: ${shown}… — the ${noun} that ${meaning}`
+        :         `Finish the term: ${shown}… — ${meaning}`,
         term,
         { hint: `${t.length} letters, starting “${shown}”.`, explanation: `${term} — ${meaning}.` });
     });
@@ -149,7 +158,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
   /* -------------------------------- match -------------------------------- */
   if (facts.length >= 4) {
     add('match-term-meaning', 'match', 'match', 1, r => matchQ(r, {
-      prompt: lexicon ? `Match each ${lang} word to its meaning.` : 'Match each term to its meaning.',
+      prompt: lexicon ? `Match each ${lang} word to its meaning.`
+            : early   ? `Match each ${noun} to the one that goes with it.`
+            :           'Match each term to its meaning.',
       pairs: sample(r, facts, 4).map(([term, meaning]) => ({ left: term, right: meaning })),
       explanation: `${name}: the pairs above are the ones to know.`
     }));
@@ -157,9 +168,9 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('match-meaning-term', 'match', 'match', 2, (r, tier = 2) => {
       if (tier < 2) return null;
       return matchQ(r, {
-        prompt: lexicon
-          ? `Match each English meaning to its ${lang} word.`
-          : 'Match each description to the term it defines.',
+        prompt: lexicon ? `Match each English meaning to its ${lang} word.`
+              : early   ? `Match each clue to the ${noun} it goes with.`
+              :           'Match each description to the term it defines.',
         pairs: sample(r, facts, 4).map(([term, meaning]) => ({ left: meaning, right: term })),
         explanation: `${name}: the pairs above are the ones to know.`
       });
@@ -171,7 +182,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('pick-truth', 'judge', 'choice', 1, r => {
       const t = pick(r, truths);
       return choice(r, {
-        prompt: `Which statement about ${lower(name)} is correct?`,
+        prompt: early ? `Which one is true?` : `Which statement about ${lower(name)} is correct?`,
         correct: t, distractors: sample(r, myths, 3), explanation: t
       });
     });
@@ -181,7 +192,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('pick-myth', 'judge', 'choice', 1, r => {
       const m = pick(r, myths);
       return choice(r, {
-        prompt: `Which statement about ${lower(name)} is NOT correct?`,
+        prompt: early ? `Which one is NOT true?` : `Which statement about ${lower(name)} is NOT correct?`,
         correct: m, distractors: sample(r, truths, 3),
         explanation: 'That claim is false. The other three are accurate.'
       });
@@ -222,7 +233,8 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       const mine = sample(r, terms, 3);
       if (mine.includes(outsider)) return null;
       return choice(r, {
-        prompt: `Three of these belong to ${lower(name)}. Which one does not?`,
+        prompt: early ? `Three of these go together. Which one does not?`
+                      : `Three of these belong to ${lower(name)}. Which one does not?`,
         correct: outsider, distractors: mine,
         explanation: `${mine.join(', ')} all belong to ${lower(name)}; ${outsider} does not.`
       });
@@ -304,6 +316,11 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     });
   }
 
+  /* Procedural activities a unit has opted into. Ten facts is ten facts, but
+     counting is a procedure: it composes a fresh question every time, which is
+     what lets a unit like "Counting to 10" carry a term's worth of work. */
+  gens.push(...proceduralMakers(unit));
+
   return gens;
 }
 
@@ -322,7 +339,9 @@ const choose = (n, k) => {
  * its four pairs with another is not really a second question, so the raw
  * combinations are capped well below their arithmetic value.
  */
-export function capacityOf(unit, makerId) {
+export function capacityOf(unit, makerId, maker = null) {
+  /* A procedural maker declares its own: it is not drawing from a fixed bank. */
+  if (maker?.capacity) return maker.capacity;
   const f = unit.facts?.length ?? 0;
   const t = unit.truths?.length ?? 0;
   const m = unit.myths?.length ?? 0;
@@ -361,5 +380,5 @@ export const kindsOf = gens => [...new Set(gens.map(g => g.kind))];
  * unit's depth by an order of magnitude.
  */
 export function unitCapacity(unit, gens) {
-  return (gens ?? []).reduce((n, g) => n + capacityOf(unit, g.id), 0);
+  return (gens ?? []).reduce((n, g) => n + capacityOf(unit, g.id, g), 0);
 }

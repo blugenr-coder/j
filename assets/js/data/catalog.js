@@ -31,6 +31,17 @@ export const GRADES = [
 
 export const SUBJECTS = [
   {
+    id: 'foundation', name: 'Early Learning', icon: 'band-early', accent: 'green',
+    blurb: 'Letters, sounds, counting, shapes and the world around us.',
+    topics: [
+      { id: 'phonics',     name: 'Letters and Sounds' },
+      { id: 'earlynumber', name: 'Early Number' },
+      { id: 'shapescolour', name: 'Shapes, Colours and Patterns' },
+      { id: 'worldaround', name: 'The World Around Us' },
+      { id: 'readiness',   name: 'School Readiness' }
+    ]
+  },
+  {
     id: 'math', name: 'Mathematics', icon: 'math', accent: 'primary',
     blurb: 'From counting to calculus, one step at a time.',
     topics: [
@@ -55,7 +66,8 @@ export const SUBJECTS = [
       { id: 'chemistry', name: 'Chemistry' },
       { id: 'physics',   name: 'Physics' },
       { id: 'earth',     name: 'Earth Science' },
-      { id: 'astronomy', name: 'Astronomy' }
+      { id: 'astronomy', name: 'Astronomy' },
+      { id: 'method',    name: 'Working Scientifically' }
     ]
   },
   {
@@ -77,7 +89,8 @@ export const SUBJECTS = [
       { id: 'history',   name: 'History' },
       { id: 'geography', name: 'Geography' },
       { id: 'civics',    name: 'Civics' },
-      { id: 'economics', name: 'Economics' }
+      { id: 'economics', name: 'Economics' },
+      { id: 'cultures',  name: 'World Cultures' }
     ]
   },
   {
@@ -87,6 +100,8 @@ export const SUBJECTS = [
       { id: 'spanish', name: 'Spanish' },
       { id: 'french',  name: 'French' },
       { id: 'german',  name: 'German' },
+      { id: 'italian', name: 'Italian' },
+      { id: 'mandarin', name: 'Mandarin Chinese' },
       { id: 'esl',     name: 'English as a Second Language' }
     ]
   },
@@ -154,6 +169,16 @@ export const SUBJECTS = [
     topics: [
       { id: 'climate',      name: 'Climate and Energy' },
       { id: 'conservation', name: 'Ecology and Conservation' }
+    ]
+  },
+  {
+    id: 'life', name: 'Life Skills & Careers', icon: 'users', accent: 'primary',
+    blurb: 'The practical things school assumes you already know.',
+    topics: [
+      { id: 'careers',       name: 'Careers and Employability' },
+      { id: 'safety',        name: 'Safety and First Aid' },
+      { id: 'household',     name: 'Home and Practical Skills' },
+      { id: 'communication', name: 'Speaking and Listening' }
     ]
   },
   {

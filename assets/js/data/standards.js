@@ -35,6 +35,23 @@ export const STANDARDS = {
   measurement:  M('Measurement and Data', ['2.MD', '3.MD', '4.MD', '5.MD', 'N-Q']),
   discrete:     M('The Number System · Counting', ['7.NS', '8.NS', 'S-CP']),
 
+  /* ---- early years ---- */
+  phonics:      E('Reading: Foundational Skills — phonics and word recognition', ['RF.K.2', 'RF.K.3', 'RF.1.3']),
+  earlynumber:  M('Counting and Cardinality · Operations and Algebraic Thinking', ['K.CC', 'K.OA', '1.OA', '1.NBT']),
+  shapescolour: M('Geometry · Measurement and Data', ['K.G', 'K.MD', '1.G']),
+  worldaround:  N('Life Science and Earth Science in the early grades', ['K-LS1', 'K-ESS2', '1-LS1']),
+  readiness:    M('Measurement and Data — time and money', ['1.MD', '2.MD']),
+
+  /* ---- life skills ---- */
+  careers:       { framework: 'CASEL/NBEA', name: 'Employability and career readiness', codes: ['NBEA.CD', 'CASEL.SM'] },
+  safety:        { framework: 'NHES', name: 'Health education — injury prevention and safety', codes: ['NHES.1', 'NHES.7'] },
+  household:     { framework: 'NHES', name: 'Practical living and personal management', codes: ['NHES.5', 'NHES.7'] },
+  communication: E('Speaking and Listening', ['SL.1', 'SL.4', 'SL.6']),
+  method:        N('Science and Engineering Practices', ['SEP.3', 'SEP.4', 'SEP.7']),
+  cultures:      { framework: 'C3', name: 'Culture, geography and global perspectives', codes: ['D2.Geo', 'D2.His'] },
+  italian:       C('Modern language — communicative competence', ['A1', 'A2', 'B1']),
+  mandarin:      C('Modern language — communicative competence', ['A1', 'A2', 'B1']),
+
   /* ---- science: NGSS disciplinary core ideas ---- */
   biology:      N('Life Science — from molecules to ecosystems', ['MS-LS1', 'MS-LS2', 'MS-LS3', 'MS-LS4', 'HS-LS1', 'HS-LS3']),
   chemistry:    N('Physical Science — matter and its interactions', ['MS-PS1', 'HS-PS1']),

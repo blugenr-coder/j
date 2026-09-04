@@ -46,6 +46,10 @@ const slug = s => {
 };
 
 const TOPIC_SUBJECT = {
+  phonics: 'foundation', earlynumber: 'foundation', shapescolour: 'foundation',
+  worldaround: 'foundation', readiness: 'foundation',
+  careers: 'life', safety: 'life', household: 'life', communication: 'life',
+  method: 'science', cultures: 'social', italian: 'languages', mandarin: 'languages',
   arithmetic: 'math', fractions: 'math', decimals: 'math', percentages: 'math', algebra: 'math',
   geometry: 'math', trigonometry: 'math', statistics: 'math', calculus: 'math',
   biology: 'science', chemistry: 'science', physics: 'science', earth: 'science', astronomy: 'science',
@@ -119,6 +123,9 @@ export const UNIT_FORMATS = [
   { id: 'exam',      label: 'Exam-Style Questions', only: null, tier: 3 },
   { id: 'homework',  label: 'Homework Sheet',       only: null },
   { id: 'mixed',     label: 'Mixed Practice',       only: null },
+  { id: 'practice',  label: 'Practice Sheet',       only: ['count-objects', 'count-choose', 'what-comes-next', 'what-came-before', 'one-more', 'one-less', 'number-word', 'bigger-number', 'add-pictures', 'add-numbers', 'take-away', 'number-bond', 'doubles', 'skip-count', 'first-letter', 'last-letter', 'count-letters', 'shape-sides', 'shape-from-sides'] },
+  { id: 'counting',  label: 'Counting and Writing',  only: ['count-objects', 'count-choose', 'count-letters', 'what-comes-next', 'what-came-before'] },
+  { id: 'numberwork', label: 'Number Work',          only: ['add-pictures', 'add-numbers', 'take-away', 'number-bond', 'doubles', 'one-more', 'one-less'] },
   { id: 'sequence',  label: 'Sequencing Activity',  only: ['sequence'] },
   { id: 'applied',   label: 'Applied Questions',    only: ['apply'] }
 ];
@@ -146,7 +153,7 @@ for (const [topic, units] of Object.entries(UNITS)) {
       capacity: unitCapacity(unit, gens),
       formatCapacity: Object.fromEntries(UNIT_FORMATS.map(f => [f.id,
         (f.only ? gens.filter(g => f.only.includes(g.id)) : gens)
-          .reduce((n, g) => n + capacityOf(unit, g.id), 0)])),
+          .reduce((n, g) => n + capacityOf(unit, g.id, g), 0)])),
       kinds: new Set(gens.map(g => g.kind)),
       ids: new Set(gens.map(g => g.id))
     };
@@ -160,6 +167,7 @@ for (const [topic, units] of Object.entries(UNITS)) {
  * and an earlier hand-written list of "procedural" topics got this wrong,
  * giving Business & Finance more worksheets than Science.
  */
+export const VARIED_GENS = {};
 const VARIETY = (() => {
   const out = {};
   for (const [topic, gens] of Object.entries(GENERATORS)) {
@@ -172,7 +180,7 @@ const VARIETY = (() => {
           if (q) seen.add(`${q.prompt ?? ''}|${q.math ?? ''}`);
         } catch { /* a generator that rejects a seed contributes nothing */ }
       }
-      if (seen.size > 1) varied++;
+      if (seen.size > 1) { varied++; (VARIED_GENS[topic] ??= new Set()).add(i); }
     }
     out[topic] = varied;
   }
@@ -521,7 +529,10 @@ const FORMAT_BLURB = {
   homework:  'A homework sheet',
   mixed:     'Mixed practice across every question type this unit supports',
   sequence:  'A sequencing activity',
-  applied:   'Applied questions — the idea in an unfamiliar situation'
+  applied:   'Applied questions — the idea in an unfamiliar situation',
+  practice:  'A practice sheet with a fresh set of questions every time',
+  counting:  'Counting and writing numbers',
+  numberwork: 'Number work — adding, taking away and number bonds'
 };
 
 const GRADE_BAND = Object.fromEntries(GRADES.map(g => [g.id, g.band]));
@@ -587,8 +598,24 @@ const FORMAT_SHAPE = {
   homework:  { count: 15, pages: 2 },
   mixed:     { count: 12, pages: 1 },
   sequence:  { count: 6,  pages: 1 },
-  applied:   { count: 10, pages: 1 }
+  applied:   { count: 10, pages: 1 },
+  practice:  { count: 12, pages: 1 },
+  counting:  { count: 10, pages: 1 },
+  numberwork:{ count: 12, pages: 1 }
 };
+
+/* Topic sheets get formats too. A procedural topic composes fresh numbers
+   every time, so the same focus at the same level can honestly be a quick
+   quiz, a homework sheet or an exam-style paper — different lengths and
+   difficulty floors, not the same sheet relabelled. */
+const TOPIC_FORMATS = [
+  { label: null,                   count: null, pages: 1 },
+  { label: 'Quick Quiz',           count: 8,    pages: 1 },
+  { label: 'Practice Sheet',       count: 15,   pages: 1 },
+  { label: 'Homework Sheet',       count: 12,   pages: 1 },
+  { label: 'Extended Practice',    count: 20,   pages: 2 },
+  { label: 'Exam-Style Questions', count: 20,   pages: 2, tier: 'hard' }
+];
 
 /* Longer booklets, built from every maker a unit has. Only offered where the
    unit can fill them: `build` refuses to repeat a question on one sheet, so
@@ -610,8 +637,14 @@ const UNIT_PACKS = [
  * padding, and the cap is what stops it.
  */
 const REPEATS_ALLOWED = 3;
-const setsFrom = (capacity, count) =>
-  Math.max(4, Math.min(60, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
+const setsFrom = (capacity, count) => {
+  /* The ceiling is a guard against re-dealing a small bank, so it rises with
+     the bank. A family whose makers compose fresh questions every time —
+     counting objects, adding numbers — has nothing to re-deal, and holding it
+     to the same limit as a sixteen-item vocabulary list is arbitrary. */
+  const ceiling = Math.min(140, Math.max(60, Math.round(capacity / 4)));
+  return Math.max(4, Math.min(ceiling, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
+};
 
 /**
  * Expand the plan into worksheet families.
@@ -627,6 +660,9 @@ export function buildFamilies() {
   for (const [topic, [from, to, focuses]] of Object.entries(PLAN)) {
     const start = idx(from), end = idx(to);
     if (start === undefined || end === undefined) continue;
+    /* A topic with no procedural or pool generators has nothing to put on a
+       topic-wide sheet; its worksheets all come from its micro-units. */
+    if (!(GENERATORS[topic] ?? []).length) continue;
     const levels = LEVELS.slice(start, end + 1);
     const sets = setsFor(topic);
 
@@ -645,8 +681,23 @@ export function buildFamilies() {
 
         const difficulty = difficultyFor(pos, levels.length, v);
         const pool = only?.length || (GENERATORS[topic] ?? []).length;
-        const count = Math.min(questionCount(lv.level, difficulty), Math.max(6, pool * 2));
-        family(new Blueprint(topic, start + pos, focus, only, 1, difficulty, count, 0), sets);
+        /* A generator that composes fresh values has no fixed bank to exhaust;
+           one that deals from a list does. That is what caps the sets. */
+        const varied = (only ?? GENERATORS[topic].map((_, i) => i))
+          .filter(i => VARIED_GENS[topic]?.has(i)).length;
+        const capacity = varied * 260 + (pool - varied) * 6;
+
+        for (const shape of TOPIC_FORMATS) {
+          const count = shape.count
+            ?? Math.min(questionCount(lv.level, difficulty), Math.max(6, pool * 2));
+          if (count > Math.max(6, pool * 2) && !varied) continue;
+          if (shape.pages > 1 && idx(lv.level) < idx('Grade 3')) continue;
+          if (shape.tier === 'hard' && idx(lv.level) < idx('Grade 4')) continue;
+          const title = shape.label ? `${focus} — ${shape.label}` : focus;
+          const diff = shape.tier ?? difficulty;
+          family(new Blueprint(topic, start + pos, title, only, shape.pages, diff, count, 0),
+                 shape.label ? setsFrom(capacity, count) : Math.max(sets, setsFrom(capacity, count)));
+        }
       }
 
       /* Packs: the same topic and level, several pages long. A procedural

@@ -256,7 +256,7 @@ export const ELECTIVE_UNITS = {
       ]
     },
     {
-      name: 'Ratios and Analysis', from: 'Grade 11', to: 'College',
+      name: 'Ratios and Analysis', from: 'Grade 10', to: 'College',
       facts: [
         ['ratio analysis', 'comparing figures to judge performance'],
         ['current ratio', 'current assets divided by current liabilities'],
