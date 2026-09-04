@@ -62,7 +62,7 @@ function draw() {
           onclick: () => copy(joinUrl, 'Join link copied') }),
         !c.sample ? el('button', {
           class: 'btn btn-ghost btn-sm', type: 'button', text: 'Delete',
-          style: 'color:var(--danger)',
+          style: 'color:var(--bad-ink)',
           onclick: () => {
             if (!confirm(`Delete "${c.name}" and its assignments? This cannot be undone.`)) return;
             deleteClass(c.id); draw(); toast('Class deleted');

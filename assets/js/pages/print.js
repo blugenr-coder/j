@@ -9,6 +9,7 @@ import { emptyState } from '../core/cards.js';
 import { getExercise } from '../data/exercises.js';
 import { SUBJECT_MAP, TOPIC_MAP, DIFF_MAP, GRADE_MAP } from '../data/catalog.js';
 import { answerText } from '../core/marking.js';
+import { STANDARDS } from '../data/standards.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
 
@@ -58,7 +59,13 @@ function sheetHead({ key = false, page = 1, pages = 1 } = {}) {
         el('div', { text: pages > 1 ? `Page ${page} of ${pages}` : `About ${ex.minutes} minutes` }))
     ),
     el('h2', { text: ex.title }),
-    el('p', { class: 'sheet-sub', text: `${ex.level} ${SUBJECT_MAP[ex.subject]?.name} · ${TOPIC_MAP[ex.topic]?.name}` })
+    el('p', { class: 'sheet-sub', text: `${ex.level} ${SUBJECT_MAP[ex.subject]?.name} · ${TOPIC_MAP[ex.topic]?.name}` }),
+    /* Teachers file worksheets against a framework, so the printed sheet
+       carries the alignment too. Domain level, and labelled as indicative. */
+    STANDARDS[ex.topic] && page === 1
+      ? el('p', { class: 'sheet-std', text:
+          `${STANDARDS[ex.topic].framework} ${STANDARDS[ex.topic].codes.join(', ')} · indicative alignment` })
+      : null
   );
 
   if (key) {

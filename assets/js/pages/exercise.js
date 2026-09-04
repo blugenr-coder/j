@@ -8,6 +8,7 @@ import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { favButton, difficultyBadge, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { getExercise } from '../data/exercises.js';
+import { STANDARDS } from '../data/standards.js';
 import { SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
 import { renderQuestion, mathNode } from '../core/question.js';
 import { mark, answerText, isAutoMarked } from '../core/marking.js';
@@ -61,6 +62,21 @@ function start() {
     ...ex.types.map(t => el('span', { class: 'badge' }, icon(QTYPE_MAP[t].icon, { size: 13 }), QTYPE_MAP[t].name))
   );
   $('#gate-print').href = href(`print.html?id=${ex.id}`);
+
+  /* Curriculum alignment, at framework and domain level. Labelled indicative
+     because it maps the topic to its domain, not the sheet to one lettered
+     statement — a claim this library could not actually verify. */
+  const std = STANDARDS[ex.topic];
+  const align = $('#gate-alignment');
+  if (std && align) {
+    align.hidden = false;
+    align.replaceChildren(
+      el('span', { class: 'small muted', text: 'Curriculum alignment (indicative)' }),
+      el('div', { class: 'align-row' },
+        el('span', { class: 'badge badge-primary', text: std.framework }),
+        el('span', { class: 'small', text: std.name }),
+        ...std.codes.map(c => el('code', { class: 'std-code', text: c }))));
+  }
 
   if (assignment && assignment.exerciseId === ex.id) {
     const banner = () => el('div', { class: 'banner', style: 'margin-bottom:20px;grid-column:1/-1' },

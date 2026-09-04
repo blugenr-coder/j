@@ -2,9 +2,9 @@
 
 **Practice anything. Learn everything.**
 
-A library of **24,857 worksheets** across **15 subjects**, for every grade from
+A library of **99,817 worksheets** across **15 subjects**, for every grade from
 Pre-K to college, where the same worksheet works online *and* on paper —
-including multi-page packs of up to four printed pages and 40 questions. Search it, practise it with instant
+including multi-page packs of up to ten printed pages and 100 questions. Search it, practise it with instant
 marking, print it with a separate answer key, and track what you are actually
 weak at.
 
@@ -78,43 +78,104 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**24,857 worksheets** across 57 topics, 15 subjects and every level from Pre-K to
-college — from counting to calculus, and from nutrition and personal finance to
-cyber security, philosophy and world religions. Sheets run from 6 to 40
-questions; 3,084 are multi-page packs of 2, 3 or 4 printed pages.
+**99,817 worksheets** across 248 curriculum micro-units, 57 topics, 15 subjects
+and every level from Pre-K to college — from counting to calculus, and from
+nutrition and personal finance to cyber security, philosophy and world
+religions. Sheets run from 6 to 100 questions; 30,387 are multi-page packs of
+2 to 10 printed pages. Together they hold about 1.7 million questions.
 
-### How a library gets to 24,857 without padding
+| Subject | Worksheets | | Subject | Worksheets |
+|---|--:|---|---|--:|
+| English / Language Arts | 13,498 | | Engineering & Design | 3,999 |
+| Science | 13,401 | | Business & Finance | 3,702 |
+| Mathematics | 13,252 | | Environment & Sustainability | 3,078 |
+| Languages | 12,096 | | Study Skills | 2,940 |
+| Social Studies | 10,197 | | Philosophy & Religion | 2,572 |
+| Computer Science | 7,908 | | Psychology & Sociology | 1,663 |
+| Health & Physical Education | 5,723 | | Media & Film | 1,344 |
+| Art & Music | 4,444 | | | |
 
-Most worksheets exist in several **sets** — the same focus at the same level,
-seeded differently, so Set A and Set K contain genuinely different questions.
-The number of sets a topic gets is **measured, not declared**:
+### Micro-units: the grain that matters
 
-- At load, every generator is probed with five seeds. It counts as varying only
-  if the *question itself* changes — reshuffling the options of a fixed item is
-  not new content.
-- Sets are then allocated in proportion to that measured variety, capped, so a
-  topic that can compose fresh questions carries many and one that deals from a
-  small fixed bank carries one.
+A subject is not one thing you practise; it is thirty. Biology is *Cell
+Structure*, *Photosynthesis*, *Genetics*, *Ecosystems* — the units a scheme of
+work is actually built from, and the units a student is actually weak at. So
+**248 curriculum micro-units** each carry their own item bank and their own
+level range, in `assets/js/data/units-*.js`:
 
-This replaced a hand-written list of "procedural" topics that got it wrong and
-gave Business & Finance more worksheets than Science.
+```js
+{ name: 'Photosynthesis', from: 'Grade 6', to: 'Grade 12',
+  facts:  [['chlorophyll', 'the green pigment that absorbs light energy'], …],
+  truths: ['Increasing light intensity raises the rate only until another factor limits it', …],
+  myths:  ['Plants stop respiring during the day because they are photosynthesising', …] }
+```
+
+`facts` are the recall spine. **`truths` and `myths` are what turn a vocabulary
+list into a quiz**: they test whether the idea is understood rather than whether
+the label was memorised, and every myth is a misconception students actually
+hold. `unit-engine.js` turns each unit into seven question makers — recognise
+the term, recognise the meaning, recall it unaided, match four pairs, pick the
+correct claim, spot the false claim, select every true statement — with
+distractors drawn from inside the same unit, so a wrong answer is always a near
+miss rather than an obviously foreign option.
+
+Two of those makers refuse to run at the easiest tier, which is why the same
+unit reads differently at Grade 6 and at college.
+
+### How a library gets to 99,817 without padding
+
+Most worksheets exist in several **sets** — the same unit or focus at the same
+level, seeded differently, so Set A and Set K contain genuinely different
+questions. How many sets a family gets is **measured, not declared**:
+
+- For a **topic**, every generator is probed with five seeds at load. It counts
+  as varying only if the *question itself* changes — reshuffling the options of
+  a fixed item is not new content. Sets are allocated in proportion to that.
+  This replaced a hand-written list of "procedural" topics that got it wrong and
+  gave Business & Finance more worksheets than Science.
+- For a **micro-unit**, capacity is counted exactly: each fact supports four
+  question shapes and each claim three, so a unit with 16 facts and 8 claims can
+  produce 88 distinct question instances. Sets are then capped so no single
+  instance appears in more than four of them.
+
+A multi-page pack is only offered at a length its content can actually fill:
+`build` refuses to repeat a question on one sheet, so asking an 88-instance unit
+for a hundred questions would produce a short sheet with a misleading title.
+Hundred-question booklets therefore come from the procedural topics — the ones
+that compose fresh numbers every time.
 
 Where a topic has a naturally large pool — vocabulary, spelling, three
 languages, grammar, geography, chemistry, biology, history, anatomy, art
 history — questions are **sampled from that pool** rather than drawn from a
-fixed list, which is what makes hundreds of genuinely different sheets possible.
+fixed list.
 
-The honest ceiling: **the library is as large as its content can support, not as
-large as a number sounds.** Going much beyond this would mean re-dealing the
-same items, and the set allocation deliberately refuses to. They come from two sources behind one shape:
+The honest ceiling still holds: **the library is as large as its content can
+support, not as large as a number sounds.** Going further means writing more
+units and deeper item banks, not raising a multiplier.
 
-- **26 authored worksheets**, written by hand — the deepest content, and what sets
-  the tone for everything else.
-- **1,030 generated worksheets**, expanded from a curriculum plan. These are
-  deterministic (the same worksheet always contains the same questions) and their
-  answers are *computed*, not transcribed, so a sheet cannot disagree with its own
-  answer key. Questions materialise only when a worksheet is opened, which is what
-  lets the library list a thousand of them instantly.
+### Curriculum alignment
+
+Every topic is mapped to the framework domains schools index their schemes of
+work against — Common Core (maths and ELA), NGSS, C3, CEFR, CSTA and others — in
+`assets/js/data/standards.js`. The library can be filtered by framework, and the
+alignment appears on the worksheet page and on the printed header.
+
+These are **domain codes, and labelled indicative**. A domain can be stated
+accurately for a topic; pinning a generated worksheet to one lettered
+sub-statement would be a claim this library cannot actually verify, so it does
+not make it.
+
+### Two sources, one shape
+
+- **26 authored worksheets**, written by hand — the deepest content, and what
+  sets the tone for everything else.
+- **99,791 generated worksheets**, expanded from a curriculum plan and the
+  micro-unit banks. These are deterministic (the same worksheet always contains
+  the same questions) and their answers are *computed*, not transcribed, so a
+  sheet cannot disagree with its own answer key. Questions materialise only when
+  a worksheet is opened, and the id index is built only when something is looked
+  up by id — which is what keeps a hundred-thousand-sheet library loading in
+  about 300 ms.
 
 Two rules keep the generated set honest, both added after the first pass broke them:
 
@@ -191,22 +252,28 @@ at 24 — a card that renders real content cannot be multiplied by a thousand.
 ## Checks
 
 ```bash
-npm run check        # module syntax, content integrity, 26 marking tests
-npm start            # then, in another shell:
-npm run test:all     # everything below, in order
-npm run test:render  # asserts every page actually renders its content
-npm run test:links   # crawls every page for broken internal links
-npm run test:e2e     # drives a real browser through every question type, and
-                     # the teacher flows: analytics, codes, joining, the builder
+npm run check          # module syntax, content integrity, 33 marking tests
+npm start              # then, in another shell:
+npm run test:all       # everything below, in order
+npm run test:render    # asserts every page actually renders its content
+npm run test:contrast  # every text element against WCAG AA, in both themes
+npm run test:links     # crawls every page for broken internal links
+npm run test:e2e       # drives a real browser through every question type, and
+                       # the teacher flows: analytics, codes, joining, the builder
 ```
 
-Two of these exist because of bugs they caught:
+Three of these exist because of bugs they caught:
 
 - `tools/check-syntax.sh` — `node --check` parses a `.js` file as CommonJS and
   silently misses syntax errors in these modules, so each is re-checked as ESM.
 - `tools/check-render.mjs` — a page can load with no console errors and still
   render nothing, because `replaceChildren` takes varargs and quietly stringifies
   an array it is handed. This asserts the content is really on the page.
+- `tools/check-contrast.mjs` — a band styled `background: var(--text); color: #fff`
+  inverted in dark mode and became white text on a white card. Nothing else could
+  see it: the markup was correct, the page rendered, the links worked. This walks
+  every element that paints text, works out the background actually behind it,
+  and fails anything under WCAG AA. It found 1,307 more on its first run.
 
 ---
 

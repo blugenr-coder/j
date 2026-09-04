@@ -41,7 +41,7 @@ function render() {
       el('div', { class: 'grow' },
         el('strong', { style: 'font-family:var(--font-head)', text: a.name }),
         el('div', { class: 'small muted', text: a.desc }),
-        !on ? el('div', { class: 'small', style: 'margin-top:4px;color:var(--primary)', text: towards[a.id]?.() ?? '' }) : null),
+        !on ? el('div', { class: 'small', style: 'margin-top:4px;color:var(--link)', text: towards[a.id]?.() ?? '' }) : null),
       el('span', { class: `badge ${on ? 'badge-success' : ''}`, text: on ? 'Unlocked' : 'Locked' })
     );
   }));

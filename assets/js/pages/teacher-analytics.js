@@ -64,7 +64,7 @@ function render(r) {
         el('span', { class: 'list-title', style: 'display:block', text: `Question ${h.index + 1}` }),
         el('span', { class: 'list-sub', text: h.question.prompt }),
         h.question.explanation
-          ? el('span', { class: 'small', style: 'display:block;margin-top:4px;color:var(--primary)',
+          ? el('span', { class: 'small', style: 'display:block;margin-top:4px;color:var(--link)',
               text: `Worked answer: ${h.question.explanation}` })
           : null),
       el('span', { class: 'small muted', style: 'white-space:nowrap', text: `${h.correct}/${h.total}` }))));

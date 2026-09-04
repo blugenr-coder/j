@@ -14,6 +14,9 @@ import { WORLD_GENERATORS } from './gen-world.js';
 import { LIFE_GENERATORS } from './gen-life.js';
 import { APPLIED_GENERATORS } from './gen-applied.js';
 import { POOL_GENERATORS } from './gen-pools.js';
+import { UNITS } from './units.js';
+import { STANDARDS } from './standards.js';
+import { unitGenerators } from './unit-engine.js';
 
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
@@ -29,6 +32,43 @@ export const GENERATORS = (() => {
   }
   return out;
 })();
+
+/* Memoised: an id is built from a level and a focus, and there are a few
+   hundred distinct values of each across a hundred thousand worksheets. */
+const slugCache = new Map();
+const slug = s => {
+  let v = slugCache.get(s);
+  if (v === undefined) {
+    v = s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    slugCache.set(s, v);
+  }
+  return v;
+};
+
+/* ------------------------------- micro-units -------------------------------
+   Every curriculum unit becomes its own family of worksheets, with its own
+   question makers drawing on its own item bank. This is what lets a worksheet
+   be called "Photosynthesis" and actually be about photosynthesis, instead of
+   "Science — Core Practice". */
+export const UNIT_GENERATORS = {};
+export const UNIT_META = {};
+for (const [topic, units] of Object.entries(UNITS)) {
+  for (const unit of units) {
+    const key = `${topic}::${slug(unit.name)}`;
+    const gens = unitGenerators(unit);
+    if (!gens.length) continue;
+    UNIT_GENERATORS[key] = gens;
+    /* Distinct question instances this unit can produce: each fact supports
+       the recognise / describe / recall / match shapes, each statement the
+       three judgement shapes. It is what caps how many sets are honest. */
+    const facts = unit.facts?.length ?? 0;
+    const claims = (unit.truths?.length ?? 0) + (unit.myths?.length ?? 0);
+    UNIT_META[key] = {
+      key, topic, name: unit.name, from: unit.from, to: unit.to,
+      capacity: facts * 4 + claims * 3
+    };
+  }
+}
 
 /**
  * How much genuinely different content a topic can produce, measured rather
@@ -182,18 +222,18 @@ const PLAN = {
   sociology:   ['Grade 9', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
   philosophy:  ['Grade 9', 'College', ['Core Practice', 'Argument and Fallacies', 'Ethics', 'Mixed Practice']],
   religions:   ['Grade 5', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  design:      ['Grade 5', 'College', ['Core Practice', 'The Design Process', 'Materials', 'Mixed Practice']],
+  design:      ['Grade 5', 'College', ['Core Practice', 'Design Fundamentals', 'Materials', 'Mixed Practice']],
   electronics: ['Grade 7', 'College', [
     ['Ohm’s Law Calculations', [4, 5]], 'Core Practice', 'Components', 'Mixed Practice']],
   robotics:    ['Grade 6', 'College', ['Core Practice', 'Sensors and Control', 'Mixed Practice']],
   climate:     ['Grade 4', 'College', ['Core Practice', 'Energy and Emissions', 'Review and Recall', 'Mixed Practice']],
   conservation:['Grade 4', 'College', ['Core Practice', 'Ecosystems', 'Mixed Practice']],
-  media:       ['Grade 6', 'College', ['Core Practice', 'Reading the News', 'Film Language', 'Mixed Practice']],
+  media:       ['Grade 6', 'College', ['Core Practice', 'News and Sources', 'Film Language', 'Mixed Practice']],
   measurement: ['Grade 2', 'Grade 9', [
     ['Converting Units', [0, 1, 2, 3]], 'Core Practice', 'Applied Questions', 'Mixed Practice']],
   discrete:    ['Grade 9', 'College', ['Core Practice', 'Counting and Arrangements', 'Mixed Practice']],
   web:         ['Grade 7', 'College', ['Core Practice', 'HTML and CSS', 'Mixed Practice']],
-  cyber:       ['Grade 6', 'College', ['Core Practice', 'Staying Safe Online', 'Mixed Practice']],
+  cyber:       ['Grade 6', 'College', ['Core Practice', 'Online Safety Basics', 'Mixed Practice']],
   drama:       ['Grade 4', 'Grade 12', ['Core Practice', 'Staging and Performance', 'Mixed Practice']],
 
   /* -------------------------------- arts -------------------------------- */
@@ -242,7 +282,6 @@ function questionCount(level, difficulty) {
 const SUMMARY = (focus, topicName, level) =>
   `${focus} at ${level} level — ${topicName.toLowerCase()} practice you can work through online or print.`;
 
-const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /* Question types a topic can produce, sampled once per topic at load. */
 const typeCache = {};
@@ -304,7 +343,7 @@ function allowedAt(topic, level) {
  * strings nobody has looked at yet.
  */
 class Blueprint {
-  constructor(topic, levelIdx, focus, only, pages, difficulty, count, set) {
+  constructor(topic, levelIdx, focus, only, pages, difficulty, count, set, unit = null) {
     this.topic = topic;
     this._level = levelIdx;
     this._focus = focus;
@@ -313,13 +352,15 @@ class Blueprint {
     this.difficulty = difficulty;
     this.count = count;
     this._set = set;               // 0 for the first, 1+ for "Set B", "Set C"…
+    this.unit = unit;              // a micro-unit key, or null for a topic-wide sheet
   }
 
   get level()   { return LEVELS[this._level].level; }
   get grade()   { return LEVELS[this._level].grade; }
   get band()    { return GRADE_BAND[this.grade] ?? 'mid'; }
   get subject() { return TOPIC_SUBJECT[this.topic]; }
-  get types()   { return typesFor(this.topic); }
+  get framework() { return STANDARDS[this.topic]?.framework ?? null; }
+  get types()   { return this.unit ? unitTypes(this.unit, tierOf(this.difficulty)) : typesFor(this.topic); }
   get minutes() { return Math.max(6, Math.round(this.count * 1.4)); }
   get generated() { return true; }
   get printable() { return true; }
@@ -340,6 +381,13 @@ class Blueprint {
 
   get summary() {
     const topicName = this.topic.replace(/-/g, ' ');
+    if (this.unit) {
+      const what = this.pages > 1
+        ? `A ${this.pages}-page quiz pack on ${this._focus.toLowerCase()}`
+        : `A quiz on ${this._focus.toLowerCase()}`;
+      return `${what} for ${this.level} — ${this.count} questions covering the key terms, ` +
+             `their meanings and the misconceptions that cost marks.`;
+    }
     if (this.pages > 1) {
       return `A ${this.pages}-page ${this._focus.toLowerCase()} covering ${topicName} at ` +
              `${this.level} level, with ${this.count} questions and an answer key.`;
@@ -371,21 +419,54 @@ const MAX_SETS = 34;
 const setsFor = topic =>
   Math.max(1, Math.min(MAX_SETS, (VARIETY[topic] ?? 0) * SETS_PER_VARIETY));
 
-/* Single sheets come in a few lengths, and packs run to four printed pages.
-   35 questions is the longest single assignment most teachers set at once. */
+/* Packs run from two pages up to a ten-page booklet. The longest are only
+   offered where the content can genuinely fill them: `build` refuses to repeat
+   a question, so asking a small item bank for a hundred questions produces a
+   short sheet with a misleading title. Capacity is checked before each shape. */
 const PACK_SHAPES = [
-  [2, 15, 'Practice Pack'],
-  [2, 20, 'Extended Practice'],
-  [3, 25, 'Problem Set'],
-  [3, 30, 'Consolidation Pack'],
-  [4, 35, 'Revision Booklet'],
-  [4, 40, 'Full Review']
+  [2, 15,  'Practice Pack'],
+  [2, 20,  'Extended Practice'],
+  [3, 25,  'Problem Set'],
+  [3, 30,  'Consolidation Pack'],
+  [4, 35,  'Revision Booklet'],
+  [4, 40,  'Full Review'],
+  [5, 50,  'Half-Term Review'],
+  [6, 60,  'Topic Mastery Pack'],
+  [8, 75,  'End-of-Unit Booklet'],
+  [10, 100, 'Complete Revision Booklet']
 ];
 
+/* Question makers for one unit, and the question types they produce. */
+const unitTypeCache = {};
+function unitTypes(key, tier = 2) {
+  const cacheKey = `${key}|${tier}`;
+  if (unitTypeCache[cacheKey]) return unitTypeCache[cacheKey];
+  const gens = UNIT_GENERATORS[key] ?? [];
+  const seen = new Set();
+  for (let i = 0; i < gens.length; i++) {
+    try {
+      const q = gens[i](rngFor(key, i), tier);
+      if (q?.type) seen.add(q.type);
+    } catch { /* a maker that rejects this tier contributes nothing */ }
+  }
+  return (unitTypeCache[cacheKey] = [...seen]);
+}
+
+/* How many differently-seeded sets a unit can carry at one level.
+   A set is honest while no single question instance has to appear in more than
+   a handful of them; past that the library is re-dealing the same cards, which
+   is padding however large it makes the total look. */
+const REPEATS_ALLOWED = 4;
+const unitSets = (capacity, count) =>
+  Math.max(4, Math.min(60, Math.round((capacity * REPEATS_ALLOWED) / count)));
+
 export function buildBlueprints() {
+  /* No id dedupe here: `id` is a computed string, so checking a hundred
+     thousand of them costs a tenth of a second on every page load to catch a
+     mistake that is a property of the plan, not of the run. Uniqueness is
+     asserted instead by tools/validate-content.mjs, across the whole set. */
   const out = [];
-  const seenIds = new Set();
-  const push = bp => { const id = bp.id; if (!seenIds.has(id)) { seenIds.add(id); out.push(bp); } };
+  const push = bp => out.push(bp);
 
   for (const [topic, [from, to, focuses]] of Object.entries(PLAN)) {
     const start = idx(from), end = idx(to);
@@ -394,9 +475,15 @@ export function buildBlueprints() {
     const sets = setsFor(topic);
 
     levels.forEach((lv, pos) => {
+      /* A topic with three focuses cannot fill four variants: the fourth
+         would repeat a focus and collide on its id. Deduping on the focus name
+         is cheap; deduping on the id was not. */
+      const usedFocus = new Set();
       for (let v = 0; v < VARIANTS_PER_LEVEL; v++) {
         const entry = focuses[(pos * VARIANTS_PER_LEVEL + v) % focuses.length];
         const focus = Array.isArray(entry) ? entry[0] : entry;
+        if (usedFocus.has(focus)) continue;
+        usedFocus.add(focus);
         const only = Array.isArray(entry) ? entry[1] : null;
         const minLevel = Array.isArray(entry) ? entry[2] : null;
         if (minLevel && idx(lv.level) < idx(minLevel)) continue;
@@ -410,24 +497,65 @@ export function buildBlueprints() {
         }
       }
 
-      /* Packs: the same topic and level, several pages long. */
+      /* Packs: the same topic and level, several pages long. A procedural
+         topic composes fresh numbers every time, so it can fill any length. */
       if (!PROCEDURAL.has(topic) || idx(lv.level) < idx('Grade 2')) return;
       const usable = allowedAt(topic, lv.level);
       const difficulty = difficultyFor(pos, levels.length, 1);
       for (const [pages, count, label] of PACK_SHAPES) {
         if (pages >= 3 && idx(lv.level) < idx('Grade 4')) continue;
-        if (pages === 4 && idx(lv.level) < idx('Grade 5')) continue;
+        if (pages >= 4 && idx(lv.level) < idx('Grade 5')) continue;
+        if (pages >= 6 && idx(lv.level) < idx('Grade 7')) continue;
         for (let set = 0; set < Math.min(sets, 6); set++) {
           push(new Blueprint(topic, start + pos, label, usable, pages, difficulty, count, set));
         }
       }
     });
   }
+
+  /* ---- micro-unit quizzes ----
+     One family per unit per level in its range. The difficulty tier changes
+     which question shapes the engine will produce, so the same unit reads
+     differently at Grade 6 and at college. */
+  for (const meta of Object.values(UNIT_META)) {
+    const start = idx(meta.from), end = idx(meta.to);
+    if (start === undefined || end === undefined) continue;
+    const span = end - start;
+
+    for (let pos = 0; pos <= span; pos++) {
+      const lv = LEVELS[start + pos];
+      const difficulty = difficultyFor(pos, span + 1, 1);
+      const count = questionCount(lv.level, difficulty);
+      const sets = unitSets(meta.capacity, count);
+
+      for (let set = 0; set < sets; set++) {
+        push(new Blueprint(meta.topic, start + pos, meta.name, null, 1, difficulty, count, set, meta.key));
+      }
+
+      /* Longer quiz packs, only at lengths this unit can actually fill. */
+      if (idx(lv.level) < idx('Grade 5')) continue;
+      for (const [pages, packCount, label] of PACK_SHAPES) {
+        if (packCount * 1.6 > meta.capacity) break;
+        const packSets = Math.max(2, Math.min(8, Math.round(meta.capacity / (packCount * 2))));
+        for (let set = 0; set < packSets; set++) {
+          push(new Blueprint(meta.topic, start + pos, `${meta.name} — ${label}`, null,
+                             pages, difficulty, packCount, set, meta.key));
+        }
+      }
+    }
+  }
+
   return out;
 }
 
 /** Materialise the questions for one blueprint. Same blueprint, same sheet. */
 export function generateQuestions(blueprint) {
+  if (blueprint.unit) {
+    const gens = UNIT_GENERATORS[blueprint.unit] ?? [];
+    if (!gens.length) return [];
+    const tier = tierOf(blueprint.difficulty);
+    return build(blueprint.seed, blueprint.count, gens.map(g => r => g(r, tier)));
+  }
   const all = GENERATORS[blueprint.topic] ?? [];
   if (!all.length) return [];
   /* A focused worksheet draws only from the generators that match its title. */

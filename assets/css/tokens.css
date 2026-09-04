@@ -20,8 +20,19 @@
   --surface:        #FFFFFF;
   --surface-2:      #F1F5F9;
   --text:           #0F172A;
-  --text-2:         #64748B;
-  --text-3:         #94A3B8;
+  --text-2:         #475569;
+  --text-3:         #5B6B80;
+
+  /* Ink for text sitting ON a tinted panel of the same hue. The tint colours
+     are pale, so the brand mid-tones fail AA on them; these are the darkened
+     versions that pass. Checked by tools/check-contrast.mjs. */
+  --brand-ink:      #4338CA;
+  --ok-ink:         #047857;
+  --warn-ink:       #B45309;
+  --bad-ink:        #B91C1C;
+  --link:           #4F46E5;
+  --btn-ink:        #4F46E5;
+  --btn-ink-hover:  #4338CA;
   --border:         #E2E8F0;
   --border-strong:  #CBD5E1;
 
@@ -49,6 +60,14 @@
   --shadow-3: 0 12px 32px rgba(15, 23, 42, .10);
   --ring: 0 0 0 3px rgba(99, 102, 241, .35);
 
+  /* Brand tile gradient, taken from the app icon. These are brand colours,
+     not theme surfaces: they must stay dark in light AND dark mode, because a
+     band that inverts turns white text on white ground. */
+  --band-from:      #4B3FD4;
+  --band-to:        #161F8C;
+  --band-text:      #FFFFFF;
+  --band-text-2:    #C7CBF2;
+
   --maxw: 1200px;
   --header-h: 68px;
 }
@@ -70,8 +89,16 @@
   --surface:        #111827;
   --surface-2:      #1E293B;
   --text:           #F1F5F9;
-  --text-2:         #94A3B8;
-  --text-3:         #64748B;
+  --text-2:         #A9B4C4;
+  --text-3:         #94A3B8;
+
+  --brand-ink:      #A5B4FC;
+  --ok-ink:         #6EE7B7;
+  --warn-ink:       #FCD34D;
+  --bad-ink:        #FCA5A5;
+  --link:           #A5B4FC;
+  --btn-ink:        #4F46E5;
+  --btn-ink-hover:  #4338CA;
   --border:         #1E293B;
   --border-strong:  #334155;
 

@@ -11,6 +11,7 @@ import early  from './exercises-early.js';
 import middle from './exercises-middle.js';
 import upper  from './exercises-upper.js';
 import { GRADE_MAP } from './catalog.js';
+import { STANDARDS } from './standards.js';
 import { STORAGE_KEY } from '../core/storage-key.js';
 import { buildBlueprints, generateQuestions } from './generated.js';
 
@@ -23,6 +24,7 @@ function decorate(ex) {
     pages: Math.max(1, Math.min(4, Math.round((ex.count ?? ex.questions?.length ?? 10) / 10) || 1)),
     ...ex,
     types,
+    framework: STANDARDS[ex.topic]?.framework ?? null,
     count: ex.count ?? ex.questions.length,
     band: GRADE_MAP[ex.grade]?.band ?? 'mid',
     autoMarked: ex.questions
@@ -57,14 +59,38 @@ export const CUSTOM = loadCustom().map(decorate);
 /* Authored worksheets come first: they are the deepest and set the tone. */
 export const EXERCISES = [...AUTHORED, ...CUSTOM, ...GENERATED];
 
-export const EXERCISE_MAP = Object.fromEntries(EXERCISES.map(e => [e.id, e]));
+/* The id index is built on first lookup, not at load.
+   Every id is a computed string, so materialising a hundred thousand of them
+   costs a fifth of a second — and the pages that only browse or filter the
+   library (home, subjects, grades, the library itself) never look one up. */
+let idIndex = null;
+function index() {
+  if (idIndex) return idIndex;
+  idIndex = new Map();
+  for (const e of EXERCISES) idIndex.set(e.id, e);
+  return idIndex;
+}
+
+/** Look one worksheet up by id. Metadata only — see getExercise for questions. */
+export const byId = id => index().get(id) ?? null;
+
+/* Kept as a Proxy so `EXERCISE_MAP[id]` still reads naturally at the call
+   sites, while the index behind it is still built lazily. */
+export const EXERCISE_MAP = new Proxy({}, {
+  get: (_, id) => typeof id === 'string' ? index().get(id) : undefined,
+  has: (_, id) => typeof id === 'string' && index().has(id),
+  ownKeys: () => [...index().keys()],
+  getOwnPropertyDescriptor: (_, id) => index().has(id)
+    ? { value: index().get(id), enumerable: true, configurable: true }
+    : undefined
+});
 
 /* --------------------------------- access --------------------------------- */
 const hydrated = new Map();
 
 /** An exercise with its questions present, building them on first request. */
 export function getExercise(id) {
-  const ex = EXERCISE_MAP[id];
+  const ex = byId(id);
   if (!ex) return null;
   if (ex.questions) return ex;
   if (hydrated.has(id)) return hydrated.get(id);
@@ -77,6 +103,7 @@ export function getExercise(id) {
     grade: ex.grade, level: ex.level, difficulty: ex.difficulty,
     minutes: ex.minutes, summary: ex.summary, types: ex.types,
     band: ex.band, pages: ex.pages, generated: true, printable: true, online: true,
+    framework: ex.framework, unit: ex.unit ?? null,
     questions,
     count: questions.length,
     autoMarked: questions.filter(q => q.type !== 'written').length
@@ -86,7 +113,7 @@ export function getExercise(id) {
 }
 
 /** Metadata only — safe to call for every card in a list. */
-export const getMeta = id => EXERCISE_MAP[id] ?? null;
+export const getMeta = id => byId(id);
 
 export const exercisesBy = pred => EXERCISES.filter(pred);
 export const countByGrade = grade => EXERCISES.filter(e => e.grade === grade).length;

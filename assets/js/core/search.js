@@ -135,24 +135,89 @@ function haystack(ex) {
  * @param {object} f  grade, level, subject, topic, difficulty, type, format,
  *                    length ('short'|'medium'|'long'), text, sort
  */
+/* --------------------------------- facets --------------------------------- */
+/**
+ * One predicate per filter key, so the same rules drive both filtering and the
+ * counts beside each option. Written once: a facet count that disagrees with
+ * the filter it labels is worse than no count at all.
+ */
+const MATCH = {
+  grade:      (ex, v) => ex.grade === v,
+  level:      (ex, v) => ex.level === v,
+  subject:    (ex, v) => ex.subject === v,
+  topic:      (ex, v) => ex.topic === v,
+  difficulty: (ex, v) => ex.difficulty === v,
+  type:       (ex, v) => ex.types.includes(v),
+  format:     (ex, v) => v === 'online' ? !!ex.online : !!ex.printable,
+  length:     (ex, v) => v === 'short' ? ex.count <= 7
+                       : v === 'medium' ? ex.count > 7 && ex.count <= 12
+                       : v === 'long' ? ex.count > 12 && ex.count <= 24
+                       : ex.count > 24,
+  pages:      (ex, v) => String(ex.pages ?? 1) === String(v),
+  framework:  (ex, v) => ex.framework === v
+};
+export const FACET_KEYS = Object.keys(MATCH);
+
+function passesAll(ex, f, except = null) {
+  for (const k of FACET_KEYS) {
+    if (k === except || !f[k]) continue;
+    if (!MATCH[k](ex, f[k])) return false;
+  }
+  return true;
+}
+
+/**
+ * How many worksheets each filter option would return, counted in one pass.
+ * An option under key K is counted when the worksheet passes every filter
+ * except possibly K — which is what makes the numbers beside a group still
+ * useful once you have chosen something in that same group.
+ */
+export function facetCounts(f = {}) {
+  const text = (f.text ?? '').trim().toLowerCase();
+  const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
+  const out = Object.fromEntries(FACET_KEYS.map(k => [k, Object.create(null)]));
+  const bump = (k, v) => { out[k][v] = (out[k][v] ?? 0) + 1; };
+
+  for (const ex of EXERCISES) {
+    if (words.length && !matchesText(ex, words)) continue;
+    /* Which single filter, if any, this worksheet fails. */
+    let failed = null, failures = 0;
+    for (const k of FACET_KEYS) {
+      if (!f[k]) continue;
+      if (!MATCH[k](ex, f[k])) { failed = k; if (++failures > 1) break; }
+    }
+    if (failures > 1) continue;
+
+    for (const k of FACET_KEYS) {
+      if (failures === 1 && k !== failed) continue;
+      if (k === 'grade') bump(k, ex.grade);
+      else if (k === 'level') bump(k, ex.level);
+      else if (k === 'subject') bump(k, ex.subject);
+      else if (k === 'topic') bump(k, ex.topic);
+      else if (k === 'difficulty') bump(k, ex.difficulty);
+      else if (k === 'type') for (const t of ex.types) bump(k, t);
+      else if (k === 'format') { if (ex.online) bump(k, 'online'); if (ex.printable) bump(k, 'printable'); }
+      else if (k === 'length') bump(k, ex.count <= 7 ? 'short' : ex.count <= 12 ? 'medium' : ex.count <= 24 ? 'long' : 'xlong');
+      else if (k === 'pages') bump(k, String(ex.pages ?? 1));
+      else if (k === 'framework') { if (ex.framework) bump(k, ex.framework); }
+    }
+  }
+  return out;
+}
+
+function matchesText(ex, words) {
+  const hay = haystack(ex);
+  for (const w of words) if (!hay.includes(w)) return false;
+  return true;
+}
+
 export function searchExercises(f = {}) {
   const text = (f.text ?? '').trim().toLowerCase();
   const words = text ? text.split(/\s+/).filter(w => w.length > 1) : [];
 
   const scored = [];
   for (const ex of EXERCISES) {
-    if (f.grade && ex.grade !== f.grade) continue;
-    if (f.level && ex.level !== f.level) continue;
-    if (f.subject && ex.subject !== f.subject) continue;
-    if (f.topic && ex.topic !== f.topic) continue;
-    if (f.difficulty && ex.difficulty !== f.difficulty) continue;
-    if (f.type && !ex.types.includes(f.type)) continue;
-    if (f.format === 'online' && !ex.online) continue;
-    if (f.format === 'printable' && !ex.printable) continue;
-    if (f.length === 'short'  && ex.count > 7) continue;
-    if (f.length === 'medium' && (ex.count <= 7 || ex.count > 12)) continue;
-    if (f.length === 'long'   && ex.count <= 12) continue;
-    if (f.pages && String(ex.pages ?? 1) !== String(f.pages)) continue;
+    if (!passesAll(ex, f)) continue;
 
     let score = 0;
     if (words.length) {

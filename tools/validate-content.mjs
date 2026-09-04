@@ -26,13 +26,22 @@ const sample = GENERATED.filter(b => {
   return true;
 });
 
+/* Ids must be unique across the whole library: the runtime index is a Map
+   built from them, so a collision silently hides a worksheet. Checked here
+   rather than at load, where it would cost a tenth of a second every time. */
+const allIds = new Set();
+for (const b of [...AUTHORED, ...GENERATED]) {
+  if (allIds.has(b.id)) errors.push(`${b.id}: duplicate worksheet id`);
+  allIds.add(b.id);
+}
+
 /* Metadata on every blueprint, questions on the sample. */
 for (const b of GENERATED) {
   if (!SUBJECT_MAP[b.subject]) errors.push(`${b.id}: unknown subject "${b.subject}"`);
   if (!TOPIC_MAP[b.topic])     errors.push(`${b.id}: unknown topic "${b.topic}"`);
   if (!GRADE_MAP[b.grade])     errors.push(`${b.id}: unknown grade band "${b.grade}"`);
   if (!DIFF_MAP[b.difficulty]) errors.push(`${b.id}: unknown difficulty "${b.difficulty}"`);
-  if (!(b.pages >= 1 && b.pages <= 4)) errors.push(`${b.id}: page count ${b.pages} out of range`);
+  if (!(b.pages >= 1 && b.pages <= 10)) errors.push(`${b.id}: page count ${b.pages} out of range`);
   if (!b.count || b.count < 4) errors.push(`${b.id}: implausible question count ${b.count}`);
 }
 

@@ -13,7 +13,7 @@ const PAGES = [
   ['grades.html',                     ['#grade-cards .card', '#level-groups .chip']],
   ['subjects.html',                   ['#subject-cards .subject-row-card']],
   ['subjects.html?subject=science',   ['#topic-cards .card', '#subject-exercises .ex-card']],
-  ['library.html',                    ['#results .ex-card', '#filter-groups .chip']],
+  ['library.html',                    ['#results .ex-card', '#filter-groups .facet', '#filter-groups .filter-group']],
   ['library.html?grade=high',         ['#results .ex-card']],
   ['how-it-works.html',               ['#type-list .row']],
   ['join.html',                       ['#join-form']],
