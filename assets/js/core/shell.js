@@ -6,6 +6,7 @@ import { el, esc, $ } from './util.js';
 import { icon, iconHtml } from './icons.js';
 import { logoTile } from './logo.js';
 import { applyTheme, setTheme, getState, currentUser, signOut, isTeacher } from './store.js';
+import { LANGUAGES, currentLanguage, setLanguage, initLanguage } from './i18n.js';
 
 /* Pages inside /teacher/ set data-base=".." so every link still resolves. */
 export const base = () => document.body.dataset.base ? document.body.dataset.base.replace(/\/?$/, '/') : '';
@@ -87,7 +88,29 @@ export function mountShell({ page = '', nav = 'public', mode = null, footer = nu
   if (footer ?? (nav === 'public')) document.body.append(buildFooter());
   document.body.append(buildBottomNav(page));
 
+  /* Translation runs after the chrome exists and keeps running as pages render
+     into it. English is the source language, so it costs nothing there. */
+  initLanguage();
+
   return { header };
+}
+
+/**
+ * The language control. A native <select> rather than a custom menu: it is one
+ * element, it is reachable by keyboard and screen reader without any work, and
+ * on a phone the platform gives it a proper picker.
+ */
+function languagePicker(where = 'in-header') {
+  const code = currentLanguage();
+  const select = el('select', {
+    class: 'lang-select', 'aria-label': 'Language',
+    onchange: e => setLanguage(e.target.value)
+  }, LANGUAGES.map(l => el('option', { value: l.code, text: l.native })));
+  select.value = code;
+  const wrap = el('div', { class: `lang-picker lang-${where}` },
+    el('span', { class: 'lang-globe', 'aria-hidden': 'true' }, icon('globe', { size: 16 })),
+    select);
+  return wrap;
 }
 
 /**
@@ -130,7 +153,7 @@ function buildHeader(page, nav) {
 
   wrap.append(el('a', {
     class: 'brand', href: href(user ? 'dashboard.html' : 'index.html'),
-    html: `${logoTile({ size: 34 })}<span class="brand-word">Worksheet<span class="brand-word-accent">Hub</span></span>`
+    html: `${logoTile({ size: 34 })}<span class="brand-word" translate="no">Worksheet<span class="brand-word-accent">Hub</span></span>`
   }));
 
   const list = el('nav', { class: 'main-nav', id: 'main-nav', 'aria-label': 'Main' });
@@ -142,6 +165,11 @@ function buildHeader(page, nav) {
       text: item.label
     }));
   }
+  /* The picker is rendered twice, and CSS shows one. On a phone the header has
+     room for the brand, one call to action and the menu button — nothing else —
+     so there the language control lives at the foot of the nav panel, which is
+     where a phone user looks for site-wide settings anyway. */
+  list.append(languagePicker('in-nav'));
   wrap.append(list);
 
   const actions = el('div', { class: 'header-actions' });
@@ -161,6 +189,7 @@ function buildHeader(page, nav) {
   });
   themeBtn.innerHTML = iconHtml(document.documentElement.dataset.theme === 'dark' ? 'sun' : 'moon');
   actions.append(themeBtn);
+  actions.append(languagePicker());
 
   if (user) {
     actions.append(el('a', { class: 'user-chip', href: href('settings.html') },
@@ -218,7 +247,7 @@ function buildFooter() {
   grid.append(el('div', {},
     el('a', {
       class: 'brand', href: href('index.html'),
-      html: `${logoTile({ size: 30 })}<span class="brand-word">Worksheet<span class="brand-word-accent">Hub</span></span>`
+      html: `${logoTile({ size: 30 })}<span class="brand-word" translate="no">Worksheet<span class="brand-word-accent">Hub</span></span>`
     }),
     el('p', { class: 'small', style: 'margin-top:12px;max-width:34ch',
       text: 'One place to practise, print, track and improve — for every grade and every subject.' })

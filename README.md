@@ -2,11 +2,11 @@
 
 **Practice anything. Learn everything.**
 
-A library of **99,817 worksheets** across **15 subjects**, for every grade from
+A library of **2,081,818 worksheets** across **17 subjects**, for every grade from
 Pre-K to college, where the same worksheet works online *and* on paper —
 including multi-page packs of up to ten printed pages and 100 questions. Search it, practise it with instant
 marking, print it with a separate answer key, and track what you are actually
-weak at.
+weak at. The interface is available in six languages.
 
 The differentiator is the loop, not the download:
 
@@ -78,29 +78,46 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**99,817 worksheets** across 248 curriculum micro-units, 57 topics, 15 subjects
-and every level from Pre-K to college — from counting to calculus, and from
+**2,081,818 worksheets** across 326 curriculum micro-units, 70 topics, 17 subjects
+and every level from Pre-K to college — from letter sounds to calculus, and from
 nutrition and personal finance to cyber security, philosophy and world
-religions. Sheets run from 6 to 100 questions; 30,387 are multi-page packs of
-2 to 10 printed pages. Together they hold about 1.7 million questions.
+religions. Sheets run from 6 to 100 questions; 564,338 are multi-page packs of
+2 to 10 printed pages. Together they hold about 27.5 million questions.
 
 | Subject | Worksheets | | Subject | Worksheets |
 |---|--:|---|---|--:|
-| English / Language Arts | 13,498 | | Engineering & Design | 3,999 |
-| Science | 13,401 | | Business & Finance | 3,702 |
-| Mathematics | 13,252 | | Environment & Sustainability | 3,078 |
-| Languages | 12,096 | | Study Skills | 2,940 |
-| Social Studies | 10,197 | | Philosophy & Religion | 2,572 |
-| Computer Science | 7,908 | | Psychology & Sociology | 1,663 |
-| Health & Physical Education | 5,723 | | Media & Film | 1,344 |
-| Art & Music | 4,444 | | | |
+| Languages | 301,890 | | Business & Finance | 79,549 |
+| Science | 263,711 | | Life Skills & Careers | 78,281 |
+| English / Language Arts | 236,558 | | Art & Music | 75,222 |
+| Social Studies | 209,653 | | Environment & Sustainability | 50,148 |
+| Mathematics | 184,163 | | Study Skills | 46,028 |
+| Early Learning | 136,910 | | Philosophy & Religion | 41,037 |
+| Computer Science | 129,334 | | Psychology & Sociology | 26,887 |
+| Health & Physical Education | 116,543 | | Media & Film | 22,050 |
+| Engineering & Design | 83,854 | | | |
+
+### Families, not worksheets
+
+Two million worksheets do not fit in a browser tab, and they do not need to.
+The catalogue stores **47,780 families** — a topic-or-unit × level × format —
+each of which knows how many distinct **sets** it can produce:
+
+```js
+class Blueprint { …  get sets() { … }   at(n) { /* materialise set n */ } }
+```
+
+Nothing is materialised until it is asked for. Counting, faceting, filtering and
+sorting all run over the families and weight each by its `sets`, so the library
+page can say "2,081,818 worksheets" and page through them without ever building
+more than the 24 cards on screen. The id index is built lazily too, on the first
+lookup by id. That is what keeps first paint under half a second.
 
 ### Micro-units: the grain that matters
 
 A subject is not one thing you practise; it is thirty. Biology is *Cell
 Structure*, *Photosynthesis*, *Genetics*, *Ecosystems* — the units a scheme of
 work is actually built from, and the units a student is actually weak at. So
-**248 curriculum micro-units** each carry their own item bank and their own
+**326 curriculum micro-units** each carry their own item bank and their own
 level range, in `assets/js/data/units-*.js`:
 
 ```js
@@ -113,45 +130,72 @@ level range, in `assets/js/data/units-*.js`:
 `facts` are the recall spine. **`truths` and `myths` are what turn a vocabulary
 list into a quiz**: they test whether the idea is understood rather than whether
 the label was memorised, and every myth is a misconception students actually
-hold. `unit-engine.js` turns each unit into seven question makers — recognise
-the term, recognise the meaning, recall it unaided, match four pairs, pick the
-correct claim, spot the false claim, select every true statement — with
-distractors drawn from inside the same unit, so a wrong answer is always a near
-miss rather than an obviously foreign option.
+hold. Units may also declare `sequences` (steps to order), `applications` (the
+idea in an unfamiliar situation) and `procedural` (composed fresh every time, for
+domains like counting and addition where that is honest).
 
-Two of those makers refuse to run at the easiest tier, which is why the same
-unit reads differently at Grade 6 and at college.
+`unit-engine.js` turns each unit into up to **eighteen named question makers** —
+recognise the term, recognise the meaning, recall it unaided, recall with a
+hint, fill the blank in a claim, match four pairs either way round, pick the
+true claim, spot the myth, audit two or three statements at once, find the odd
+one out, decide what belongs, order a sequence, apply the idea, define, explain,
+correct the error. Distractors are drawn from inside the same unit, or from a
+near-neighbour unit in the same subject, so a wrong answer is always a near miss
+rather than an obviously foreign option. Each maker declares the difficulty tier
+it refuses to run below, which is why the same unit reads differently at Grade 6
+and at college.
 
-### How a library gets to 99,817 without padding
+### Nineteen formats
+
+The same unit at the same level produces genuinely different sheets depending on
+what you asked for. Each **format** restricts which makers may run, and some
+raise the difficulty floor:
+
+`quiz` · `vocab` · `define` · `match` · `cloze` · `truefalse` · `myths` ·
+`sorting` · `retrieval` · `starter` · `written` · `exam` · `homework` · `mixed` ·
+`sequence` · `applied` · `practice` · `counting` · `numberwork`
+
+A *Definitions Drill* and a *Misconception Check* on the same unit share no
+questions at all.
+
+### How a library gets to two million without padding
 
 Most worksheets exist in several **sets** — the same unit or focus at the same
-level, seeded differently, so Set A and Set K contain genuinely different
-questions. How many sets a family gets is **measured, not declared**:
+level and format, seeded differently, so Set A and Set K contain genuinely
+different questions. How many sets a family gets is **measured, not declared**:
 
+- For a **micro-unit**, capacity is counted exactly per format: each maker is
+  asked how many distinct question instances it can produce from this unit's
+  bank, and combinatorial shapes are counted as such — a matching question that
+  draws 4 of 16 items is not 16 questions.
 - For a **topic**, every generator is probed with five seeds at load. It counts
   as varying only if the *question itself* changes — reshuffling the options of
   a fixed item is not new content. Sets are allocated in proportion to that.
-  This replaced a hand-written list of "procedural" topics that got it wrong and
-  gave Business & Finance more worksheets than Science.
-- For a **micro-unit**, capacity is counted exactly: each fact supports four
-  question shapes and each claim three, so a unit with 16 facts and 8 claims can
-  produce 88 distinct question instances. Sets are then capped so no single
-  instance appears in more than four of them.
+
+Sets are then capped so no single question instance appears in more than three
+of them, with a ceiling that rises with the size of the bank:
+
+```js
+const REPEATS_ALLOWED = 3;
+const setsFrom = (capacity, count) => {
+  const ceiling = Math.min(140, Math.max(60, Math.round(capacity / 4)));
+  return Math.max(4, Math.min(ceiling, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
+};
+```
 
 A multi-page pack is only offered at a length its content can actually fill:
 `build` refuses to repeat a question on one sheet, so asking an 88-instance unit
 for a hundred questions would produce a short sheet with a misleading title.
-Hundred-question booklets therefore come from the procedural topics — the ones
-that compose fresh numbers every time.
+Hundred-question booklets therefore come from the procedural makers and topics —
+the ones that compose fresh numbers every time.
 
-Where a topic has a naturally large pool — vocabulary, spelling, three
-languages, grammar, geography, chemistry, biology, history, anatomy, art
-history — questions are **sampled from that pool** rather than drawn from a
-fixed list.
+**Every one of the 326 micro-units carries at least 2,513 worksheets**; the
+median is 4,401 and the largest is 6,843. Where that floor was not met, the fix
+was more item-bank depth and more question shapes, never a larger multiplier.
 
 The honest ceiling still holds: **the library is as large as its content can
 support, not as large as a number sounds.** Going further means writing more
-units and deeper item banks, not raising a multiplier.
+units and deeper item banks.
 
 ### Curriculum alignment
 
@@ -169,13 +213,13 @@ not make it.
 
 - **26 authored worksheets**, written by hand — the deepest content, and what
   sets the tone for everything else.
-- **99,791 generated worksheets**, expanded from a curriculum plan and the
+- **2,081,792 generated worksheets**, expanded from a curriculum plan and the
   micro-unit banks. These are deterministic (the same worksheet always contains
   the same questions) and their answers are *computed*, not transcribed, so a
   sheet cannot disagree with its own answer key. Questions materialise only when
   a worksheet is opened, and the id index is built only when something is looked
-  up by id — which is what keeps a hundred-thousand-sheet library loading in
-  about 300 ms.
+  up by id — which is what keeps a two-million-sheet library painting in
+  under 500 ms.
 
 Two rules keep the generated set honest, both added after the first pass broke them:
 
@@ -203,6 +247,55 @@ Eight question types, each with its own interaction:
 
 ---
 
+## Six languages, and an honest boundary
+
+A selector in the header switches the interface between **English, Español,
+Français, Deutsch, Português and Italiano**. The choice is remembered and applies
+to every page.
+
+There are no translation keys in the markup. `assets/js/core/i18n.js` matches on
+the **source text**: a `TreeWalker` replaces text nodes and four attributes
+(`placeholder`, `title`, `aria-label`, `alt`), and a `MutationObserver` catches
+anything a page renders afterwards. Adding a language is one file —
+`assets/js/i18n/<code>.js` — with a dictionary and a list of patterns:
+
+```js
+export const DICT = { "Browse worksheets": "Esplora le schede", … };
+export const PATTERNS = [
+  [String.raw`^(\d[\d.,]*) worksheets?$`, "$1 scheda", "$1 schede"],
+  [String.raw`^(.+) on (.+) for (.+), with (\d+) questions and a separate answer key\.$`,
+   "$1! su «$2» per $3!, con $4 domande e griglia di correzione a parte."],
+];
+```
+
+Patterns cover the strings that carry a number, with a plural form where the
+language needs one. `$1` inserts a captured group as-is; **`$1!` looks it up in
+the dictionary first**, which is what lets one pattern translate a whole
+worksheet summary whose subject is itself a translatable phrase.
+
+Three deliberate boundaries:
+
+- **The worksheet questions stay in English.** A Spanish reading of a chemistry
+  question is a translation job with a right and a wrong answer, and a machine
+  pass over an answer key would produce sheets that quietly disagree with their
+  own marking. The interface, the taxonomy, the titles and the summaries are
+  translated; the question text is not. The language units are the exception —
+  they were already in their own language.
+- **The brand name is not a word to look up.** `translate="no"` marks it, and the
+  walker skips anything inside such an element. Without it, the Italian pass
+  turned "WorksheetHub" into "SchedaHub".
+- **Switching back to English reloads the page.** The dictionary only runs one
+  way, so a translated page cannot be turned back by looking words up.
+
+Layout is part of the translation. The filter panel picks one or two columns
+from how long the *translated* option names are — "Grade 1" fits a half-width
+column and "Scuola secondaria di primo grado" does not — so the library waits
+for the language pack before its first render. The header tightens its own
+spacing between 901px and 1100px, where the German nav labels used to run 50px
+past the edge.
+
+---
+
 ## How it is built
 
 Plain HTML, CSS and ES modules. No framework, no bundler, no dependencies at
@@ -212,8 +305,11 @@ starts instantly, and nothing rots.
 ```
 assets/css/     tokens → base → components → pages → print
 assets/js/
-  core/         store, marking, search, question renderers, app shell, cards, icons
-  data/         taxonomy, authored content, and the generator engine
+  core/         store, marking, search, i18n, question renderers, app shell,
+                cards, icons
+  data/         taxonomy, authored content, 326 micro-unit banks, the unit
+                engine and the family catalogue
+  i18n/         one dictionary per language
   pages/        one module per page
 tools/          content validator, marking tests, syntax check, e2e, link check,
                 render check, icon contact sheet
@@ -234,9 +330,11 @@ the worked explanation appears only when the learner asks for it.
 
 **Content is data, not markup.** Adding a worksheet means adding an object to
 `assets/js/data/exercises-*.js`, or a line to the plan in `generated.js`.
-`node tools/validate-content.mjs` materialises all 11,222 questions and checks them
-for dangling answer indexes, unknown topics, levels that do not belong to their band,
-and worksheets that come up short of their declared length.
+`node tools/validate-content.mjs` checks metadata on every one of the 47,780
+families and materialises a sample of about 40,000 sheets — some 794,000
+questions — checking them for dangling answer indexes, unknown topics, levels
+that do not belong to their band, duplicate questions on one sheet, and
+worksheets that come up short of their declared length.
 
 **No emoji anywhere.** All 77 icons are line SVGs on a 24px grid that inherit type
 colour and weight. Emoji render differently on every platform, cannot be styled, and
@@ -259,8 +357,9 @@ npm run test:render    # asserts every page actually renders its content
 npm run test:contrast  # every text element against WCAG AA, in both themes
 npm run test:mobile    # nothing may scroll sideways at phone or tablet width
 npm run test:links     # crawls every page for broken internal links
-npm run test:e2e       # drives a real browser through every question type, and
-                       # the teacher flows: analytics, codes, joining, the builder
+npm run test:e2e       # drives a real browser through every question type, the
+                       # teacher flows (analytics, codes, joining, the builder)
+                       # and all six languages
 ```
 
 Three of these exist because of bugs they caught:
@@ -295,9 +394,11 @@ This is a complete front end with local persistence. Being precise about the gap
   who-has-done-what grid all work. Results only flow back to the teacher when
   the student worked in the same browser. This is the single highest-value thing
   a backend would unlock.
-- **Teacher analytics runs on sample classes.** Results are generated deterministically
-  from student and question ids so the view is usable and reproducible before real
-  students exist. Every sample class is labelled as such in the interface.
+- **Teacher analytics runs on real submissions only.** There is no sample class and
+  no generated data: a teacher who has set nothing sees an empty state that says so.
+  Every number on the analytics view comes from work a student actually handed in
+  in this browser, which is also why the per-question success rates are worth acting
+  on.
 - **The exercise builder covers five question types**, not all eight. Matching,
   ordering and graph questions need dedicated editing interfaces; shipping a
   half-working editor for them would produce broken exercises. What it does save

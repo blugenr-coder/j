@@ -288,7 +288,6 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
   font-size: var(--step--1); color: var(--text-3); font-weight: 600;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
-.subject-row-count::after { content: ' worksheets'; font-variant-numeric: normal; }
 .subject-row-blurb { margin: 6px 0 0; color: var(--text-2); font-size: var(--step-0); max-width: 68ch; }
 .subject-row-topics {
   margin: var(--s3) 0 0; font-size: var(--step--1); color: var(--text-3);
@@ -306,7 +305,10 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
    entry can be split down the middle of a column break. */
 @media (min-width: 900px) {
   .subject-index {
-    display: grid; grid-template-columns: 1fr 1fr;
+    /* minmax(0, 1fr), not 1fr: a bare 1fr track takes its minimum from its
+       widest child, so one long topic name pushed the whole grid past the
+       viewport. */
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     column-gap: var(--s7); border-top: 0;
   }
   .subject-row-card:nth-child(-n+2) { border-top: 1px solid var(--border); }

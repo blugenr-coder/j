@@ -2,7 +2,7 @@
    The worksheet card shows two real questions from the sheet rather than
    describing it — a worksheet is its questions, so the card should say so. */
 
-import { el, esc, pct } from './util.js';
+import { el, esc, pct, plural } from './util.js';
 import { href } from './shell.js';
 import { icon, iconHtml } from './icons.js';
 import { DIFF_MAP, SUBJECT_MAP, TOPIC_MAP, QTYPE_MAP, GRADE_MAP } from '../data/catalog.js';
@@ -187,7 +187,7 @@ export function subjectCard(subject) {
   return el('a', { class: 'subject-row-card', href: href(`subjects.html?subject=${subject.id}`) },
     el('div', { class: 'subject-row-head' },
       el('h3', { class: 'subject-row-title', text: subject.name }),
-      el('span', { class: 'subject-row-count mono', text: count.toLocaleString() })),
+      el('span', { class: 'subject-row-count mono', text: plural(count, 'worksheet') })),
     el('p', { class: 'subject-row-blurb', text: subject.blurb }),
     /* Each topic is its own span so the separator can hang off the word before
        it: joining with a plain " · " lets a line break land before the dot,

@@ -49,7 +49,7 @@ export function logoTile({ size = 34 } = {}) {
 
 /** Wordmark plus mark, for places that need the full lockup. */
 export function logoLockup({ size = 34 } = {}) {
-  return `${logoTile({ size })}<span class="brand-word">Worksheet<span class="brand-word-accent">Hub</span></span>`;
+  return `${logoTile({ size })}<span class="brand-word" translate="no">Worksheet<span class="brand-word-accent">Hub</span></span>`;
 }
 
 /** The full app icon: the mark on its own tile, for favicons and store art. */

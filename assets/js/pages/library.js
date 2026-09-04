@@ -9,6 +9,7 @@ import { icon } from '../core/icons.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES, GRADE_MAP } from '../data/catalog.js';
 import { searchExercises, parseQuery, facetCounts } from '../core/search.js';
 import { STANDARDS } from '../data/standards.js';
+import { t, whenReady } from '../core/i18n.js';
 
 mountShell({ page: 'library', nav: 'public' });
 
@@ -61,12 +62,30 @@ const openGroups = new Set(['grade', 'subject', 'level']);
 const expanded = new Set();
 const COLLAPSE_AT = 8;
 
+/* A half-width column fits about this many characters before the name has to
+   ellipsize. English level names ("Grade 1") fit; the Italian ones
+   ("Scuola secondaria di primo grado") do not, so the group falls back to one
+   column rather than clipping every row. */
+const TWO_COL_AT = 15;
+
 function filterGroup(label, key, options, counts, { compact = false, any = null } = {}) {
   const chosen = state[key];
   const chosenLabel = chosen ? (options.find(o => o.id === chosen)?.label ?? chosen) : '';
   const isOpen = openGroups.has(key) || !!chosen;
 
-  const box = el('details', { class: 'filter-group' + (compact ? ' is-compact' : '') });
+  /* Drop the options with nothing behind them BEFORE deciding what to collapse.
+     Slicing first hid NGSS behind "show all" and then filtered away the eleven
+     empty frameworks in front of it, leaving a group that claimed there was
+     nothing to narrow by while NGSS was the active filter. */
+  const live = options.filter(o => (counts?.[o.id] ?? 0) > 0 || chosen === o.id);
+  const showAll = expanded.has(key) || live.length <= COLLAPSE_AT;
+  const visible = showAll ? live : live.slice(0, COLLAPSE_AT);
+
+  /* Measured against the translated name, not the English one — the choice is
+     about what fits on screen, and that changes with the language. */
+  const twoCol = compact && visible.every(o => t(o.label).length <= TWO_COL_AT);
+
+  const box = el('details', { class: 'filter-group' + (twoCol ? ' is-compact' : '') });
   box.open = isOpen;
   box.addEventListener('toggle', () => {
     if (box.open) openGroups.add(key); else openGroups.delete(key);
@@ -84,21 +103,13 @@ function filterGroup(label, key, options, counts, { compact = false, any = null 
      filter, but that is a thing you have to know; a row that says so is not. */
   if (any) {
     opts.append(el('button', {
-      class: 'facet facet-any' + (compact ? ' facet-wide' : ''), type: 'button',
+      class: 'facet facet-any' + (twoCol ? ' facet-wide' : ''), type: 'button',
       'aria-pressed': String(!chosen),
       onclick: () => { if (!chosen) return; state[key] = null; apply({ resetPage: true }); }
     },
       el('span', { class: 'facet-name', text: any }),
       !chosen ? el('span', { class: 'facet-tick' }, icon('check', { size: 14 })) : null));
   }
-  /* Drop the options with nothing behind them BEFORE deciding what to collapse.
-     Slicing first hid NGSS behind "show all" and then filtered away the eleven
-     empty frameworks in front of it, leaving a group that claimed there was
-     nothing to narrow by while NGSS was the active filter. */
-  const live = options.filter(o => (counts?.[o.id] ?? 0) > 0 || chosen === o.id);
-  const showAll = expanded.has(key) || live.length <= COLLAPSE_AT;
-  const visible = showAll ? live : live.slice(0, COLLAPSE_AT);
-
   for (const o of visible) {
     const n = counts?.[o.id] ?? 0;
     const on = chosen === o.id;
@@ -297,4 +308,8 @@ narrow.addEventListener('change', syncPanel);
 syncPanel();
 window.addEventListener('popstate', () => { readUrl(); input.value = state.text; apply({ pushUrl: false }); });
 
+/* Wait for the language pack before the first render. The filter panel picks
+   one or two columns from how long the option names are, and that answer is
+   different in every language. */
+await whenReady();
 apply({ pushUrl: false });

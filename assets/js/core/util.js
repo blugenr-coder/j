@@ -55,7 +55,13 @@ export function setQs(params, { replace = true } = {}) {
 export const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 export const pct = (part, whole) => whole > 0 ? Math.round((part / whole) * 100) : 0;
 
-export function plural(n, one, many = one + 's') { return `${n} ${n === 1 ? one : many}`; }
+/* Counts run into the millions here, so the number is grouped. The i18n
+   patterns read `(\d[\d.,]*)`, which is why the separator is allowed to be a
+   comma or a dot. */
+export function plural(n, one, many = one + 's') {
+  const shown = typeof n === 'number' ? n.toLocaleString() : n;
+  return `${shown} ${n === 1 ? one : many}`;
+}
 
 /* Practice time is held as fractional minutes. Rounding straight to whole
    minutes made a real 40-second session read as "0m", which looks like the
