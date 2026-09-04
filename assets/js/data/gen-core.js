@@ -166,6 +166,11 @@ export function build(seed, count, makers) {
   const rounds = Math.ceil((count * 3) / Math.max(1, makers.length)) + 1;
   for (let i = 0; i < rounds; i++) queue.push(...sample(order, makers.map((_, j) => j), makers.length));
 
+  /* The keys of what is already on the sheet. This was `out.some(o => keyOf(o)
+     === key)`, which recomputed — and re-sorted the options of — every question
+     already placed, for every candidate: five thousand key builds on a
+     hundred-question booklet, to answer a question a Set answers once. */
+  const placed = new Set();
   let guard = 0, at = 0;
   while (out.length < count && at < queue.length && guard < count * 12) {
     const maker = makers[queue[at++]];
@@ -180,7 +185,8 @@ export function build(seed, count, makers) {
        shuffled are the same question, and a sheet that asks it twice looks
        exactly as careless as it is. */
     const key = keyOf(q);
-    if (out.some(o => keyOf(o) === key)) continue;
+    if (placed.has(key)) continue;
+    placed.add(key);
     q.id = `q${out.length + 1}`;
     out.push(q);
   }

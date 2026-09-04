@@ -10,7 +10,10 @@ import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:8099';
 const LANGS = ['en', 'es', 'fr', 'de', 'pt', 'it'];
-const PAGES = ['index.html', 'library.html', 'how-it-works.html', 'teachers.html'];
+/* teachers.html was in this list and does not exist. The check dutifully
+   loaded a 404 page, found no header on it, and passed. A page that cannot be
+   fetched is a failure, not a pass — see the status check below. */
+const PAGES = ['index.html', 'library.html', 'how-it-works.html', 'teacher/index.html'];
 /* Real device widths plus the awkward gaps between them. */
 const WIDTHS = [360, 390, 414, 480, 600, 768, 820, 900, 940, 1024, 1100, 1180,
                 1280, 1366, 1440, 1600, 1920];
@@ -30,7 +33,12 @@ for (const lang of LANGS) {
     }, [lang]);
     const page = await ctx.newPage();
     for (const path of PAGES) {
-      await page.goto(`${BASE}/${path}`, { waitUntil: 'load' });
+      const response = await page.goto(`${BASE}/${path}`, { waitUntil: 'load' });
+      if (!response || !response.ok()) {
+        failures++;
+        console.log(`✗ [${lang} ${width}px] ${path} — ${response ? response.status() : 'no response'}`);
+        continue;
+      }
       /* The shell sets data-nav-ready once the header has been measured against
          the text it will actually show — after the fonts and the language pack
          have landed. Waiting for that beats guessing a delay. */
