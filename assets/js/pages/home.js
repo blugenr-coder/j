@@ -6,7 +6,7 @@ import { mountShell, href } from '../core/shell.js';
 import { gradeCard, subjectCard, exerciseCard, statTile } from '../core/cards.js';
 import { GRADES, SUBJECTS, QUESTION_TYPES } from '../data/catalog.js';
 import { TOTAL, TOTAL_QUESTIONS, featuredExercises } from '../data/exercises.js';
-import { parseQuery, suggest } from '../core/search.js';
+import { resolveQuery, suggest } from '../core/search.js';
 
 mountShell({ page: 'home', nav: 'public' });
 
@@ -58,10 +58,12 @@ form.addEventListener('submit', (e) => {
   e.preventDefault();
   const q = input.value.trim();
   if (!q) { location.href = href('library.html'); return; }
-  /* Send the parsed filters through so the library opens pre-filtered, and
-     keep the raw query so the user can see what was understood. */
-  const parsed = parseQuery(q);
+  /* Send the filters through so the library opens pre-filtered, and keep the
+     raw query so the reader can see what was understood. `resolveQuery` drops
+     a structured reading that finds nothing, so "french revolution" arrives as
+     a search rather than as the French language with the word "revolution". */
+  const { filters } = resolveQuery(q);
   const params = new URLSearchParams({ q });
-  for (const [k, v] of Object.entries(parsed)) if (v && k !== 'text') params.set(k, v);
+  for (const [k, v] of Object.entries(filters)) if (v && k !== 'text') params.set(k, v);
   location.href = href(`library.html?${params}`);
 });

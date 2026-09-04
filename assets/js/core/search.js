@@ -114,6 +114,37 @@ export function parseQuery(input) {
   return { ...found, text: q.replace(/\b(worksheet|worksheets|exercise|exercises|practice|for|in|on|the)\b/g, '').replace(/\s+/g, ' ').trim() };
 }
 
+/**
+ * Read a query the way the reader meant it.
+ *
+ * `parseQuery` is greedy: it turns any word it recognises into a hard filter.
+ * That is right for "fractions grade 6" and badly wrong for "spanish empire",
+ * which it read as the Spanish *language* plus the leftover word "empire" —
+ * and then returned nothing, because no Spanish vocabulary worksheet mentions
+ * empires. "french revolution" and "english civil war" failed the same way.
+ *
+ * The parser proposes and the catalogue disposes: if the parsed reading finds
+ * nothing, the whole query is used as free text instead. That keeps the good
+ * case (a filtered, precise result) and repairs the bad one, without the
+ * parser having to guess which sense of "Spanish" someone meant.
+ *
+ * @returns {{ filters: object, parsed: boolean }} filters to search with, and
+ *          whether the structured reading survived.
+ */
+export function resolveQuery(raw) {
+  const parsed = parseQuery(raw);
+  const filters = {
+    grade: parsed.grade ?? null, level: parsed.level ?? null,
+    subject: parsed.subject ?? null, topic: parsed.topic ?? null,
+    difficulty: parsed.difficulty ?? null, type: parsed.type ?? null,
+    text: parsed.text
+  };
+  const structured = Object.entries(filters).some(([k, v]) => k !== 'text' && v);
+  if (!structured) return { filters: { ...filters, text: raw.trim() }, parsed: false };
+  if (searchExercises(filters).total > 0) return { filters, parsed: true };
+  return { filters: { text: raw.trim() }, parsed: false };
+}
+
 /* What a worksheet can be matched against, built per worksheet on first use.
    Doing this eagerly would mean concatenating and lower-casing a string for
    every one of twenty-five thousand sheets before the page could paint, to

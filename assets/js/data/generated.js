@@ -280,77 +280,178 @@ const PLAN = {
     ['Integration Basics', [6, 0], 'Grade 12'], 'Mixed Practice']],
 
   /* ------------------------------ science ------------------------------ */
-  biology:     ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  chemistry:   ['Grade 7', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
+  biology:     ['Grade 6', 'College', [
+    ['Cells and Organelles', [3, 4, 15, 18]], ['Photosynthesis and Plants', [7, 12, 13, 20]],
+    ['The Human Body', [6, 9, 10, 21]], ['Food Chains and Habitats', [0, 1, 8, 14, 17]],
+    ['Genetics and Evolution', [5, 11, 2]], ['Classification and Life Cycles', [16, 19, 2, 17]],
+    'Mixed Practice']],
+  chemistry:   ['Grade 7', 'College', [
+    ['Elements and the Periodic Table', [0, 1, 2, 3, 13]], ['Atoms and Bonding', [6, 7, 9, 17]],
+    ['Balancing Equations', [4, 11, 12, 14, 18]], ['Reactions and Acids', [5, 8, 15, 16]],
+    ['States of Matter', [10, 17, 16]], 'Mixed Practice']],
   physics:     ['Grade 7', 'College', [
-    ['Calculations', [0, 1, 2, 3]], 'Core Practice', 'Review and Recall', 'Mixed Practice']],
-  earth:       ['Grade 4', 'Grade 10', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  astronomy:   ['Grade 4', 'Grade 12', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+    ['Calculations', [0, 1, 2, 3]], ['Forces and Movement', [0, 1, 2]],
+    ['Energy Calculations', [1, 3]], ['Waves and Light', [2, 3]], 'Mixed Practice']],
+  earth:       ['Grade 4', 'Grade 10', [
+    ['Rocks and Fossils', [0, 8, 9]], ['Plate Tectonics and Earthquakes', [1, 5, 6, 2]],
+    ['The Water Cycle and Weather', [4, 7, 3]], 'Mixed Practice']],
+  astronomy:   ['Grade 4', 'Grade 12', [
+    ['Planets and Orbits', [0, 2, 6, 7]], ['Stars and Distances', [1, 4, 5]],
+    ['The Moon, Gravity and Seasons', [3, 8, 2]], 'Mixed Practice']],
 
   /* -------------------------------- ELA -------------------------------- */
-  grammar:     ['Grade 2', 'Grade 10', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  vocabulary:  ['Grade 4', 'Grade 12', ['Core Practice', 'Words in Context', 'Review and Recall', 'Mixed Practice']],
-  spelling:    ['Grade 1', 'Grade 8', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  reading:     ['Grade 5', 'Grade 12', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  writing:     ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  literature:  ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
+  grammar:     ['Grade 2', 'Grade 10', [
+    ['Word Classes', [0, 5, 6, 12, 16, 18, 19]], ['Plurals and Verb Forms', [1, 2, 3, 4, 10, 14, 15, 17]],
+    ['Punctuation Practice', [7, 8, 21]], ['Homophones and Common Errors', [9, 21, 8]],
+    ['Sentences and Voice', [11, 13, 20]], 'Mixed Practice']],
+  vocabulary:  ['Grade 4', 'Grade 12', [
+    ['Synonyms and Antonyms', [1, 2, 7, 9, 13]], ['Words in Context', [10, 11, 12, 18]],
+    ['Word Roots and Prefixes', [5, 6, 15, 16, 17]],
+    ['Definitions and Meaning', [0, 3, 4, 8, 14]], 'Mixed Practice']],
+  spelling:    ['Grade 1', 'Grade 8', [
+    ['Common Misspellings', [0, 1, 3, 4, 5, 6, 7, 8, 11]], ['Suffix Rules', [9, 10]],
+    ['Spot the Correct Spelling', [2, 12, 0]], 'Mixed Practice']],
+  reading:     ['Grade 5', 'Grade 12', [
+    ['Comprehension Skills', [0, 1, 5, 7]], ['Reading Strategies', [2, 6, 3]],
+    ['Bias and Sources', [3, 4, 7]], 'Mixed Practice']],
+  writing:     ['Grade 6', 'College', [
+    ['Building an Argument', [0, 1, 2, 6]], ['Narrative Craft', [3, 7]],
+    ['The Writing Process', [4, 5, 1]], 'Mixed Practice']],
+  literature:  ['Grade 6', 'College', [
+    ['Figurative Language', [0, 1, 7, 8]], ['Narrative and Plot', [5, 6, 9]],
+    ['Themes, Mood and Analysis', [3, 4, 10, 2]], 'Mixed Practice']],
 
   /* --------------------------- social studies --------------------------- */
-  history:     ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  geography:   ['Grade 4', 'Grade 12', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  civics:      ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  economics:   ['Grade 8', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+  history:     ['Grade 6', 'College', [
+    ['Rome: Republic and Empire', [4, 10, 15, 16]], ['Early Civilisations', [8, 11, 13, 14]],
+    ['Medieval and Renaissance', [7, 9, 14, 2]], ['Revolutions and the Modern World', [1, 5, 6, 0]],
+    ['Chronology and Timelines', [0, 2, 3, 12, 13]], ['Sources and Evidence', [14, 17, 3]],
+    'Mixed Practice']],
+  geography:   ['Grade 4', 'Grade 12', [
+    ['Countries and Capitals', [0, 4, 2, 13, 15]], ['Continents and Oceans', [1, 3, 5, 11, 14]],
+    ['Using Maps and Compasses', [6, 7, 12, 16]], ['Climate and Biomes', [8, 10, 12]],
+    ['Rivers and Landforms', [9, 16, 17]], 'Mixed Practice']],
+  civics:      ['Grade 6', 'College', [
+    ['How Government Works', [0, 2, 6, 3]], ['Democracy and Voting', [1, 4, 5]],
+    ['Rights and Responsibilities', [7, 8, 5]], 'Mixed Practice']],
+  economics:   ['Grade 8', 'College', [
+    ['Supply and Demand', [0, 1, 5, 7]], ['Elasticity and Choice', [2, 3, 6]],
+    ['Inflation and the Economy', [4, 6, 8]], 'Mixed Practice']],
 
   /* ----------------------------- languages ----------------------------- */
-  spanish:     ['Grade 4', 'College', ['Vocabulary', 'Phrases and Translation', 'Review and Recall', 'Mixed Practice']],
-  french:      ['Grade 4', 'College', ['Vocabulary', 'Phrases and Translation', 'Review and Recall', 'Mixed Practice']],
-  german:      ['Grade 5', 'College', ['Vocabulary', 'Phrases and Translation', 'Review and Recall', 'Mixed Practice']],
-  esl:         ['Grade 4', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+  spanish:     ['Grade 4', 'College', [
+    ['Everyday Words', [0, 4, 5, 6, 8, 9, 16]], ['Greetings and Phrases', [10, 11, 12, 13]],
+    ['Verbs and Grammar', [7, 15, 3]], ['Articles and Gender', [17, 2]],
+    ['Days and Numbers', [18, 14]], ['Translation Practice', [1, 10, 11]], 'Mixed Practice']],
+  french:      ['Grade 4', 'College', [
+    ['Everyday Words', [0, 4, 5, 6, 8, 9]], ['Greetings and Phrases', [10, 11, 12, 13]],
+    ['Verbs and Grammar', [7, 15, 3]], ['Articles and Gender', [16, 2]],
+    ['Days and Numbers', [17, 14]], ['Translation Practice', [1, 10, 11]], 'Mixed Practice']],
+  german:      ['Grade 5', 'College', [
+    ['Everyday Words', [0, 4, 5, 6, 8, 9]], ['Greetings and Phrases', [10, 11, 12, 13]],
+    ['Verbs and Grammar', [7, 16, 3]], ['Articles and Cases', [15, 2]],
+    ['Days and Numbers', [17, 14]], ['Translation Practice', [1, 10, 11]], 'Mixed Practice']],
+  esl:         ['Grade 4', 'College', [
+    ['Tenses and Verb Forms', [0, 4, 5, 6]], ['Prepositions and Articles', [1, 3, 2]],
+    ['Everyday English', [7, 2, 1]], 'Mixed Practice']],
 
   /* ------------------------- computer science ------------------------- */
   programming: ['Grade 6', 'College', [
-    ['Reading Code', [0, 1, 2, 3]], 'Core Practice', 'Review and Recall', 'Mixed Practice']],
-  algorithms:  ['Grade 8', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  data:        ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+    ['Reading Code', [0, 1, 2, 3]], ['Loops and Ranges', [0, 1, 5, 10]],
+    ['Functions and Data Structures', [6, 7, 8]], ['Operators and Expressions', [3, 4, 9]],
+    ['Debugging', [5, 11, 9]], 'Mixed Practice']],
+  algorithms:  ['Grade 8', 'College', [
+    ['Search and Complexity', [1, 2, 3]], ['Sorting and Efficiency', [6, 4, 8]],
+    ['Algorithm Basics', [0, 5, 7]], 'Mixed Practice']],
+  data:        ['Grade 6', 'College', [
+    ['Databases', [0, 3, 2]], ['Data Formats and Charts', [1, 4, 5]],
+    ['Reading Data Critically', [6, 4, 5]], 'Mixed Practice']],
 
   /* ---------------------------- study skills ---------------------------- */
-  notes:       ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  revision:    ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  exams:       ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+  notes:       ['Grade 6', 'College', [
+    ['Taking Better Notes', [1, 0, 2]], ['Making Notes Useful', [3, 4, 0]], 'Mixed Practice']],
+  revision:    ['Grade 6', 'College', [
+    ['Effective Revision', [0, 2, 5]], ['Spacing and Interleaving', [1, 3, 4]], 'Mixed Practice']],
+  exams:       ['Grade 6', 'College', [
+    ['Command Words', [2, 4]], ['Exam Timing and Strategy', [0, 1, 3, 5]], 'Mixed Practice']],
 
   /* ------------------------ beyond the core subjects ------------------------ */
-  nutrition:   ['Grade 4', 'College', ['Core Practice', 'Review and Recall', 'Applied Questions', 'Mixed Practice']],
-  anatomy:     ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  fitness:     ['Grade 5', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
+  nutrition:   ['Grade 4', 'College', [
+    ['Nutrients and Their Jobs', [0, 1, 4, 6, 9]], ['Vitamins and Minerals', [2, 4, 6]],
+    ['A Balanced Diet', [3, 5, 10, 11]], ['Food Labels and Calculations', [7, 8, 11]],
+    'Mixed Practice']],
+  anatomy:     ['Grade 6', 'College', [
+    ['Organs and Systems', [0, 1, 2, 6, 11]], ['The Heart and Circulation', [3, 9, 12, 13]],
+    ['Breathing and the Lungs', [4, 10]], ['Bones, Muscles and Joints', [7, 8, 5]],
+    'Mixed Practice']],
+  fitness:     ['Grade 5', 'College', [
+    ['Fitness and Testing', [0, 2, 6]], ['Warming Up and Overload', [1, 3]],
+    ['Heart Rate and Measurement', [4, 5]], 'Mixed Practice']],
   finance:     ['Grade 6', 'College', [
-    ['Calculations', [0, 1, 8]], 'Core Practice', 'Budgeting and Borrowing', 'Mixed Practice']],
-  accounting:  ['Grade 9', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  marketing:   ['Grade 8', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  psychology:  ['Grade 9', 'College', ['Core Practice', 'Review and Recall', 'Research Methods', 'Mixed Practice']],
-  sociology:   ['Grade 9', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  philosophy:  ['Grade 9', 'College', ['Core Practice', 'Argument and Fallacies', 'Ethics', 'Mixed Practice']],
-  religions:   ['Grade 5', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  design:      ['Grade 5', 'College', ['Core Practice', 'Design Fundamentals', 'Materials', 'Mixed Practice']],
+    ['Interest and Saving', [0, 4, 8]], ['Budgeting and Borrowing', [1, 2, 9]],
+    ['Credit and Debt', [3, 7, 10]], ['Assets and Liabilities', [5, 6, 8]], 'Mixed Practice']],
+  accounting:  ['Grade 9', 'College', [
+    ['Balance Sheet Basics', [0, 2, 7]], ['Profit and Margins', [1, 5, 6]],
+    ['Cash Flow and Depreciation', [3, 4, 8]], 'Mixed Practice']],
+  marketing:   ['Grade 8', 'College', [
+    ['The Four Ps', [0, 2, 5]], ['Researching a Market', [3, 4, 6]],
+    ['Segmentation and Targeting', [1, 7, 8]], 'Mixed Practice']],
+  psychology:  ['Grade 9', 'College', [
+    ['Memory and Cognition', [0, 3, 7]], ['Learning and Development', [1, 5, 7]],
+    ['Research Methods', [2, 4, 6, 8]], 'Mixed Practice']],
+  sociology:   ['Grade 9', 'College', [
+    ['Socialisation and Norms', [0, 1, 5]], ['Class and Social Mobility', [2, 4]],
+    ['Sociological Research', [3, 6]], 'Mixed Practice']],
+  philosophy:  ['Grade 9', 'College', [
+    ['Argument and Fallacies', [0, 1, 2, 6, 7, 8]], ['Ethics', [3, 4]],
+    ['What Can We Know?', [5, 0]], 'Mixed Practice']],
+  religions:   ['Grade 5', 'College', [
+    ['Beliefs and Sacred Texts', [0, 1, 6, 3]], ['Festivals and Practice', [2, 5, 4]],
+    ['Places of Worship', [4, 6, 7]], 'Mixed Practice']],
+  design:      ['Grade 5', 'College', [
+    ['Designing and Iterating', [0, 3, 6]], ['Prototyping and Testing', [1, 8]],
+    ['Choosing Materials', [7, 5]], ['Structures and Tolerance', [2, 4, 8]], 'Mixed Practice']],
   electronics: ['Grade 7', 'College', [
-    ['Ohm’s Law Calculations', [4, 5]], 'Core Practice', 'Components', 'Mixed Practice']],
-  robotics:    ['Grade 6', 'College', ['Core Practice', 'Sensors and Control', 'Mixed Practice']],
-  climate:     ['Grade 4', 'College', ['Core Practice', 'Energy and Emissions', 'Review and Recall', 'Mixed Practice']],
-  conservation:['Grade 4', 'College', ['Core Practice', 'Ecosystems', 'Mixed Practice']],
-  media:       ['Grade 6', 'College', ['Core Practice', 'News and Sources', 'Film Language', 'Mixed Practice']],
+    ['Ohm’s Law Calculations', [4, 5]], ['Components and Symbols', [0, 1, 2, 7]],
+    ['Series and Parallel Circuits', [3, 8]], ['Units and Measurement', [6, 4, 5]], 'Mixed Practice']],
+  robotics:    ['Grade 6', 'College', [
+    ['Sensing and Acting', [0, 1, 6]], ['Control Loops and Feedback', [2, 5, 7]],
+    ['Programming a Robot', [4, 3]], 'Mixed Practice']],
+  climate:     ['Grade 4', 'College', [
+    ['Greenhouse Gases and Warming', [0, 1, 4, 9]], ['Energy and Emissions', [2, 3, 5, 7]],
+    ['Deforestation and Biodiversity', [6, 8]], 'Mixed Practice']],
+  conservation:['Grade 4', 'College', [
+    ['Endangered and Invasive Species', [0, 1, 2]], ['Ecosystems and Habitats', [4, 5]],
+    ['Conservation Strategies', [3, 6, 7]], 'Mixed Practice']],
+  media:       ['Grade 6', 'College', [
+    ['News and Sources', [0, 1, 2, 3, 8]], ['Film Language', [4, 5, 6, 7]],
+    ['Bias and Framing', [0, 1, 8]], 'Mixed Practice']],
   measurement: ['Grade 2', 'Grade 9', [
-    ['Converting Units', [0, 1, 2, 3]], 'Core Practice', 'Applied Questions', 'Mixed Practice']],
-  discrete:    ['Grade 9', 'College', ['Core Practice', 'Counting and Arrangements', 'Mixed Practice']],
-  web:         ['Grade 7', 'College', ['Core Practice', 'HTML and CSS', 'Mixed Practice']],
-  cyber:       ['Grade 6', 'College', ['Core Practice', 'Online Safety Basics', 'Mixed Practice']],
-  drama:       ['Grade 4', 'Grade 12', ['Core Practice', 'Staging and Performance', 'Mixed Practice']],
+    ['Converting Units', [0, 1, 2, 3]], ['Choosing the Right Unit', [5, 6, 7]],
+    ['Speed, Distance and Time', [4, 3]], 'Mixed Practice']],
+  discrete:    ['Grade 9', 'College', [
+    ['Counting and Arrangements', [0, 1, 2, 7]], ['Sets and Notation', [3, 6]],
+    ['Primes and Factors', [4, 5, 6]], 'Mixed Practice']],
+  web:         ['Grade 7', 'College', [
+    ['HTML and Structure', [0, 2, 6]], ['CSS and Styling', [1, 3, 6]],
+    ['Accessibility and Good Practice', [4, 7]], ['URLs and the Web', [5, 3]], 'Mixed Practice']],
+  cyber:       ['Grade 6', 'College', [
+    ['Passwords and Accounts', [0, 2, 4]], ['Spotting a Phishing Email', [1, 6, 7]],
+    ['Malware and Encryption', [3, 5]], 'Mixed Practice']],
+  drama:       ['Grade 4', 'Grade 12', [
+    ['Staging and Performance', [1, 2, 5]], ['Script and Text', [0, 3]],
+    ['Theatre Conventions', [4, 6]], 'Mixed Practice']],
 
   /* -------------------------------- arts -------------------------------- */
-  'art-history':  ['Grade 6', 'College', ['Core Practice', 'Review and Recall', 'Mixed Practice']],
-  'music-theory': ['Grade 4', 'Grade 12', ['Core Practice', 'Review and Recall', 'Mixed Practice']]
+  'art-history':  ['Grade 6', 'College', [
+    ['Movements and Artists', [0, 1, 2, 3, 7]], ['Technique and Light', [4, 5, 8]],
+    ['Colour Theory', [6, 8]], 'Mixed Practice']],
+  'music-theory': ['Grade 4', 'Grade 12', [
+    ['Rhythm and Time Signatures', [0, 1]], ['Pitch and Intervals', [2, 4]],
+    ['Dynamics and Expression', [3, 5, 6]], ['Keys and Scales', [7, 5]], 'Mixed Practice']]
 };
 
 
-const VARIANTS_PER_LEVEL = 4;
 
 /* Difficulty rises with how far through a topic's own range the level sits. */
 function difficultyFor(pos, total, variant) {
@@ -811,6 +912,22 @@ const setsFrom = (capacity, count) => {
   return Math.max(3, Math.min(ceiling, Math.round((capacity * REPEATS_ALLOWED) / Math.max(1, count))));
 };
 
+/* The tiers a unit sheet is offered at. The unnamed one is the sheet as the
+   level would normally pitch it; the other two are the differentiated
+   versions, and each is only emitted where it produces a different set of
+   question shapes. */
+const DIFFICULTY_VARIANTS = [
+  { label: null,         difficulty: null },
+  { label: 'Foundation', difficulty: 'easy' },
+  { label: 'Higher',     difficulty: 'hard' }
+];
+
+/** Which makers the untiered version of this sheet would use. */
+function baseFingerprint(gens, difficulty, format) {
+  const tier = Math.max(tierOf(difficulty), format.tier ?? 1);
+  return gens.filter(g => (g.minTier ?? 1) <= tier).map(g => g.id).join(',');
+}
+
 /**
  * Expand the plan into worksheet families.
  * A family is one topic or unit, at one level, in one format; `sets` is how
@@ -832,17 +949,18 @@ export function buildFamilies() {
     const sets = setsFor(topic);
 
     levels.forEach((lv, pos) => {
-      /* A topic with three focuses cannot fill four variants: the fourth
-         would repeat a focus and collide on its id. */
-      const usedFocus = new Set();
-      for (let v = 0; v < VARIANTS_PER_LEVEL; v++) {
-        const entry = focuses[(pos * VARIANTS_PER_LEVEL + v) % focuses.length];
+      /* Every focus, at every level it suits.
+         This used to rotate four of them per level, which was right when the
+         focuses were "Core Practice" and "Review and Recall" — four helpings of
+         the same undifferentiated sheet is three too many. Now that each focus
+         names a real topic and is pinned to the generators that cover it,
+         Ancient Rome and Sources and Evidence are two different Grade 8
+         worksheets and both should exist. */
+      focuses.forEach((entry, v) => {
         const focus = Array.isArray(entry) ? entry[0] : entry;
-        if (usedFocus.has(focus)) continue;
-        usedFocus.add(focus);
         const only = Array.isArray(entry) ? entry[1] : null;
         const minLevel = Array.isArray(entry) ? entry[2] : null;
-        if (minLevel && idx(lv.level) < idx(minLevel)) continue;
+        if (minLevel && idx(lv.level) < idx(minLevel)) return;
 
         const difficulty = difficultyFor(pos, levels.length, v);
         const pool = only?.length || (GENERATORS[topic] ?? []).length;
@@ -863,7 +981,7 @@ export function buildFamilies() {
           family(new Blueprint(topic, start + pos, title, only, shape.pages, diff, count, 0),
                  shape.label ? setsFrom(capacity, count) : Math.max(sets, setsFrom(capacity, count)));
         }
-      }
+      });
 
       /* Packs: the same topic and level, several pages long. A procedural
          topic composes fresh numbers every time, so it can fill any length. */
@@ -903,14 +1021,36 @@ export function buildFamilies() {
         if (gens.length < 2 && capacity < 40) continue;
 
         const shape = FORMAT_SHAPE[format.id] ?? { count: 10, pages: 1 };
-        const count = shape.count ?? questionCount(lv.level, difficulty);
-        /* Never title a sheet longer than its makers can fill. */
-        if (count * 1.4 > capacity) continue;
 
-        const title = format.label ? `${meta.name} — ${format.label}` : meta.name;
-        const bp = new Blueprint(meta.topic, start + pos, title, null, shape.pages,
-                                 difficulty, count, 0, meta.key, format.id);
-        family(bp, setsFrom(capacity, count));
+        /* Differentiated versions of the same sheet.
+           A maker declares the tier it refuses to run below, so a foundation
+           sheet on a unit draws on nine question shapes and a higher sheet on
+           sixteen — the higher one asks for unaided recall and written
+           explanation, the foundation one does not. That is a genuinely
+           different worksheet and the thing a teacher with a mixed class
+           actually needs, so both are offered. A tier that yields the same
+           makers as the one already emitted is not offered: relabelling an
+           identical sheet is padding. */
+        for (const variant of DIFFICULTY_VARIANTS) {
+          const diff = variant.difficulty ?? difficulty;
+          /* A format can raise the floor: an exam paper is higher tier
+             wherever it sits, so it has no foundation version. */
+          const tier = Math.max(tierOf(diff), format.tier ?? 1);
+          const usable = gens.filter(g => (g.minTier ?? 1) <= tier);
+          if (usable.length < 2 && capacity < 40) continue;
+          const fingerprint = usable.map(g => g.id).join(',');
+          if (variant.label && fingerprint === baseFingerprint(gens, difficulty, format)) continue;
+
+          const count = shape.count ?? questionCount(lv.level, diff);
+          /* Never title a sheet longer than its makers can fill. */
+          if (count * 1.4 > capacity) continue;
+
+          const named = format.label ? `${meta.name} — ${format.label}` : meta.name;
+          const title = variant.label ? `${named} (${variant.label})` : named;
+          const bp = new Blueprint(meta.topic, start + pos, title, null, shape.pages,
+                                   diff, count, 0, meta.key, format.id);
+          family(bp, setsFrom(capacity, count));
+        }
       }
 
       /* Long booklets, only where the bank can fill them and the level suits. */

@@ -7,7 +7,7 @@ import { mountShell, href } from '../core/shell.js';
 import { exerciseCard, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES, GRADE_MAP } from '../data/catalog.js';
-import { searchExercises, parseQuery, facetCounts, isSet, valuesOf } from '../core/search.js';
+import { searchExercises, resolveQuery, facetCounts, isSet, valuesOf } from '../core/search.js';
 import { STANDARDS } from '../data/standards.js';
 import { t, whenReady } from '../core/i18n.js';
 
@@ -34,11 +34,12 @@ function readUrl() {
   state.sort = p.get('sort') || 'recommended';
   const raw = p.get('q');
   if (raw) {
-    /* A raw query from the home page or a shared link: parse it once so the
-       filter panel visibly reflects what the search understood. */
-    const parsed = parseQuery(raw);
-    for (const k of FILTERS) if (!state[k].length && parsed[k]) state[k] = [parsed[k]];
-    state.text = parsed.text;
+    /* A raw query from the home page or a shared link. `resolveQuery` reads it
+       as filters where that finds something and as plain text where it does
+       not, so "spanish empire" is not read as the Spanish language. */
+    const { filters } = resolveQuery(raw);
+    for (const k of FILTERS) if (!state[k].length && filters[k]) state[k] = [filters[k]];
+    state.text = filters.text ?? '';
     state.raw = raw;
   } else {
     state.text = p.get('text') || '';
@@ -91,14 +92,14 @@ function reconcile(key) {
   }
 }
 
-/* A half-width column fits about this many characters before the name has to
-   ellipsize — fewer than it looks, because each row also carries a checkbox
-   and a count. English level names ("Grade 1") fit; the Italian ones
-   ("Scuola secondaria di primo grado") do not, so the group falls back to one
-   column rather than clipping every row. */
-const TWO_COL_AT = 10;
+/* Filter options are one per row.
+   They used to sit two to a row where the names were short, which stopped
+   working once every row grew a checkbox and a count: "Printable" beside
+   "111,222" does not fit half a 250px rail, and the names were being
+   ellipsized to "Pri…". A translated name never fitted at all. One column is
+   taller and always readable, and the groups collapse anyway. */
 
-function filterGroup(label, key, options, counts, { compact = false, any = null } = {}) {
+function filterGroup(label, key, options, counts, { any = null } = {}) {
   const chosen = valuesOf(state[key]);
   const nameOf = id => options.find(o => o.id === id)?.label ?? id;
   const chosenLabel = chosen.length === 1 ? nameOf(chosen[0])
@@ -113,11 +114,7 @@ function filterGroup(label, key, options, counts, { compact = false, any = null 
   const showAll = expanded.has(key) || live.length <= COLLAPSE_AT;
   const visible = showAll ? live : live.slice(0, COLLAPSE_AT);
 
-  /* Measured against the translated name, not the English one — the choice is
-     about what fits on screen, and that changes with the language. */
-  const twoCol = compact && visible.every(o => t(o.label).length <= TWO_COL_AT);
-
-  const box = el('details', { class: 'filter-group' + (twoCol ? ' is-compact' : '') });
+  const box = el('details', { class: 'filter-group' });
   box.open = isOpen;
   box.addEventListener('toggle', () => {
     if (box.open) openGroups.add(key); else openGroups.delete(key);
@@ -135,7 +132,7 @@ function filterGroup(label, key, options, counts, { compact = false, any = null 
      filter, but that is a thing you have to know; a row that says so is not. */
   if (any) {
     opts.append(el('button', {
-      class: 'facet facet-any' + (twoCol ? ' facet-wide' : ''), type: 'button',
+      class: 'facet facet-any', type: 'button',
       'aria-pressed': String(!chosen),
       onclick: () => { if (!chosen.length) return; state[key] = []; apply({ resetPage: true }); }
     },
@@ -184,15 +181,15 @@ function buildFilters(counts) {
 
   groupsHost.replaceChildren(
     filterGroup('Grade band', 'grade', GRADES.map(g => ({ id: g.id, label: g.name })), counts.grade, { any: 'Any grade band' }),
-    filterGroup('Level', 'level', levelOptions, counts.level, { compact: true, any: 'Any level' }),
+    filterGroup('Level', 'level', levelOptions, counts.level, { any: 'Any level' }),
     filterGroup('Subject', 'subject', SUBJECTS.map(s => ({ id: s.id, label: s.name })), counts.subject, { any: 'Any subject' }),
     filterGroup('Topic', 'topic', topicOptions, counts.topic, { any: 'Any topic' }),
     filterGroup('Curriculum framework', 'framework', FRAMEWORKS, counts.framework, { any: 'Any framework' }),
-    filterGroup('Difficulty', 'difficulty', DIFFICULTIES.map(d => ({ id: d.id, label: d.name })), counts.difficulty, { compact: true, any: 'Any difficulty' }),
+    filterGroup('Difficulty', 'difficulty', DIFFICULTIES.map(d => ({ id: d.id, label: d.name })), counts.difficulty, { any: 'Any difficulty' }),
     filterGroup('Question type', 'type', QUESTION_TYPES.map(t => ({ id: t.id, label: t.name })), counts.type, { any: 'Any question type' }),
-    filterGroup('Format', 'format', [{ id: 'online', label: 'Online' }, { id: 'printable', label: 'Printable' }], counts.format, { compact: true, any: 'Any format' }),
+    filterGroup('Format', 'format', [{ id: 'online', label: 'Online' }, { id: 'printable', label: 'Printable' }], counts.format, { any: 'Any format' }),
     filterGroup('Length', 'length', LENGTHS, counts.length, { any: 'Any length' }),
-    filterGroup('Printed pages', 'pages', PAGE_OPTIONS, counts.pages, { compact: true, any: 'Any page count' })
+    filterGroup('Printed pages', 'pages', PAGE_OPTIONS, counts.pages, { any: 'Any page count' })
   );
 }
 
@@ -314,9 +311,9 @@ if (state.raw && state.raw !== state.text) {
 
 $('#search-form').addEventListener('submit', e => {
   e.preventDefault();
-  const parsed = parseQuery(input.value);
-  for (const k of FILTERS) state[k] = parsed[k] ? [parsed[k]] : state[k];
-  state.text = parsed.text;
+  const { filters } = resolveQuery(input.value);
+  for (const k of FILTERS) state[k] = filters[k] ? [filters[k]] : [];
+  state.text = filters.text ?? '';
   $('#parse-note').hidden = true;
   apply({ resetPage: true });
 });
