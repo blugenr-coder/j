@@ -47,12 +47,17 @@ modules, which browsers refuse over `file://`.
 | Variable | Default | What it does |
 |---|---|---|
 | `PORT` | `8099` | Port to listen on |
-| `HOST` | `127.0.0.1` | Interface to bind |
-| `DATABASE` | `data/worksheethub.db` | SQLite file; created on first run |
-| `NODE_ENV` | — | `production` adds `Secure` to the session cookie |
+| `HOST` | `127.0.0.1`, `0.0.0.0` in production | Loopback on a laptop, so it does not quietly serve the local network |
+| `DATABASE` | `data/worksheethub.db` | SQLite file; created with its directory on first run |
+| `NODE_ENV` | — | `production` adds `Secure` to the session cookie and HSTS to responses |
+| `TRUST_PROXY` | `0` | How many proxies are in front of this server |
 
-Behind TLS in production, set `NODE_ENV=production` so the session cookie is
-never sent over plain HTTP.
+Deploying it is [DEPLOY.md](DEPLOY.md) — Docker, Render, Fly and a plain
+server behind nginx, plus the three settings that decide whether a deployment
+is correct. `TRUST_PROXY` is the one worth reading about: behind any proxy,
+leaving it at `0` makes every visitor share a single rate-limit bucket, and
+setting it without a proxy in front lets anyone forge their address. The server
+warns at boot if it is in production with no proxies trusted.
 
 ---
 
@@ -486,10 +491,35 @@ Both were already there and neither could happen until a backend existed.
 nobody being signed in is a normal state on a public page, and treating it as
 an error fills the console with red on every visit.
 
+### Deploying it
+
+The rate limiter is the part that changes shape once this is hosted.
+`req.socket.remoteAddress` is the truth when the server faces the internet and
+a lie the moment anything sits in front of it: behind nginx or a
+platform-as-a-service every request arrives from the proxy, so the per-address
+limit becomes one bucket for the whole world and ten wrong passwords lock out
+the site. The header that fixes it, `X-Forwarded-For`, is set by the client on
+the way in — so reading it *without* a proxy in front means an attacker sends a
+different address each time and the limit stops existing.
+
+Both failures are silent and which one you get depends on the deployment, so
+`TRUST_PROXY` says how many proxies are really there and the address is counted
+in from the right by that many: the last one the client could not have forged.
+The default trusts nothing, which is right for a laptop and wrong for every
+hosted deployment, so the server says so at boot when it is in production with
+`TRUST_PROXY=0`.
+
+The rest is small: `Dockerfile`, `render.yaml` and `fly.toml` in the root, a
+`GET /api/health` for the platform to poll, and a strict Content-Security-Policy
+(`script-src 'self'`, no inline script anywhere in the site) verified against
+five real pages in a browser rather than asserted. [DEPLOY.md](DEPLOY.md) has
+the nginx and systemd units, the SQLite `.backup` command that is safe to run
+while the server is live, and the checklist.
+
 ### Testing it
 
 `tools/test-api.mjs` runs the real server against an in-memory database on an
-ephemeral port and drives it over HTTP with cookies — **87 assertions**, no
+ephemeral port and drives it over HTTP with cookies — **94 assertions**, no
 mocks. It covers what should work and, as carefully, what should not: another
 teacher cannot read, rename or delete a class; a student account cannot create
 one; a join code lookup does not leak the roster; an unknown email and a wrong
@@ -681,7 +711,7 @@ at 24 — a card that renders real content cannot be multiplied by a thousand.
 ```bash
 npm run check          # module syntax, content integrity, 33 marking tests,
                        # and 345 curriculum terms that must find worksheets
-npm run test:api       # the backend over HTTP, 87 assertions, no browser
+npm run test:api       # the backend over HTTP, 94 assertions, no browser
 npm run test:backend   # two browser contexts: teacher sets work, student on
                        # another device joins and hands it in
 

@@ -1,0 +1,24 @@
+# Render blueprint. `render.yaml` in the repository root is all Render needs;
+# it reads this on connect and provisions what is described here.
+services:
+  - type: web
+    name: worksheethub
+    runtime: node
+    plan: starter          # a persistent disk needs a paid plan; free has no disk
+    buildCommand: ""       # nothing to build
+    startCommand: node server/index.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE
+        value: /var/data/worksheethub.db
+      # Render terminates TLS at its own proxy, so the client address arrives
+      # in X-Forwarded-For. Without this every visitor shares one rate-limit
+      # bucket and ten wrong passwords lock out the whole site.
+      - key: TRUST_PROXY
+        value: "1"
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1

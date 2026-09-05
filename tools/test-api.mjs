@@ -310,6 +310,31 @@ ok('repeated wrong passwords are rate limited', limited !== null && limited <= 1
 r = await anon('POST', '/api/auth/login', { email: 'locked@school.org', password: 'seashell4' });
 ok('and the right password is refused while the limit holds', r.status === 429, r.status);
 
+/* --------------------------- behind a proxy --------------------------- */
+/* Deployed behind nginx or a load balancer, every request arrives from the
+   proxy. Without X-Forwarded-For the per-address rate limit becomes one
+   bucket for the whole world; trusting it blindly means an attacker sends a
+   different address each time and there is no limit at all. Both directions
+   are checked, because getting either wrong is silent. */
+const { clientAddress, trustedHops } = await import('../server/net.mjs');
+const fake = (h) => ({ headers: h, socket: { remoteAddress: '10.0.0.1' } });
+
+ok('with no trusted proxy, a forged header is ignored',
+  clientAddress(fake({ 'x-forwarded-for': '1.2.3.4' }), 0) === '10.0.0.1');
+ok('with one trusted proxy, the forwarded address is used',
+  clientAddress(fake({ 'x-forwarded-for': '203.0.113.9' }), 1) === '203.0.113.9');
+ok('a client cannot prepend its own address to escape the limit',
+  clientAddress(fake({ 'x-forwarded-for': '9.9.9.9, 203.0.113.9' }), 1) === '203.0.113.9');
+ok('two proxies count in from the right',
+  clientAddress(fake({ 'x-forwarded-for': '203.0.113.9, 172.16.0.1' }), 2) === '203.0.113.9');
+ok('a missing header falls back to the socket',
+  clientAddress(fake({}), 1) === '10.0.0.1');
+ok('TRUST_PROXY defaults to trusting nothing',
+  trustedHops(undefined) === 0 && trustedHops('nonsense') === 0 && trustedHops('true') === 1);
+
+r = await anon('GET', '/api/health');
+ok('there is a health endpoint for the platform to poll', r.status === 200 && r.body.ok === true, r.body);
+
 /* ------------------------------ static site ------------------------------ */
 const page = await fetch(`${BASE}/library.html`);
 ok('the site is served from the same origin as the API', page.status === 200, page.status);

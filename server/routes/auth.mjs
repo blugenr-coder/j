@@ -20,7 +20,7 @@ export function register(router) {
     /* Registration is rate limited too. Without it, one script fills the
        users table overnight and every one of those rows costs a scrypt hash
        on the way in. */
-    const address = ctx.req.socket.remoteAddress ?? 'unknown';
+    const address = ctx.address;
     if (tooManyAttempts(`register:${address}`, REGISTER_LIMIT)) {
       throw new HttpError(429, 'Too many accounts created from here. Try again later.');
     }
@@ -53,7 +53,7 @@ export function register(router) {
   router.post('/api/auth/login', async ctx => {
     const body = await readJson(ctx.req);
     const email = normaliseEmail(body.email ?? '');
-    const address = ctx.req.socket.remoteAddress ?? 'unknown';
+    const address = ctx.address;
 
     /* Counted twice: once for the account being attacked, once for whoever is
        doing the attacking. Either limit alone leaves the other route open. */
