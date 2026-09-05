@@ -109,6 +109,18 @@ a.card:hover, .card-link:hover { text-decoration: none; transform: translateY(-2
 }
 .hint { font-size: var(--step--1); color: var(--text-3); margin-top: 6px; }
 
+/* What a form says when the server refuses it. Announced to a screen reader
+   through role="alert", so it needs no colour to be noticed. */
+.form-error {
+  font-size: var(--step--1);
+  color: var(--bad-ink);
+  background: var(--danger-light);
+  border-left: 3px solid var(--bad-ink);
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  border-radius: var(--r-sm);
+}
+
 .search-box { position: relative; }
 .search-box .input { padding-left: 44px; height: 50px; border-radius: var(--r-pill); }
 .search-box .search-ico { position: absolute; left: var(--s4); top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }

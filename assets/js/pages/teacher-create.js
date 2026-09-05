@@ -74,10 +74,10 @@ $('#new-class-btn').addEventListener('click', () => openQuickClass($('#quick-cla
 $('#q-cancel').addEventListener('click', () => openQuickClass(false));
 $('#q-name').addEventListener('keydown', e => { if (e.key === 'Enter') $('#q-create').click(); });
 
-$('#q-create').addEventListener('click', () => {
+$('#q-create').addEventListener('click', async () => {
   const name = $('#q-name').value.trim();
   if (!name) { toast('Give the class a name first'); $('#q-name').focus(); return; }
-  const cls = createClass({ name, level: $('#q-level').value, subject: $('#f-subject').value || null });
+  const cls = await createClass({ name, level: $('#q-level').value, subject: $('#f-subject').value || null });
   liveClasses.unshift(cls);
   t.classes.unshift(cls);
   $('#q-name').value = '';
@@ -186,7 +186,7 @@ refreshMatches();
 drawSelected();
 
 /* -------------------------------- creation -------------------------------- */
-$('#create-btn').addEventListener('click', () => {
+$('#create-btn').addEventListener('click', async () => {
   if (!chosen.size) return;
   if (!$('#f-class').value) {
     toast('Create a class first — an assignment has to be set for someone');
@@ -195,7 +195,7 @@ $('#create-btn').addEventListener('click', () => {
   }
   const ids = [...chosen];
   const first = getExercise(ids[0]);
-  const assignment = createAssignment({
+  const assignment = await createAssignment({
     worksheetIds: ids,
     classId: $('#f-class').value,
     title: $('#f-title').value.trim() ||

@@ -1,6 +1,8 @@
 /* Settings: profile, appearance, and honest handling of the stored data. */
 import { $, $$, el, toast, formatMinutes } from '../core/util.js';
 import { mountShell, mountSideNav, href, requireUser, signOutAndGoHome } from '../core/shell.js';
+import { startSync } from '../core/sync.js';
+import * as api from '../core/api.js';
 import { GRADES } from '../data/catalog.js';
 import { currentUser, signIn, setTheme, getState, resetAll, summary } from '../core/store.js';
 
@@ -32,9 +34,22 @@ function render() {
   paintRole();
   for (const b of $$('#role-choice button')) b.addEventListener('click', () => { role = b.dataset.role; paintRole(); });
 
-  $('#profile-form').addEventListener('submit', (e) => {
+  $('#profile-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    signIn({ name: $('#name').value.trim() || user.name, role, grade: $('#grade').value });
+    const name = $('#name').value.trim() || user.name;
+    const grade = $('#grade').value;
+    signIn({ name, role, grade });
+
+    /* On an account the change has to reach the server, or the next sync
+       pulls the old name back and the save looks as though it was ignored. */
+    const { online, user: account } = await startSync();
+    if (online && account) {
+      const res = await api.updateMe({ name, role, grade });
+      if (!res.ok) {
+        toast('Saved on this device, but the server did not accept it.');
+        return;
+      }
+    }
     toast('Settings saved');
     setTimeout(() => location.reload(), 500);
   });
@@ -80,11 +95,48 @@ function render() {
     toast('Downloaded');
   });
 
-  $('#reset-btn').addEventListener('click', () => {
-    if (!confirm('Erase all progress, favourites, achievements and teacher data from this browser? This cannot be undone.')) return;
+  $('#reset-btn').addEventListener('click', async () => {
+    /* On an account this has to erase the server copy too. Clearing only the
+       browser would look like it worked and then hand everything back on the
+       next sync — worse than refusing to do it at all. */
+    /* Asked directly rather than read off the document, because the flag on
+       the root element is set by a promise that may not have resolved when
+       somebody clicks this. Getting it wrong here erases the browser and
+       leaves the account intact. */
+    const { online, user: account } = await startSync();
+    const onAccount = Boolean(online && account);
+    const warning = onAccount
+      ? 'Erase all progress, favourites, achievements and classes from your account and this browser? This cannot be undone, on any device.'
+      : 'Erase all progress, favourites, achievements and teacher data from this browser? This cannot be undone.';
+    if (!confirm(warning)) return;
+
+    $('#reset-btn').disabled = true;
+    if (onAccount) {
+      const res = await api.eraseMyData();
+      if (!res.ok) {
+        $('#reset-btn').disabled = false;
+        toast('Could not reach the server — nothing was erased.');
+        return;
+      }
+      /* Signed out as well, so nothing re-syncs into the empty browser. */
+      await api.logout();
+    }
     resetAll();
     location.href = href('index.html');
   });
 
   $('#signout-btn').addEventListener('click', signOutAndGoHome);
+}
+
+/* What this page promises about the data depends on whether there is a server
+   behind it, and getting that wrong in either direction is a lie: telling
+   somebody their work is safe when it lives in one browser, or telling them
+   nothing leaves their device when it is on an account. */
+const note = $('#storage-note');
+if (note) {
+  startSync().then(({ online, user }) => {
+    note.textContent = online && user
+      ? 'Progress, favourites and classes are saved to your account, so they are on every device you sign in on. This browser also keeps a copy so the site works offline.'
+      : 'Progress, favourites and teacher classes are stored in this browser only. Nothing is sent to a server, so clearing site data will erase them.';
+  });
 }

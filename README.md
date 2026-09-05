@@ -19,16 +19,40 @@ Search → Open → Practise online → Check → Print → Review → Track pro
 
 ## Running it
 
-There is no build step and no dependencies. Any static file server works:
+```bash
+npm start                 # server + site on http://127.0.0.1:8099
+```
+
+That runs the backend, which also serves the site, so accounts and class
+results work. There is still no build step and still nothing to install: the
+server is Node's own `node:http` and `node:sqlite`, and the front end is plain
+ES modules.
+
+The site also still runs with no backend at all, which is how most of the test
+suite drives it:
 
 ```bash
-npm start                 # http://127.0.0.1:8099
-# or
+npm run start:static      # any static file server will do
 python3 -m http.server 8099
 ```
 
+In that mode an account is a name in `localStorage`, exactly as it was before
+the backend existed, and the sign-in page says so.
+
 Opening `index.html` from the filesystem will **not** work — the pages load ES
 modules, which browsers refuse over `file://`.
+
+### Configuration
+
+| Variable | Default | What it does |
+|---|---|---|
+| `PORT` | `8099` | Port to listen on |
+| `HOST` | `127.0.0.1` | Interface to bind |
+| `DATABASE` | `data/worksheethub.db` | SQLite file; created on first run |
+| `NODE_ENV` | — | `production` adds `Secure` to the session cookie |
+
+Behind TLS in production, set `NODE_ENV=production` so the session cookie is
+never sent over plain HTTP.
 
 ---
 
@@ -49,7 +73,7 @@ modules, which browsers refuse over `file://`.
 | `favorites.html` | Starred exercises |
 | `achievements.html` | Optional milestones, kept off the practice screens |
 | `join.html` | Open an assignment from a six-character code |
-| `signin.html`, `settings.html` | Local account, level, theme, and your stored data |
+| `signin.html`, `settings.html` | Your account, level, theme, and your stored data |
 
 ### For teachers
 
@@ -80,11 +104,15 @@ Analytics does the same thing with its class picker rather than showing a blank
 select, and the student join page offers the teacher route to anyone who landed
 there without a code.
 
-The honest boundary: **a code resolves only on the device the class was created
-on; the link works anywhere**, because the class details travel inside the URL.
-What no link can do is send results back without a server, so a student working
-on their own laptop shows on the roster but their marks stay on their machine.
-The interface says this rather than implying otherwise.
+**With the backend running, a code resolves anywhere.** A student on their own
+phone types the six characters, joins the class the teacher made on a laptop,
+does the work, and the mark appears in the teacher's grid — see
+[The backend](#the-backend). Started as a static site with no server, the old
+boundary still holds and is still stated on the page: a code then resolves only
+on the device the class was made on, the link works anywhere because the class
+travels inside the URL, and nothing can carry a result home. The join page and
+the class grid each say which of the two they are in rather than implying the
+better one.
 
 Teacher pages switch the interface into a denser, more sober visual mode
 (`data-mode="teacher"`) using the same palette, so both audiences clearly see one product.
@@ -289,6 +317,196 @@ Nine question types, each with its own interaction:
 
 ---
 
+## The backend
+
+The site spent its whole life as a folder of static files, and the one thing
+that cost it was stated in the interface rather than hidden: a join link could
+carry a class to another device, and **nothing could carry a result back**. A
+teacher saw only the students who had worked in their own browser.
+
+That is what this is for. Everything else — accounts, saved answers, scores,
+progress — follows from the same requirement.
+
+### Still no dependencies
+
+`node:http` for the server, `node:sqlite` for the database, `node:crypto` for
+passwords. Nothing is installed, there is no build, and one process serves both
+the API and the site, which means the page and its backend are the same origin
+and there is no CORS configuration to get wrong.
+
+```
+server/
+  index.mjs        config, request pipeline, error handling
+  db.mjs           schema and migrations
+  auth.mjs         scrypt, sessions, cookies, rate limiting
+  http.mjs         router, JSON bodies, cross-site checks
+  static.mjs       the site itself
+  routes/
+    auth.mjs       register, login, logout, me
+    progress.mjs   answers, runs, scores, the personal document
+    classes.mjs    classes, rosters, joining, assignments, results
+```
+
+### Authentication
+
+Three decisions carry the weight, and each is the difference between
+authentication and the appearance of it:
+
+- **Passwords are scrypt with a per-user salt** (N=32768), compared with
+  `timingSafeEqual`. A hash costs about 175ms, which is unnoticeable to a
+  person signing in and ruinous to a wordlist.
+- **The cookie holds a random token; the database holds only its SHA-256.**
+  Somebody who reads the database cannot log in as anybody.
+- **The cookie is HttpOnly and SameSite=Lax**, so page JavaScript can never
+  read it and another site cannot make the browser send it on a form post.
+
+Beyond that: a failed sign-in says the same thing whether the email is unknown
+or the password is wrong — and takes the same time, because an unknown email
+still pays for a scrypt comparison, or the response time answers the question
+the message refuses to. Attempts are counted per email *and* per address, so
+neither one account nor one attacker can be hammered.
+
+**The cross-site rule took a correction.** The first version required every
+mutation to declare `application/json`, which reads as thorough and broke every
+`DELETE`: a delete has no body, so it has no content type. The rule that
+actually matters is narrower. Only a POST can be a *simple* request — one the
+browser sends cross-origin with no preflight — so only a POST needs the
+content-type check to take it out of that set. `PUT`, `PATCH` and `DELETE` are
+never simple, whatever they carry, and the server never answers a preflight.
+Requiring it on them refused honest requests while guarding nothing.
+
+### The schema
+
+Everything a teacher needs to query *across* people is a real table:
+`users`, `sessions`, `runs`, `answers`, `scores`, `classes`, `class_students`,
+`assignments`, `submissions`, `custom_exercises`. The handful of things nobody
+queries across users — theme, favourites, achievements, day totals, the
+activity feed — live in one JSON document per user, because giving them tables
+would buy nothing.
+
+`answers` is a row per question, not a blob, and that is the point: the
+question-level analytics has to be able to ask which students got question 7
+wrong, and a JSON document cannot answer that.
+
+Two pragmas matter. `foreign_keys = ON`, because every `ON DELETE CASCADE` is
+load-bearing — deleting a class takes its roster, assignments and submissions
+with it, and SQLite has foreign keys off by default. And `journal_mode = WAL`,
+so a class of thirty submitting at once does not serialise into a queue.
+
+### Finishing a worksheet files it
+
+The write worth describing is `POST /api/me/scores`. In one transaction it
+stamps the run complete, records the score, and then files a submission against
+**every assignment that set this worksheet to a class this student is in**. The
+student sends nothing to anybody; the teacher's grid fills in.
+
+That is the whole feature, and it is why the answers are rows: the submission
+carries the per-question detail, so "which question did the class find hardest"
+is a real answer about real people rather than a chart of nothing.
+
+### How the browser and the server meet
+
+The store already had the seam. Its header comment used to say *"swap
+read()/write() for fetch calls and the rest of the app is unchanged"* — which
+was optimistic, but the shape was right.
+
+- **Local write first, always.** A student who answers a question sees it saved
+  whether or not the network is having a good day. The store writes to
+  `localStorage`, emits an event, and `sync.js` turns that into an API call
+  behind them. Nothing in a render path is awaited on the network.
+- **A dropped write is not a lost write.** Failed calls go into an outbox that
+  survives a reload, and are retried. A 401 empties it and signs the person
+  out, because pretending to save work into a dead session is worse than saying
+  so.
+- **Classes and assignments go to the server first.** Everything else can be
+  written locally and pushed after, because it belongs to one person. An id and
+  a six-character join code cannot: two teachers on two devices would mint the
+  same code soon enough, and a code has to reach exactly one class.
+- **Merging is newer-wins, field by field.** A phone that answered five minutes
+  ago must not be overwritten by a tab that has been open since this morning.
+  The shared document carries its own timestamp and the server refuses a stale
+  write, handing back the newer copy instead of taking it.
+- **With no backend, none of this runs.** `api.js` probes once and every call
+  returns `{ ok: false }` from then on. That is not a fallback bolted on; it is
+  how the whole test suite still drives the site.
+
+### Erasing it all had to change
+
+Settings has always offered to erase everything, and it meant clearing
+`localStorage`. On an account that is worse than doing nothing: the browser
+empties, the page says it worked, and the next sync hands it all straight back.
+It now calls `DELETE /api/me/data`, which drops the runs, answers, scores, the
+state document, the custom worksheets, the class memberships and — for a
+teacher — their classes, cascading to every assignment and submission under
+them. The account keeps its name and password and nothing else. The button
+signs the person out too, so nothing re-syncs into the empty browser, and the
+confirmation says *on any device* rather than *from this browser*, because that
+is now what it does.
+
+### Two bugs this found
+
+Both were already there and neither could happen until a backend existed.
+
+- **A page held a stale class.** `teacher/class.html` captured its class object
+  at module load. Sync then replaced the store's classes with the server's
+  copies, and the captured reference kept pointing at the old one — a roster
+  full of real students rendering as empty. It re-reads now, and "class not
+  found" waits for the server to have its say, because a teacher signing in on
+  a new laptop has an empty store for the first half-second.
+- **A temporal dead zone on the progress page.** `progress.js` called `render()`
+  from the top of the file, above a `const` that a function two hops down
+  reaches for. The branch only runs when a student has practised topics and
+  *none* are weak — which no test had ever produced until a full set of correct
+  answers arrived. The entry point moved to the bottom of the file.
+
+### The API
+
+| | |
+|---|---|
+| `POST /api/auth/register` | Create an account; sets the session cookie |
+| `POST /api/auth/login` | Sign in |
+| `POST /api/auth/logout` | End the session |
+| `GET /api/auth/me` | The signed-in user, or `null` — never a 401 |
+| `PATCH /api/auth/me` | Change name, role or level |
+| `GET /api/me/data` | The whole account in one call: state, runs, answers, scores |
+| `PUT /api/me/state` | The personal document, with a timestamp that can lose |
+| `PUT /api/me/answers/:exercise/:qid` | Save one answer |
+| `PATCH /api/me/runs/:exercise` | Practice time, flags, reset |
+| `POST /api/me/scores` | Finish a worksheet; files it against any assignment |
+| `DELETE /api/me/data` | Erase everything this person has |
+| `GET /api/classes` | A teacher's classes, rosters and assignments |
+| `POST /api/classes` | Create a class; the server allocates the join code |
+| `GET /api/classes/lookup/:code` | What class a code belongs to, without the roster |
+| `POST /api/classes/join` | Join with a code |
+| `GET /api/me/classes` | A student's classes, work set to them, work handed in |
+| `POST /api/assignments` | Set worksheets to a class |
+| `GET /api/classes/:id/results` | Every submission in a class, with per-question detail |
+
+`GET /api/auth/me` answering `{ user: null }` rather than 401 is deliberate:
+nobody being signed in is a normal state on a public page, and treating it as
+an error fills the console with red on every visit.
+
+### Testing it
+
+`tools/test-api.mjs` runs the real server against an in-memory database on an
+ephemeral port and drives it over HTTP with cookies — **87 assertions**, no
+mocks. It covers what should work and, as carefully, what should not: another
+teacher cannot read, rename or delete a class; a student account cannot create
+one; a join code lookup does not leak the roster; an unknown email and a wrong
+password are indistinguishable; ten wrong passwords lock the account; a stale
+state document loses.
+
+`tools/e2e-backend.mjs` runs the browser on **two separate contexts** — its own
+cookies and its own storage, as different as a phone is from a laptop. The
+teacher registers and sets work on one; the student registers on the other,
+joins with the code, answers every question and finishes; the result appears in
+the teacher's grid and analytics with the student named. Then the same student
+signs in on a *third* context that has never seen them, and their progress and
+their homework are both there. **28 assertions**, and the last three prove the
+site still works with every API call blocked.
+
+---
+
 ## Search that finds what a worksheet teaches
 
 Two bugs, both of which made a large library feel empty.
@@ -462,8 +680,12 @@ at 24 — a card that renders real content cannot be multiplied by a thousand.
 
 ```bash
 npm run check          # module syntax, content integrity, 33 marking tests,
-                       # and 188 curriculum terms that must find worksheets
-npm start              # then, in another shell:
+                       # and 345 curriculum terms that must find worksheets
+npm run test:api       # the backend over HTTP, 87 assertions, no browser
+npm run test:backend   # two browser contexts: teacher sets work, student on
+                       # another device joins and hands it in
+
+npm run start:static   # then, in another shell:
 npm run test:all       # everything below, in order
 npm run test:render    # asserts every page actually renders its content
 npm run test:contrast  # every text element against WCAG AA, in both themes
@@ -474,6 +696,11 @@ npm run test:e2e       # drives a real browser through every question type, the
                        # teacher flows (analytics, codes, joining, the builder)
                        # and all six languages
 ```
+
+`test:api` and `test:backend` start their own server, so they need nothing
+running. Everything else is driven against the static site, which is the point:
+the front end has to keep working with no backend behind it, and these prove it
+does.
 
 Each of these exists because of a bug it caught:
 
@@ -503,30 +730,31 @@ Each of these exists because of a bug it caught:
   thing a teacher types in. Searching for "mitosis", "apostrophe", "Roman
   numerals" or "the Tudors" once returned nothing, while worksheets covering all
   of them sat in the catalogue: the index could not see inside a unit, and a
-  whole strand of school history had never been written. This is a list of 188
+  whole strand of school history had never been written. This is a list of 345
   terms taken from published curricula that must all find worksheets, plus a
   subject × level grid, so a hole in a year group is visible rather than
   inferred.
+- `tools/test-api.mjs` — the first cross-site rule refused every `DELETE`
+  request, because it demanded a JSON content type from a verb that has no
+  body. Nothing in the browser would have shown it: the calls simply came back
+  403 and the interface would have looked as though the writes had gone
+  through. Driving the API directly, with cookies, is what made it a two-line
+  failure instead of a mystery.
+- `tools/e2e-backend.mjs` — two browser contexts, because one cannot tell you
+  whether a result actually crossed between devices. It caught a page holding a
+  class object from before sync replaced it, which rendered a full roster as
+  empty.
 
 ---
 
 ## What is not built yet
 
-This is a complete front end with local persistence. Being precise about the gap:
+Being precise about the gap:
 
-- **No server and no real accounts.** "Signing in" is a name, a role and a level held
-  in `localStorage`. There is no password, nothing is transmitted, and clearing site
-  data erases everything. `settings.html` says so on the page and offers an export.
-- **Classes are real but single-device for results.** Creating classes, rosters,
-  multi-worksheet assignments, due dates, joining by code or link, and the
-  who-has-done-what grid all work. Results only flow back to the teacher when
-  the student worked in the same browser. This is the single highest-value thing
-  a backend would unlock.
 - **Teacher analytics runs on real submissions only.** There is no sample class and
   no generated data: a teacher who has set nothing sees an empty state that says so.
-  Every number on the analytics view comes from work a student actually handed in
-  in this browser, which is also why the per-question success rates are worth acting
-  on.
+  Every number on the analytics view comes from work a student actually handed in,
+  which is also why the per-question success rates are worth acting on.
 - **The exercise builder covers five question types**, not all eight. Matching,
   ordering and graph questions need dedicated editing interfaces; shipping a
   half-working editor for them would produce broken exercises. What it does save
@@ -539,10 +767,11 @@ This is a complete front end with local persistence. Being precise about the gap
 - **No AI generation.** Section 18 of the plan puts it deliberately late, and the
   library is the product.
 
-### The order I would build the server in
+### Still on the list
 
-1. Accounts and progress sync — makes everything else durable and multi-device.
-2. Assignment codes — unlocks the whole teacher-to-student flow.
-3. Real submissions and analytics — replaces the sample data with actual answers.
-4. Teacher-authored exercises shared to a class.
-5. AI-assisted authoring, as a tool inside the builder rather than a headline feature.
+1. Password reset by email, which needs an email sender and therefore a decision
+   about which one. Until then a forgotten password is a support request.
+2. Teacher-authored exercises shared to a class — they sync to the author's own
+   account today, not yet to their students.
+3. AI-assisted authoring, as a tool inside the builder rather than a headline
+   feature.

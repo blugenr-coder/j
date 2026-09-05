@@ -10,11 +10,16 @@ import { findWhere, getExercise } from '../data/exercises.js';
 import { summary, getState, scoreFor, statusFor } from '../core/store.js';
 
 mountShell({ page: 'progress', nav: 'app', footer: false });
-if (requireUser('progress.html')) render();
 
 /* What to say when there is no weak topic: either nothing has been assessed
    yet, or everything assessed is above the threshold — which is good news and
    should read as such, plus somewhere useful to go next. */
+/* Declared above the function that reads it. It used to sit below, which is a
+   temporal dead zone: the moment a student had practised topics and none of
+   them were weak, this panel threw instead of rendering. Nothing reached that
+   branch until a full set of correct answers made it possible. */
+const WEAK_LABEL = 85;
+
 function nothingWeak(assessed) {
   if (!assessed.length) {
     return el('p', { class: 'small muted', style: 'margin:0',
@@ -32,7 +37,6 @@ function nothingWeak(assessed) {
         'Try something new and this panel will start pointing at the gaps.' })),
     next ? el('a', { class: 'btn btn-ghost btn-sm', href: href(`exercise.html?id=${next.id}`), text: 'Try one' }) : null);
 }
-const WEAK_LABEL = 85;
 
 function render() {
   mountSideNav($('#side-nav-host'), 'progress');
@@ -148,3 +152,8 @@ function render() {
     );
   }));
 }
+
+/* Entry point last, after every declaration this file makes. Running it from
+   the top of the file put the call above a const it reaches through two
+   function hops, and the page threw the moment that branch was taken. */
+if (requireUser('progress.html')) render();

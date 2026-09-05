@@ -6,6 +6,8 @@ import { el, esc, $ } from './util.js';
 import { icon, iconHtml } from './icons.js';
 import { logoTile } from './logo.js';
 import { applyTheme, setTheme, getState, currentUser, signOut, isTeacher } from './store.js';
+import { startSync } from './sync.js';
+import * as api from './api.js';
 import { LANGUAGES, currentLanguage, setLanguage, initLanguage, whenReady } from './i18n.js';
 
 /* Pages inside /teacher/ set data-base=".." so every link still resolves. */
@@ -91,6 +93,14 @@ export function mountShell({ page = '', nav = 'public', mode = null, footer = nu
   /* Translation runs after the chrome exists and keeps running as pages render
      into it. English is the source language, so it costs nothing there. */
   initLanguage();
+
+  /* Deliberately not awaited. With a backend this pulls the account down and
+     starts pushing changes up; with none it resolves to nothing. Either way
+     the page has already rendered from local state, so a slow or absent
+     server delays no pixel. */
+  startSync().then(result => {
+    if (result.online && result.user) document.documentElement.dataset.account = 'server';
+  });
 
   return { header };
 }
@@ -381,7 +391,10 @@ export function requireUser(nextPath) {
   return false;
 }
 
-export function signOutAndGoHome() {
+export async function signOutAndGoHome() {
+  /* Tell the server first: a session that lives on after the browser thinks
+     it is signed out is the kind of thing nobody notices until it matters. */
+  await api.logout();
   signOut();
   location.href = href('index.html');
 }

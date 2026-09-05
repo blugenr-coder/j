@@ -8,6 +8,7 @@ import { icon } from '../core/icons.js';
 import { takeWhere, getExercise } from '../data/exercises.js';
 import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor,
          assignedToMe, enrollments } from '../core/store.js';
+import { startSync } from '../core/sync.js';
 
 mountShell({ page: 'dashboard', nav: 'app', footer: false });
 if (requireUser('dashboard.html')) render();
@@ -189,3 +190,7 @@ function drawAssigned() {
 
   $('#assigned-list').replaceChildren(...cards);
 }
+
+/* Work set by a teacher arrives with the account, not with the browser, so the
+   assigned section is drawn again once the server has answered. */
+startSync().then(drawAssigned);

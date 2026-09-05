@@ -10,22 +10,42 @@ import {
   teacherData, findClass, addStudent, removeStudent, encodeClass,
   deleteAssignment, submissionsFor
 } from '../core/store.js';
+import { refreshResults, syncing } from '../core/sync.js';
 
 mountShell({ page: 'teachers', nav: 'app', mode: 'teacher', footer: false });
 mountSideNav($('#side-nav-host'), 't-classes');
 
 teacherData();
-const cls = findClass(qs('id'));
 
-if (!cls) {
+/* A let, not a const, and re-read rather than captured. Sync replaces the
+   class objects in the store with the server's copies, and a reference taken
+   before that points at a stale one — which is how a roster full of students
+   renders as empty. */
+const classId = qs('id');
+let cls = findClass(classId);
+let rendered = false;
+
+function showNotFound() {
   $('#class-body').hidden = true;
   $('#not-found').hidden = false;
-  $('#not-found').append(emptyState('users', 'Class not found',
-    'That class is not on this device.',
+  $('#not-found').replaceChildren(emptyState('users', 'Class not found',
+    'That class is not on this account.',
     el('a', { class: 'btn btn-primary', href: href('teacher/classes.html'), text: 'Back to classes' })));
-} else {
-  render();
 }
+
+if (cls) { render(); rendered = true; }
+
+/* The class may not be on this device at all — a teacher signing in on a new
+   laptop has an empty store until the account arrives. So "not found" is only
+   decided once the server has had its say. */
+refreshResults(classId).then(() => {
+  cls = findClass(classId) ?? cls;
+  if (!cls) return showNotFound();
+  $('#class-body').hidden = false;
+  $('#not-found').hidden = true;
+  if (!rendered) { render(); rendered = true; }
+  else { drawAssignments(); drawRoster(); drawMatrix(); }
+});
 
 function render() {
   document.title = `${cls.name} — WorksheetHub`;
@@ -46,10 +66,10 @@ function render() {
     catch { prompt('Copy this link:', joinUrl); }
   });
 
-  $('#add-student').addEventListener('click', () => {
+  $('#add-student').addEventListener('click', async () => {
     const name = $('#student-name').value.trim();
     if (!name) { $('#student-name').focus(); return; }
-    addStudent(cls.id, name);
+    await addStudent(cls.id, name);
     $('#student-name').value = '';
     drawRoster(); drawMatrix();
     toast(`${name} added`);
@@ -64,6 +84,7 @@ function classAssignments() {
 }
 
 function drawAssignments() {
+  cls = findClass(classId) ?? cls;
   const list = classAssignments();
   $('#assignment-count').textContent = plural(list.length, 'assignment');
   $('#assignment-list').replaceChildren(...(list.length
@@ -82,9 +103,9 @@ function drawAssignments() {
             el('span', { class: `badge ${done ? 'badge-success' : ''}`,
               text: `${done}/${cls.students.length} started` }),
             el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Remove',
-              onclick: () => {
+              onclick: async () => {
                 if (!confirm(`Remove "${a.title}"?`)) return;
-                deleteAssignment(a.code); drawAssignments(); drawMatrix();
+                await deleteAssignment(a.code); drawAssignments(); drawMatrix();
               } })));
       })
     : [el('div', { style: 'padding:8px 0' },
@@ -94,6 +115,7 @@ function drawAssignments() {
 }
 
 function drawRoster() {
+  cls = findClass(classId) ?? cls;
   const current = findClass(cls.id);
   $('#roster-count').textContent = plural(current.students.length, 'student');
   $('#roster').replaceChildren(...(current.students.length
@@ -105,13 +127,14 @@ function drawRoster() {
           el('span', { class: 'list-sub',
             text: st.source === 'joined' ? `Joined with the code ${timeAgo(st.joinedAt)}` : 'Added by you' })),
         el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Remove',
-          onclick: () => { removeStudent(cls.id, st.id); drawRoster(); drawMatrix(); } })))
+          onclick: async () => { await removeStudent(cls.id, st.id); drawRoster(); drawMatrix(); } })))
     : [el('p', { class: 'small muted', style: 'margin:0',
         text: 'Nobody yet. Share the join code, or add students by name above.' })]));
 }
 
 /** The grid a teacher actually looks at: students down, assignments across. */
 function drawMatrix() {
+  cls = findClass(classId) ?? cls;
   const current = findClass(cls.id);
   const list = classAssignments();
 
@@ -146,8 +169,13 @@ function drawMatrix() {
       el('td', { class: 'mono small', text: `${done}/${list.length}` }));
   });
 
+  /* This used to have to say that results only appeared for students working
+     in this browser. With a backend behind it that is no longer true, and the
+     line says what is actually the case rather than the limit it used to be. */
   const note = el('p', { class: 'hint', style: 'margin-top:12px' },
-    'Results appear for students working in this browser. Sending them back from another device needs a server — see the README.');
+    syncing()
+      ? 'Results appear here as students finish the work, on whatever device they use.'
+      : 'This copy is running without a server, so results appear only for students working in this browser.');
 
   $('#matrix').replaceChildren(
     el('table', { class: 'table' }, el('thead', {}, head), el('tbody', {}, ...rows)), note);

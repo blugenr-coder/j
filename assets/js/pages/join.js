@@ -11,6 +11,8 @@ import {
   findClassByCode, decodeClass, joinClass, leaveClass, enrollments,
   isEnrolled, assignedToMe, currentUser
 } from '../core/store.js';
+import { lookupClass } from '../core/api.js';
+import { startSync } from '../core/sync.js';
 
 mountShell({ page: 'join', nav: 'public' });
 
@@ -39,7 +41,7 @@ if (invited) {
 }
 
 /* --------------------------------- join --------------------------------- */
-$('#join-form').addEventListener('submit', (e) => {
+$('#join-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const code = input.value.trim();
   const studentName = nameInput.value.trim() || currentUser()?.name;
@@ -47,15 +49,26 @@ $('#join-form').addEventListener('submit', (e) => {
   if (!studentName) { nameInput.focus(); return fail('Enter the name your teacher will recognise.'); }
   if (isEnrolled(code)) return fail('You have already joined that class.');
 
-  /* Prefer the real class on this device; fall back to the invite payload. */
+  /* Three places a code can resolve, in order of how much they know.
+     The server is first: it is the only one that knows about a class made on
+     somebody else's laptop, which is the ordinary case. Then this device's own
+     classes, then the invite link, which carries the class inside the URL and
+     is what made joining possible at all before there was a backend. */
+  const remote = await lookupClass(code);
   const local = findClassByCode(code);
-  const cls = local
-    ? { name: local.name, level: local.level, code: local.code, subject: local.subject }
-    : (invited && invited.code.replace('-', '') === code.replace('-', '') ? invited : null);
+  const cls = remote.ok && remote.data?.class
+    ? remote.data.class
+    : local
+      ? { name: local.name, level: local.level, code: local.code, subject: local.subject }
+      : (invited && invited.code.replace('-', '') === code.replace('-', '') ? invited : null);
 
-  if (!cls) return fail('No class found with that code. Codes work on the device the class was created on — otherwise ask your teacher for the join link.');
+  if (!cls) {
+    return fail(remote.error === 'offline'
+      ? 'No class found with that code. Without a server, codes only work on the device the class was created on — otherwise ask your teacher for the join link.'
+      : 'No class found with that code. Check it with your teacher.');
+  }
 
-  joinClass({ ...cls, studentName });
+  await joinClass({ ...cls, studentName });
   toast(`Joined ${cls.name}`);
   input.value = ''; $('#invite').hidden = true;
   drawMine();
@@ -91,9 +104,9 @@ function drawMine() {
             el('div', { class: 'small muted',
               text: `${e.level ?? ''}${e.level ? ' · ' : ''}joined as ${e.studentName} ${timeAgo(e.joinedAt)}` })),
           el('button', { class: 'btn btn-ghost btn-sm', type: 'button', text: 'Leave',
-            onclick: () => {
+            onclick: async () => {
               if (!confirm(`Leave ${e.className}?`)) return;
-              leaveClass(e.code); drawMine(); toast('Left the class');
+              await leaveClass(e.code); drawMine(); toast('Left the class');
             } })),
         set.length
           ? el('div', { class: 'list list-divided', style: 'margin-top:12px' },
@@ -108,3 +121,6 @@ function drawMine() {
     }));
 }
 drawMine();
+/* And again once the server has said which classes this account is in — a
+   class joined on another device belongs on this list too. */
+startSync().then(drawMine);

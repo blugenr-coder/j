@@ -6,6 +6,7 @@ import { emptyState } from '../core/cards.js';
 import { icon, iconHtml } from '../core/icons.js';
 import { GRADES, SUBJECTS, SUBJECT_MAP } from '../data/catalog.js';
 import { teacherData, createClass, deleteClass, encodeClass, getState } from '../core/store.js';
+import { startSync } from '../core/sync.js';
 
 mountShell({ page: 'teachers', nav: 'app', mode: 'teacher', footer: false });
 mountSideNav($('#side-nav-host'), 't-classes');
@@ -22,15 +23,19 @@ $('#new-class-btn').addEventListener('click', () => {
 });
 $('#cancel-class-btn').addEventListener('click', () => { $('#new-class-panel').hidden = true; });
 
-$('#create-class-btn').addEventListener('click', () => {
+$('#create-class-btn').addEventListener('click', async () => {
   const name = $('#c-name').value.trim();
   if (!name) { toast('Give the class a name first'); $('#c-name').focus(); return; }
-  const cls = createClass({ name, level: $('#c-level').value, subject: $('#c-subject').value || null });
+  const cls = await createClass({ name, level: $('#c-level').value, subject: $('#c-subject').value || null });
   $('#c-name').value = '';
   $('#new-class-panel').hidden = true;
   toast('Class created');
   showNewClass(cls);
   draw();
+/* The list renders from this device immediately, then again when the
+   server's copy of the account arrives — which is the copy that has the
+   classes made on a laptop and opened on a phone. */
+startSync().then(draw);
 });
 
 /* The join code is the whole point of creating a class, so it is put in front
@@ -82,9 +87,9 @@ function draw() {
         el('button', {
           class: 'btn btn-ghost btn-sm', type: 'button', text: 'Delete',
           style: 'color:var(--bad-ink)',
-          onclick: () => {
+          onclick: async () => {
             if (!confirm(`Delete "${c.name}" and its assignments? This cannot be undone.`)) return;
-            deleteClass(c.id); draw(); toast('Class deleted');
+            await deleteClass(c.id); draw(); toast('Class deleted');
           }
         }))
     );
@@ -102,3 +107,7 @@ async function copy(text, message) {
 }
 
 draw();
+/* Drawn from this device first, then again once the server's copy of the
+   account arrives — the copy that holds the class made on a laptop and
+   opened on a phone. */
+startSync().then(draw);

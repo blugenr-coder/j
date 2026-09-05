@@ -7,6 +7,7 @@ import { mountShell, mountSideNav, href } from '../core/shell.js';
 import { statTile } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { teacherData, classResults } from '../core/store.js';
+import { refreshResults } from '../core/sync.js';
 import { getExercise } from '../data/exercises.js';
 
 mountShell({ page: 'teachers', nav: 'app', mode: 'teacher', footer: false });
@@ -129,3 +130,7 @@ function render(r) {
 }
 
 sync();
+
+/* Then again with the server's answer, so the averages are computed over every
+   student who handed the work in rather than only those who used this browser. */
+if (classId) refreshResults(classId).then(fresh => { if (fresh) sync(); });
