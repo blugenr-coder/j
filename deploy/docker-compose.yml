@@ -1,0 +1,50 @@
+# WorksheetHub on one machine, with TLS that renews itself.
+#
+#   docker compose up -d
+#
+# Caddy takes care of the certificate: point a domain at this machine, put it
+# in the Caddyfile, and it fetches and renews from Let's Encrypt with nothing
+# to configure and no cron job to forget.
+
+services:
+  app:
+    build: ..
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      DATABASE: /data/worksheethub.db
+      # Caddy is the one proxy in front. Without this every visitor shares a
+      # single rate-limit bucket and ten wrong passwords lock out the site.
+      TRUST_PROXY: "1"
+    volumes:
+      - worksheethub-data:/data
+    # Deliberately no published port: nothing reaches the app except through
+    # Caddy, so the machine's firewall only ever needs 80 and 443 open.
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8080/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data          # certificates live here — keep this volume
+      - caddy-config:/config
+
+volumes:
+  worksheethub-data:
+  caddy-data:
+  caddy-config:

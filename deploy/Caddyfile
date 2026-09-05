@@ -1,0 +1,20 @@
+# Replace with your domain. Caddy fetches and renews the certificate itself.
+#
+# No domain yet? Use the machine's IP with no TLS while you test:
+#   :80 {
+#     reverse_proxy app:8080
+#   }
+# — and set NODE_ENV to anything but "production" in docker-compose.yml while
+# you do, or the Secure cookie will never be sent over plain HTTP and you will
+# not be able to sign in.
+
+worksheethub.example.com {
+	encode zstd gzip
+
+	# Caddy appends the real client address to X-Forwarded-For, which is what
+	# TRUST_PROXY=1 counts one in from the right to find.
+	reverse_proxy app:8080 {
+		health_uri /api/health
+		health_interval 30s
+	}
+}

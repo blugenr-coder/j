@@ -125,9 +125,124 @@ WantedBy=multi-user.target
 
 `HOST=127.0.0.1` so nothing reaches Node except through nginx.
 
+## Google Cloud
+
+**Use Compute Engine, not Cloud Run.** Cloud Run is the obvious answer and the
+wrong one for this app: its filesystem is ephemeral, so the SQLite file is gone
+on every cold start, and it scales to several instances, each of which would
+have its own copy of a database that is meant to have one. You would lose every
+account, quietly, and only notice when somebody could not sign in. Cloud Run is
+right for this only after moving the data to Cloud SQL, which is a change to
+the backend rather than a setting.
+
+App Engine has the same ephemeral filesystem, and so does Cloud Functions.
+Firebase Hosting is static only — see the next section for what that costs.
+
+A single Compute Engine VM, on the other hand, is exactly the shape this app
+is: one machine, one disk, one database file.
+
+### One VM, with TLS
+
+```bash
+gcloud config set project YOUR_PROJECT
+gcloud services enable compute.googleapis.com
+
+gcloud compute instances create worksheethub \
+  --zone=us-central1-a \
+  --machine-type=e2-micro \
+  --image-family=debian-12 --image-project=debian-cloud \
+  --boot-disk-size=20GB --boot-disk-type=pd-standard \
+  --tags=http-server,https-server \
+  --metadata-from-file user-data=deploy/cloud-init.yaml
+```
+
+`e2-micro` in some US regions has historically been covered by Google's
+always-free tier, but the terms change — check the current free-tier page
+before assuming this costs nothing. It is a small instance either way; the
+library is static files and the database is small.
+
+The default VPC usually already allows 80 and 443 to those tags. If not:
+
+```bash
+gcloud compute firewall-rules create allow-http  --allow=tcp:80  --target-tags=http-server
+gcloud compute firewall-rules create allow-https --allow=tcp:443 --target-tags=https-server
+```
+
+`deploy/cloud-init.yaml` installs Docker, clones the repository and starts
+`deploy/docker-compose.yml` at first boot. That brings up two containers: the
+app, and Caddy in front of it. Caddy fetches and renews the Let's Encrypt
+certificate on its own — no certbot, no cron job to forget.
+
+Then point your domain at the machine's external address:
+
+```bash
+gcloud compute instances describe worksheethub --zone=us-central1-a \
+  --format='get(networkInterfaces[0].accessConfigs[0].natIP)'
+```
+
+Create an `A` record for that address, put the domain in `deploy/Caddyfile` in
+place of `worksheethub.example.com`, and restart:
+
+```bash
+gcloud compute ssh worksheethub --zone=us-central1-a
+sudo nano /srv/worksheethub/deploy/Caddyfile
+sudo docker compose -f /srv/worksheethub/deploy/docker-compose.yml restart caddy
+```
+
+The certificate appears within a minute or so of DNS resolving.
+
+**Testing before you have a domain.** Caddy cannot get a certificate for a bare
+IP address, so use the `:80` block commented at the top of the Caddyfile — and
+while you do, set `NODE_ENV` to something other than `production` in
+`docker-compose.yml`. In production the session cookie is `Secure`, which means
+the browser will not send it over plain HTTP and nobody will be able to stay
+signed in. Put both back before you tell anyone the address.
+
+### Updating it
+
+```bash
+gcloud compute ssh worksheethub --zone=us-central1-a
+cd /srv/worksheethub && sudo git pull
+sudo docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+The schema migrates itself forward on boot and the database is on a named
+volume, so an update does not touch the data.
+
+### Backups
+
+The volume lives on the VM's disk, so a disk snapshot is a backup of
+everything:
+
+```bash
+gcloud compute disks snapshot worksheethub --zone=us-central1-a \
+  --snapshot-names=worksheethub-$(date +%F)
+```
+
+For a copy you can inspect, take a real SQLite backup instead — safe to run
+while the server is live, unlike `cp`:
+
+```bash
+sudo docker compose -f /srv/worksheethub/deploy/docker-compose.yml \
+  exec app node -e "const{DatabaseSync}=require('node:sqlite'); \
+  new DatabaseSync('/data/worksheethub.db').exec(\"VACUUM INTO '/data/backup.db'\")"
+```
+
+### If you want Cloud Run anyway
+
+It is a reasonable thing to want: it scales to zero, it is cheap, and there is
+no machine to look after. It needs the data moved out of SQLite first —
+`server/db.mjs` is the only file that knows what the database is, and the
+routes speak to it through prepared statements that Postgres also understands,
+so the port is contained rather than sprawling. Cloud SQL for PostgreSQL with
+the Cloud Run connector is the usual pairing. That is a real piece of work, not
+a config change; the tests would carry over unchanged, which is what makes it
+tractable.
+
 ## Static hosting, without the backend
 
-The site still runs as a folder of files on GitHub Pages, Netlify or any CDN —
+The site still runs as a folder of files on Firebase Hosting, GitHub Pages,
+Netlify or any CDN —
 that is how most of the test suite drives it. What you lose is exactly the
 thing the backend was built for: an account is then a name in `localStorage`,
 progress lives in one browser, and a class code only resolves on the device
@@ -142,15 +257,26 @@ either the backend is reachable at `/api` or it is not.
 `GET /api/health` returns `{ ok: true, uptime }` — unauthenticated, cheap, and
 tells a stranger nothing. Point the platform's health check at it.
 
-The database is one SQLite file plus its write-ahead log. Back it up with
-SQLite's own online backup, which is safe while the server is running:
+The database is one SQLite file plus its write-ahead log. **Copying it with
+`cp` while the server is live can capture a torn write** — the copy looks fine
+and restores as a corrupt database. Use one of SQLite's own online backups
+instead; both are safe with the server running.
+
+With the `sqlite3` CLI installed:
 
 ```bash
 sqlite3 /var/lib/worksheethub/worksheethub.db ".backup '/backups/worksheethub-$(date +%F).db'"
 ```
 
-Copying the file with `cp` while the server is live can capture a torn write.
-Use `.backup`.
+Or with nothing but Node, which is what you have inside the container:
+
+```bash
+node -e "const{DatabaseSync}=require('node:sqlite'); \
+  new DatabaseSync(process.env.DATABASE).exec(\"VACUUM INTO '/backups/worksheethub.db'\")"
+```
+
+`VACUUM INTO` writes a compacted copy with the write-ahead log already folded
+in, so the result is a single file you can open anywhere.
 
 Upgrading is `git pull` and a restart. The schema carries a version and
 migrates itself forward on boot; an existing database is never rebuilt.
