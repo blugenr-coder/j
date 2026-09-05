@@ -22,6 +22,7 @@ import { clientAddress, trustedHops } from './net.mjs';
 import { register as registerAuth } from './routes/auth.mjs';
 import { register as registerProgress } from './routes/progress.mjs';
 import { register as registerClasses } from './routes/classes.mjs';
+import { register as registerSeo } from './routes/seo.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(here, '..');
@@ -42,6 +43,9 @@ export function createApp({ dbFile = join(REPO_ROOT, 'data', 'worksheethub.db'),
   registerAuth(router);
   registerProgress(router);
   registerClasses(router);
+  /* robots.txt and sitemap.xml are generated per request so they carry the
+     right absolute URLs on whatever host this is running on. */
+  registerSeo(router);
 
   const serveStatic = makeStaticHandler(root, { production: secureCookies });
   const allowedOrigins = new Set(origins);
@@ -58,6 +62,16 @@ export function createApp({ dbFile = join(REPO_ROOT, 'data', 'worksheethub.db'),
        Every platform wants one to decide whether an instance is alive. */
     if (url.pathname === '/api/health') {
       return json(res, 200, { ok: true, uptime: Math.round(process.uptime()) });
+    }
+
+    /* Two paths outside /api are served by the router, not from disk: they
+       have to know the host they are being asked on. */
+    if (url.pathname === '/robots.txt' || url.pathname === '/sitemap.xml') {
+      const match = router.match(req.method, url.pathname);
+      if (match?.handler) {
+        return match.handler(context(req, res, {}, { db, user: null, token: null, secure: secureCookies }))
+          .catch(() => serveStatic(req, res, url.pathname));
+      }
     }
 
     if (!url.pathname.startsWith('/api/')) {

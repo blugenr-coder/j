@@ -4,7 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>WorksheetHub — Practice anything. Learn everything.</title>
-<meta name="description" content="Nearly 100,000 worksheets across 248 curriculum units, for every grade from Pre-K to college. Practise online with instant marking, or print with an answer key — and track what you are actually weak at.">
+<meta name="description" content="Over two million worksheets across 679 curriculum units, for every grade from Pre-K to college. Practise online with instant marking, or print with an answer key — and track what you are actually weak at.">
+<!-- Self-referencing, so every filter permutation in the query string
+     collapses to one indexable URL. -->
+<link rel="canonical" href="/">
 <link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
 <link rel="alternate icon" sizes="64x64" href="assets/img/favicon-64.png">
 <link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
@@ -12,9 +15,41 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="WorksheetHub">
 <meta property="og:title" content="WorksheetHub — Practice anything. Learn everything.">
-<meta property="og:description" content="Nearly 100,000 worksheets across 248 curriculum units, for every grade from Pre-K to college. Practise online with instant marking, or print with an answer key — and track what you are actually weak at.">
+<meta property="og:description" content="Over two million worksheets across 679 curriculum units, for every grade from Pre-K to college. Practise online with instant marking, or print with an answer key — and track what you are actually weak at.">
 <meta property="og:image" content="assets/img/og.png">
 <meta name="twitter:card" content="summary_large_image">
+<!-- Structured data. Two things only, both of which Google actually uses:
+     what this site is, and that it has a search — which is what lets a
+     sitelinks search box appear under the result. Anything beyond that would
+     be markup written for a rich result this site does not qualify for. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "#website",
+      "name": "WorksheetHub",
+      "description": "Over two million worksheets across 679 curriculum units, for every grade from Pre-K to college.",
+      "inLanguage": ["en", "es", "fr", "de", "it", "pt"],
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "library.html?text={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@type": "EducationalOrganization",
+      "@id": "#organization",
+      "name": "WorksheetHub",
+      "description": "A worksheet library that works online and on paper, for every grade from Pre-K to college."
+    }
+  ]
+}
+</script>
 <link rel="manifest" href="site.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

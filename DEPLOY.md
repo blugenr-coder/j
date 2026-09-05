@@ -252,6 +252,77 @@ rather than promising something they cannot do.
 Deploy it that way only if that is what you want. There is no partial mode:
 either the backend is reachable at `/api` or it is not.
 
+## Google Search Console
+
+**This needs the site to be live first.** Search Console verifies a URL it can
+reach, so there is nothing to do here until the site has a public address.
+
+### 1. Verify ownership
+
+A **domain property** (DNS) is the one worth having: it covers `http` and
+`https`, `www` and bare, and every subdomain, so you never end up with the
+site's traffic split across four properties that each know a quarter of it.
+Search Console gives you a `TXT` record to add at your registrar. Nothing in
+this repository changes.
+
+If you cannot edit DNS, the **HTML file** method works with no code change
+either: Google hands you a `google<something>.html`, you drop it in the
+repository root, and the server serves it like any other file. The meta-tag
+method also works — add the tag Google gives you to `index.html` — but it only
+verifies that one origin.
+
+### 2. Submit the sitemap
+
+Sitemaps → add `sitemap.xml`. The server generates it per request from the
+host it is being asked on, so it is already correct — no build step, nothing
+to update when the domain changes. Six pages, absolute URLs, all answering
+200; `npm run test:seo` asserts exactly that.
+
+Hosting the site *without* the backend? Then the file has to be written with
+your domain baked in:
+
+```bash
+npm run sitemap -- https://your-domain
+```
+
+### 3. Ask for the homepage to be indexed
+
+URL Inspection → paste the homepage → Request Indexing. That queues one page.
+The rest arrive on their own; the sitemap is how Google finds them.
+
+### What is deliberately kept out
+
+`robots.txt` disallows everything behind a sign-in — the dashboard, settings,
+progress, favourites, the whole teacher section — and each of those pages also
+carries `noindex, follow`. Both are needed: `robots.txt` stops the crawl, the
+meta tag stops a page indexed from a link somewhere else. A crawler reaching
+any of them gets an empty state, so indexing them would spend crawl budget to
+publish nothing.
+
+The library is the case worth understanding. Its filters live in the URL, so
+`library.html` has an unbounded number of query-string permutations — Google
+would crawl thousands of them and treat them as near-duplicates of each other.
+A self-referencing canonical collapses every one to `/library.html`.
+`exercise.html` does the same in JavaScript: `?id=x`, `?id=x&mode=online`,
+`?id=x&mode=printable` and `?id=x&q=7` are one worksheet, and without it they
+are four pages competing with one another.
+
+### The honest limit: the worksheets themselves will not rank
+
+Six pages will be indexed. Two million worksheets will not, and no sitemap
+fixes that. Every worksheet page is rendered in the browser from JavaScript:
+the HTML that arrives from the server is an empty shell, and the content only
+exists after the module graph has loaded and run. Google does render
+JavaScript, but it does so on a second pass with a much smaller budget, and
+two million URLs is far beyond what that budget reaches.
+
+If search traffic on worksheet topics matters — "Grade 8 photosynthesis
+worksheet" and the like — the work is server-side rendering: the server has
+the whole library in memory already, so having it write the questions into the
+HTML for a crawler is tractable rather than speculative. It is a real feature,
+not a setting, and it is the single highest-value SEO change this site could
+make. Until then, the six pages are what Google sees.
+
 ## Health, backups and upgrades
 
 `GET /api/health` returns `{ ok: true, uptime }` — unauthenticated, cheap, and

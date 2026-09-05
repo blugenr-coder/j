@@ -11,7 +11,7 @@
     "test:links": "node tools/check-links.mjs",
     "test:render": "node tools/check-render.mjs",
     "test:spacing": "node tools/check-spacing.mjs",
-    "test:all": "node tools/check-render.mjs && node tools/check-spacing.mjs && node tools/check-contrast.mjs && node tools/check-mobile.mjs && node tools/check-header.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs && node tools/e2e-language.mjs && node tools/test-api.mjs && node tools/e2e-backend.mjs",
+    "test:all": "node tools/check-render.mjs && node tools/check-spacing.mjs && node tools/check-contrast.mjs && node tools/check-mobile.mjs && node tools/check-header.mjs && node tools/check-links.mjs && node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs && node tools/e2e-language.mjs && node tools/test-api.mjs && node tools/e2e-backend.mjs && node tools/check-seo.mjs",
     "test:contrast": "node tools/check-contrast.mjs",
     "test:mobile": "node tools/check-mobile.mjs",
     "test:coverage": "node tools/check-coverage.mjs",
@@ -19,6 +19,8 @@
     "serve": "node server/index.mjs",
     "start:static": "npx --yes http-server -p 8099 -c-1 .",
     "test:api": "node tools/test-api.mjs",
-    "test:backend": "node tools/e2e-backend.mjs"
+    "test:backend": "node tools/e2e-backend.mjs",
+    "sitemap": "node tools/make-sitemap.mjs",
+    "test:seo": "node tools/check-seo.mjs"
   }
 }

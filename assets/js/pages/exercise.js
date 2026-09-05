@@ -22,6 +22,18 @@ mountShell({ page: 'library', nav: 'app', footer: false });
 
 const ex = getExercise(qs('id'));
 
+/* One worksheet, one indexable URL. The same sheet is reachable as
+   ?id=x, ?id=x&mode=online, ?id=x&mode=printable and ?id=x&q=7, and without
+   this each of those is a separate page as far as a crawler is concerned —
+   four copies of identical content competing with each other. A worksheet
+   that is not in the library gets no canonical at all rather than one
+   pointing at a page that does not exist. */
+const canonical = document.getElementById('canonical-link');
+if (canonical) {
+  if (ex) canonical.href = `exercise.html?id=${encodeURIComponent(ex.id)}`;
+  else canonical.remove();
+}
+
 if (!ex) {
   $('#not-found').hidden = false;
   $('#not-found').append(emptyState('help', 'Worksheet not found',
