@@ -23,10 +23,20 @@ Search → Open → Practise online → Check → Print → Review → Track pro
 npm start                 # server + site on http://127.0.0.1:8099
 ```
 
-That runs the backend, which also serves the site, so accounts and class
-results work. There is still no build step and still nothing to install: the
-server is Node's own `node:http` and `node:sqlite`, and the front end is plain
-ES modules.
+That is the whole thing. No `npm install` — there are no dependencies — no
+build step, and no database to set up: the file and its directory are created
+on first run. The server is Node's own `node:http` and `node:sqlite`, and the
+front end is plain ES modules.
+
+**Node 22.5 or newer**, because `node:sqlite` arrived in 22.5. On anything
+older the server says so and stops, rather than failing with "Cannot find
+module 'node:sqlite'" — which reads like a missing dependency in a project
+that has none, and sends people to `npm install` for twenty minutes before
+they find out their Node is too old.
+
+Then open <http://127.0.0.1:8099>, create an account, and everything works:
+progress follows the account, a class code resolves across devices, and a
+student's finished worksheet lands in their teacher's grid.
 
 The site also still runs with no backend at all, which is how most of the test
 suite drives it:

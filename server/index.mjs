@@ -27,6 +27,19 @@ import { register as registerSeo } from './routes/seo.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = join(here, '..');
 
+/* node:sqlite arrived in Node 22.5. On anything older the import above fails
+   with "Cannot find module 'node:sqlite'", which reads like a missing
+   dependency in a project that has none — so somebody spends twenty minutes
+   running npm install before finding out their Node is too old. Say it
+   instead. */
+const [major, minor] = process.versions.node.split('.').map(Number);
+if (major < 22 || (major === 22 && minor < 5)) {
+  console.error(`WorksheetHub needs Node 22.5 or newer; this is ${process.versions.node}.`);
+  console.error('The database is Node\'s own node:sqlite, which older versions do not have.');
+  console.error('\n  nvm install 22 && nvm use 22\n');
+  process.exit(1);
+}
+
 export function createApp({ dbFile = join(REPO_ROOT, 'data', 'worksheethub.db'),
                             root = REPO_ROOT,
                             secureCookies = process.env.NODE_ENV === 'production',

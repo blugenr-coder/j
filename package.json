@@ -4,6 +4,9 @@
   "private": true,
   "description": "Practice anything. Learn everything. \u2014 an exercise library that works online and on paper.",
   "type": "module",
+  "engines": {
+    "node": ">=22.5"
+  },
   "scripts": {
     "start": "node server/index.mjs",
     "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs && node tools/check-coverage.mjs",
