@@ -12,15 +12,35 @@
    has ever read.
 */
 
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, rmSync } from 'node:fs';
 import { robotsTxt, sitemapXml } from '../server/routes/seo.mjs';
 
-const site = process.argv[2];
+/* The domain, from the argument or from whatever the host tells us at build
+   time. Vercel and Netlify both publish it; taking it from there means the
+   sitemap is right the first time rather than after somebody remembers to
+   regenerate it. */
+const fromEnv = process.env.SITE_URL
+  ?? (process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
+  ?? (process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`)
+  ?? process.env.URL                      // Netlify
+  ?? null;
+
+const site = process.argv[2] ?? fromEnv;
+
 if (!site || !/^https?:\/\/[^/]+$/.test(site)) {
-  console.error('Usage: node tools/make-sitemap.mjs https://your-domain\n');
-  console.error('The domain is required and cannot be guessed: an absolute URL is');
-  console.error('the one thing both of these files must have.');
-  process.exit(1);
+  /* Deliberately not a failure. Called from a host's build command with no
+     domain available, stopping the build would be a worse outcome than
+     shipping without a sitemap — and a sitemap carrying the wrong domain is
+     worse than both, so that is the one thing this will not do. */
+  console.warn('No site URL given and none in the environment.');
+  console.warn('Writing robots.txt with no Sitemap: line, and no sitemap.xml.');
+  console.warn('Pass one to get both: node tools/make-sitemap.mjs https://your-domain\n');
+
+  const bare = robotsTxt({ headers: { host: 'placeholder' }, socket: {} })
+    .replace(/\nSitemap: .*\n/, '\n');
+  writeFileSync('robots.txt', bare);
+  rmSync('sitemap.xml', { force: true });
+  process.exit(0);
 }
 
 const url = new URL(site);

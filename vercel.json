@@ -1,0 +1,40 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+
+  "//": [
+    "Vercel serves this repository as static files. There is nothing to build,",
+    "so the build command exists only to write a sitemap carrying the domain",
+    "Vercel has just assigned — VERCEL_PROJECT_PRODUCTION_URL is set during a",
+    "build. Without it the script writes a robots.txt with no Sitemap: line",
+    "rather than one naming a domain nobody owns.",
+    "",
+    "The Node server is NOT running here. Vercel is serverless: there is no",
+    "long-lived process and no writable disk, so server/index.mjs never starts",
+    "and /api/* does not exist. The site detects that and falls back to the",
+    "browser-only mode it had before the backend was written. That is a real",
+    "product difference, not a rough edge — see DEPLOY.md."
+  ],
+
+  "buildCommand": "node tools/make-sitemap.mjs",
+  "outputDirectory": ".",
+  "installCommand": "echo 'no dependencies'",
+  "framework": null,
+  "cleanUrls": false,
+  "trailingSlash": false,
+
+  "headers": [
+    {
+      "//": "The Node server sends these itself. Vercel is not running it, so they have to be declared here or the deployed site ships with none of them.",
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "Referrer-Policy", "value": "same-origin" },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'"
+        }
+      ]
+    }
+  ]
+}

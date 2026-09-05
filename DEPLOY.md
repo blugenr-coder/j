@@ -239,6 +239,56 @@ the Cloud Run connector is the usual pairing. That is a real piece of work, not
 a config change; the tests would carry over unchanged, which is what makes it
 tractable.
 
+## Vercel
+
+Vercel will host this, and it will not run the backend. That is worth being
+plain about before rather than after: Vercel is serverless, so there is no
+long-lived process for `server/index.mjs` to be and no writable disk for
+SQLite to live on. `/api/*` will not exist, the browser will find nothing when
+it probes, and the site falls back to the mode it had before the backend was
+written — an account is a name in this browser, progress lives on one device,
+and a class code only resolves where the class was made. The sign-in and
+settings pages detect this and say so.
+
+That is a perfectly reasonable way to put the library in front of people. It
+is not a way to run the classes.
+
+Settings in the import screen:
+
+| Field | Value |
+|---|---|
+| Application Preset | **Other** |
+| Root Directory | `./` |
+| Build Command | leave empty — `vercel.json` sets it |
+| Output Directory | leave empty — `vercel.json` sets it |
+| Install Command | leave empty — there are no dependencies |
+
+`vercel.json` in the repository root does two jobs. It runs
+`tools/make-sitemap.mjs`, which reads the domain Vercel assigns from
+`VERCEL_PROJECT_PRODUCTION_URL` at build time, so the sitemap carries the real
+address the first time rather than after somebody remembers to regenerate it.
+And it declares the security headers, because those are sent by the Node
+server that is not running here — without them the deployed site ships with
+none.
+
+### Keeping the backend
+
+If you want the accounts and the class results, the API has to run somewhere
+with a process and a disk: a Compute Engine VM, Fly, or any small server. Two
+things change when the front end and the API are on different origins:
+
+- **CORS.** The server currently answers no preflight at all, deliberately,
+  because same-origin needs none. It would have to allow the Vercel origin
+  explicitly.
+- **The session cookie.** `SameSite=Lax` stops a cookie crossing origins, so
+  it would have to become `SameSite=None; Secure` — which is a real widening
+  of what the cookie will ride along on, and the reason same-origin was chosen
+  in the first place.
+
+Both are contained changes rather than a rewrite. The simpler answer, if you
+want the whole product, is to serve the site from the same machine as the API,
+which is what every other section here describes.
+
 ## Static hosting, without the backend
 
 The site still runs as a folder of files on Firebase Hosting, GitHub Pages,
