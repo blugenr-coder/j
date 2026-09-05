@@ -172,7 +172,7 @@ for (const [topic, units] of Object.entries(UNITS)) {
         ...(unit.myths ?? []),
         ...(unit.sequences ?? []).map(sq => sq[0]),
         ...(unit.applications ?? []).map(a => a[1])
-      ].join(' ').toLowerCase()
+      ].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
     };
   }
 }

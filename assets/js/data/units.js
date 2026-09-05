@@ -30,12 +30,17 @@ import { PRIMARY_UNITS } from './units-primary.js';
 import { CULTURE_UNITS } from './units-culture.js';
 import { HIST2_UNITS } from './units-hist2.js';
 import { GAP_UNITS } from './units-gaps.js';
+import { MEDIA_MIND_UNITS } from './units-media-mind.js';
+import { IDEAS_UNITS } from './units-ideas.js';
+import { WORK_UNITS } from './units-work.js';
+import { LIFE_ARTS_UNITS } from './units-life-arts.js';
+import { BODY_CODE_UNITS } from './units-body-code.js';
 
 /* Merged per topic: several files may contribute units to the same topic. */
 export const UNITS = (() => {
   const out = {};
   for (const src of [EARLY_UNITS, SCIENCE_UNITS, HUMANITIES_UNITS, ELA_UNITS, LANGUAGE_UNITS,
-                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS, ELEM_UNITS, ELEM2_UNITS, NATION_UNITS, WORLD_UNITS, SCI2_UNITS, PRIMARY_UNITS, CULTURE_UNITS, HIST2_UNITS, GAP_UNITS]) {
+                     APPLIED_UNITS, ELECTIVE_UNITS, MORE_UNITS, BIO_UNITS, CHEM_UNITS, MATHS_UNITS, MATHS2_UNITS, WIDER_UNITS, EARLY2_UNITS, ELA2_UNITS, HIST_UNITS, LANG2_UNITS, MORE2_UNITS, ELEM_UNITS, ELEM2_UNITS, NATION_UNITS, WORLD_UNITS, SCI2_UNITS, PRIMARY_UNITS, CULTURE_UNITS, HIST2_UNITS, GAP_UNITS, MEDIA_MIND_UNITS, IDEAS_UNITS, WORK_UNITS, LIFE_ARTS_UNITS, BODY_CODE_UNITS]) {
     for (const [topic, units] of Object.entries(src)) {
       (out[topic] ??= []).push(...units);
     }

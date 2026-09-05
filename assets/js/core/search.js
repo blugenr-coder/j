@@ -165,8 +165,8 @@ function haystack(ex) {
        `extra` is built only if the cheaper fields all miss, which is rare. */
     entry = {
       ex,
-      title: ex.title.toLowerCase(),
-      summary: ex.summary.toLowerCase(),
+      title: fold(ex.title),
+      summary: fold(ex.summary),
       keywords: ex.unit ? (UNIT_META[ex.unit]?.keywords ?? '') : '',
       extra: null
     };
@@ -175,13 +175,26 @@ function haystack(ex) {
   return entry;
 }
 
+/* Accents are a spelling detail, not a meaning. "mise-en-scene" found nothing
+   while the library said "mise-en-scène"; the same goes for café, Dalí and
+   résumé. Both sides of every comparison are folded to unaccented lower case,
+   once, at the point the index entry is built. */
+const ASCII = /^[\x00-\x7F]*$/;
+export const fold = s => {
+  const v = String(s);
+  /* normalize() is not cheap, and almost every string in the library is plain
+     ASCII. Testing first keeps the index build the same speed it was before
+     accents were handled at all. */
+  return (ASCII.test(v) ? v : v.normalize('NFD').replace(/[\u0300-\u036f]/g, '')).toLowerCase();
+};
+
 /** Level, topic, subject and any question text already in memory. */
 function extraOf(entry) {
   if (entry.extra === null) {
     const ex = entry.ex;
-    entry.extra = [ex.level, ex.topic, ex.subject,
-                   ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
-      .join(' ').toLowerCase();
+    entry.extra = fold([ex.level, ex.topic, ex.subject,
+                        ...(ex.questions ?? []).map(q => `${q.prompt} ${q.math ?? ''}`)]
+      .join(' '));
   }
   return entry.extra;
 }
@@ -222,13 +235,36 @@ function stem(word) {
  * which is what makes a plural find a singular. 0 means no match at all, and
  * one such term rules the worksheet out.
  */
+/* The keyword blob is one string per unit, shared by reference across every
+   family of that unit — so a hundred and forty thousand families between them
+   hold only about seven hundred distinct strings. Scanning each distinct
+   string once per search instead of once per family is what keeps a one-word
+   search fast as the library grows: "cell" went from 686ms to a fraction of
+   that, and the cost no longer rises with the number of families. */
+const KW_W = 1, KW_ALT = 2, KW_ST = 4, KW_ROOT = 8, KW_PLURAL = 16;
+function keywordHits(term, keywords) {
+  if (!keywords) return 0;
+  let bits = term.kw.get(keywords);
+  if (bits === undefined) {
+    bits = 0;
+    if (keywords.includes(term.w)) bits |= KW_W;
+    if (term.alt && keywords.includes(term.alt)) bits |= KW_ALT;
+    if (term.st && term.st.length > 3 && keywords.includes(term.st)) bits |= KW_ST;
+    if (term.root && keywords.includes(term.root)) bits |= KW_ROOT;
+    if (term.plural && keywords.includes(term.plural)) bits |= KW_PLURAL;
+    term.kw.set(keywords, bits);
+  }
+  return bits;
+}
+
 function wordScore(entry, term) {
-  const { w, st, root, alt } = term;
+  const { w, st, root, alt, plural } = term;
+  const kw = keywordHits(term, entry.keywords);
   if (entry.title.includes(w)) return 12;
   if (entry.summary.includes(w)) return 6;
   /* What the unit actually teaches. Ranked below the title and summary, so a
      worksheet named for the thing you searched for still comes first. */
-  if (entry.keywords.includes(w)) return 5;
+  if (kw & KW_W) return 5;
   if (extraOf(entry).includes(w)) return 2;
   /* Hyphens are a spelling choice, not a meaning. The library says
      "transatlantic" and a teacher types "trans-atlantic"; neither is wrong and
@@ -237,7 +273,7 @@ function wordScore(entry, term) {
   if (alt) {
     if (entry.title.includes(alt)) return 11;
     if (entry.summary.includes(alt)) return 5;
-    if (entry.keywords.includes(alt)) return 4;
+    if (kw & KW_ALT) return 4;
     if (extraOf(entry).includes(alt)) return 2;
   }
   if (!st) return 0;
@@ -246,10 +282,10 @@ function wordScore(entry, term) {
      "photosynthesise" finds photosynthesis. */
   if (st.length > 3) {
     if (entry.title.includes(st) || entry.summary.includes(st)) return 4;
-    if (entry.keywords.includes(st)) return 4;
+    if (kw & KW_ST) return 4;
     if (extraOf(entry).includes(st)) return 3;
   }
-  if (root && (entry.keywords.includes(root) || entry.title.includes(root)
+  if (root && ((kw & KW_ROOT) || entry.title.includes(root)
                || entry.summary.includes(root) || extraOf(entry).includes(root))) return 2;
   /* Every stemming rule trims the end of a word, so the substring tests above
      already cover them — except -y → -ies, which rewrites. Searching "body"
@@ -257,23 +293,24 @@ function wordScore(entry, term) {
      "body" produces "bodies". So that one form is spelled out and tested
      directly. An earlier version built a set of word stems per worksheet for
      this, which cost three and a half seconds on a one-word search. */
-  if (w.endsWith('y') && w.length > 3) {
-    const plural = `${w.slice(0, -1)}ies`;
-    if (entry.keywords.includes(plural) || entry.title.includes(plural)
-        || entry.summary.includes(plural) || extraOf(entry).includes(plural)) return 3;
-  }
+  if (plural && ((kw & KW_PLURAL) || entry.title.includes(plural)
+                 || entry.summary.includes(plural) || extraOf(entry).includes(plural))) return 3;
   return 0;
 }
 
 /** Prepare the query once: the word, its stem, and a truncated root. */
 function termsFrom(words) {
   return words.map(w => {
-    const st = stem(w);
-    const joined = w.replace(/[-']/g, '');
+    const folded = fold(w);
+    const st = stem(folded);
+    const joined = folded.replace(/[-']/g, '');
     return {
-      w, st,
+      w: folded, st,
       root: st.length >= 7 ? st.slice(0, st.length - 2) : null,
-      alt: joined !== w && joined.length > 2 ? joined : null
+      alt: joined !== folded && joined.length > 2 ? joined : null,
+      plural: folded.endsWith('y') && folded.length > 3 ? `${folded.slice(0, -1)}ies` : null,
+      /* One entry per distinct keyword blob, for the life of this search. */
+      kw: new Map()
     };
   });
 }

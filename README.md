@@ -2,7 +2,7 @@
 
 **Practice anything. Learn everything.**
 
-A library of **1,748,955 worksheets** across **17 subjects**, for every grade from
+A library of **2,019,183 worksheets** across **17 subjects**, for every grade from
 Pre-K to college, where the same worksheet works online *and* on paper —
 including multi-page packs of up to ten printed pages and 100 questions, and
 labelled diagrams that work both on screen and in print. Search it, practise it
@@ -91,24 +91,32 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**1,748,955 worksheets** across 588 curriculum micro-units, 70 topics, 17
+**2,019,183 worksheets** across 679 curriculum micro-units, 70 topics, 17
 subjects and every level from Pre-K to college — from letter sounds to the
 Krebs cycle, and from nutrition and personal finance to cyber security,
-philosophy and world religions. Sheets run from 6 to 100 questions; 686,114 are
-multi-page packs and 153,130 run to 40 questions or more. Together they hold
-about 29.7 million questions.
+philosophy and world religions. Sheets run from 6 to 100 questions; 800,946 are
+multi-page packs and 184,555 run to 40 questions or more. Together they hold
+about 34.6 million questions.
 
 | Subject | Worksheets | | Subject | Worksheets |
 |---|--:|---|---|--:|
-| Science | 268,231 | | Computer Science | 110,077 |
-| Social Studies | 261,334 | | Health & Physical Education | 81,704 |
-| Languages | 193,782 | | Early Learning | 77,948 |
-| Mathematics | 184,422 | | Art & Music | 69,814 |
-| English / Language Arts | 183,321 | | Life Skills & Careers | 66,050 |
-| Business & Finance | 46,201 | | Engineering & Design | 45,842 |
-| Study Skills | 38,015 | | Philosophy & Religion | 36,416 |
-| Environment & Sustainability | 36,644 | | Psychology & Sociology | 28,967 |
-| | | | Media & Film | 20,161 |
+| Science | 268,231 | | Early Learning | 84,855 |
+| Social Studies | 261,334 | | Engineering & Design | 70,497 |
+| Languages | 193,782 | | Philosophy & Religion | 64,448 |
+| Mathematics | 184,422 | | Business & Finance | 63,933 |
+| English / Language Arts | 183,321 | | Environment & Sustainability | 63,521 |
+| Computer Science | 132,582 | | Psychology & Sociology | 53,467 |
+| Art & Music | 103,292 | | Study Skills | 52,545 |
+| Health & Physical Education | 99,226 | | Media & Film | 45,633 |
+| Life Skills & Careers | 94,068 | | | |
+
+The subjects outside the core were the ones that needed this most. Media & Film
+had two units and now has eight named ones — film language, genre and
+narrative, news values, representation, algorithms and misinformation, sound,
+documentary, games. Psychology, sociology, environment, philosophy, world
+religions, engineering, business, life skills, the arts, health and computing
+all got the same treatment: a unit per block a syllabus actually names, rather
+than one broad unit per subject.
 
 ### Families, not worksheets
 
@@ -131,7 +139,7 @@ paint under half a second.
 A subject is not one thing you practise; it is thirty. Biology is *Cell
 Structure*, *Photosynthesis*, *Cellular Respiration and the Krebs Cycle*,
 *Homeostasis* — the units a scheme of work is actually built from, and the
-units a student is actually weak at. So **588 curriculum micro-units** each
+units a student is actually weak at. So **679 curriculum micro-units** each
 carry their own item bank and their own level range, in
 `assets/js/data/units-*.js`:
 
@@ -246,7 +254,7 @@ not make it.
 
 - **26 authored worksheets**, written by hand — the deepest content, and what
   sets the tone for everything else.
-- **1,748,929 generated worksheets**, expanded from a curriculum plan and the
+- **2,019,157 generated worksheets**, expanded from a curriculum plan and the
   micro-unit banks. These are deterministic (the same worksheet always contains
   the same questions) and their answers are *computed*, not transcribed, so a
   sheet cannot disagree with its own answer key. Questions materialise only when
@@ -322,8 +330,25 @@ because the obvious implementation of each was the slow one:
   that one form is now spelled out and tested directly. The stem-set code is
   gone.
 
-Searches now run in **90–290ms with a 97MB heap**, and singular and plural
-return identical counts for every term tested.
+Two more problems appeared once the library passed two million sheets:
+
+- **Accents.** Searching "mise-en-scene" found nothing while the library said
+  "mise-en-scène" — and the same would go for café, Dalí and résumé. Both sides
+  of every comparison are now folded to unaccented lower case at the point the
+  index entry is built. `normalize()` is not cheap and almost every string here
+  is plain ASCII, so a fast ASCII test runs first and the index build is the
+  speed it was before accents were handled at all.
+- **The keyword blob, scanned per family.** The unit vocabulary is one string
+  per unit, shared by reference — a hundred and forty thousand families hold
+  about seven hundred distinct strings between them, and every one was being
+  scanned per family. Each distinct string is now tested once per search and
+  the result cached on the query term, so the cost stops rising with the number
+  of families. A one-word search went from 686ms back to **185ms**.
+
+Searches run in **150–250ms with a 174MB heap** once the index is warm; the
+first search of a session pays about 600ms to build it. Singular and plural
+return identical counts for every term tested, and so now do accented and
+unaccented spellings.
 
 Filters are multi-select: several values per group, OR inside a group and AND
 between groups. Picking Biology and Chemistry widens the results; picking
@@ -392,7 +417,7 @@ assets/css/     tokens → base → components → pages → print
 assets/js/
   core/         store, marking, search, i18n, question renderers, app shell,
                 cards, icons
-  data/         taxonomy, authored content, 588 micro-unit banks, the figure
+  data/         taxonomy, authored content, 679 micro-unit banks, the figure
                 library, the unit engine and the family catalogue
   i18n/         one dictionary per language
   pages/        one module per page
