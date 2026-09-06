@@ -27,7 +27,7 @@ globalThis.MutationObserver = class { observe() {} disconnect() {} };
 globalThis.localStorage = { getItem: () => null, setItem() {} };
 
 const { setLanguage, loadContent, t } = await import('../assets/js/core/i18n.js');
-const { FAMILIES, getExercise } = await import('../assets/js/data/exercises.js');
+const { FAMILIES, AUTHORED, getExercise } = await import('../assets/js/data/exercises.js');
 const { SUBJECTS } = await import('../assets/js/data/catalog.js');
 
 const [lang = 'es', only = '', topN = '200'] = process.argv.slice(2);
@@ -46,12 +46,21 @@ const step = Math.max(1, Math.floor(FAMILIES.length / SAMPLE));
 const freq = new Map();     // subject -> Map(string -> times seen)
 const slots = new Map();    // subject -> total option slots
 
-for (let i = 0; i < FAMILIES.length; i += step) {
-  const family = FAMILIES[i];
-  const subject = subjectOf.get(family.topic);
-  if (!subject || (only && subject !== only)) continue;
-  const ex = getExercise(family.at(0).id);
+/* Authored worksheets are counted in full, not sampled. There are only
+   twenty-six of them, and they are the ones a reader actually meets first:
+   they are featured on the home page and sit at the top of the library. Each
+   of their strings appears exactly once in the library, so sampling buries
+   them at the bottom of a frequency ranking — which is how a number can climb
+   while the first worksheet somebody opens is still entirely in English. */
+const sampled = [];
+for (let i = 0; i < FAMILIES.length; i += step) sampled.push(FAMILIES[i].at(0).id);
+for (const ex of AUTHORED) sampled.push(ex.id);
+
+for (const id of sampled) {
+  const ex = getExercise(id);
   if (!ex?.questions) continue;
+  const subject = subjectOf.get(ex.topic);
+  if (!subject || (only && subject !== only)) continue;
   const counts = freq.get(subject) ?? freq.set(subject, new Map()).get(subject);
   for (const q of ex.questions) {
     for (const o of q.options ?? []) {

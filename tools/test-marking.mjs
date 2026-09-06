@@ -46,6 +46,26 @@ check('normalise strips x=',              normalise('x = 12'), '12');
 check('answerText for order',             answerText({ type: 'order', items: ['Egg', 'Larva'] }), 'Egg → Larva');
 check('answerText for choice',            answerText({ type: 'choice', options: ['a', 'b'], answer: 1 }), 'b');
 
+/* A reader given a Spanish prompt types a Spanish answer. Translating a
+   fill-in-the-blank question and then marking the right answer wrong would be
+   worse than not translating it at all, so the accepted answers grow with the
+   language. English must be unaffected. */
+{
+  globalThis.document ??= { documentElement: { lang: '', dataset: {} },
+                            createTreeWalker: () => ({ nextNode: () => null }), body: null };
+  globalThis.MutationObserver ??= class { observe() {} disconnect() {} };
+  globalThis.localStorage ??= { getItem: () => null, setItem() {} };
+  const { setLanguage } = await import('../assets/js/core/i18n.js');
+  const q = { type: 'blank', answer: 'photosynthesis' };
+  marks('blank: English answer before any language is set', q, 'photosynthesis', true);
+  await setLanguage('es', { reload: false });
+  await (await import('../assets/js/core/i18n.js')).loadContent('science');
+  const q2 = { type: 'blank', answer: 'condensation' };
+  marks('blank: Spanish answer accepted', q2, 'la condensación', true);
+  marks('blank: English answer still accepted', q2, 'condensation', true);
+  marks('blank: a wrong answer is still wrong', q2, 'la evaporación', false);
+}
+
 /* Practice time: a real 45-second session must not read as "0m". */
 check('formatMinutes: nothing',        formatMinutes(0), '0m');
 check('formatMinutes: under a second', formatMinutes(0.008), '0m');

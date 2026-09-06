@@ -4,6 +4,8 @@
    agree. Marking is intentionally forgiving about formatting and strict
    about meaning. */
 
+import { t } from './i18n.js';
+
 /** Normalise a free-text answer: case, whitespace, common maths spellings. */
 export function normalise(value) {
   return String(value ?? '')
@@ -35,7 +37,14 @@ function numeric(value) {
 }
 
 function textMatches(given, question) {
-  const candidates = [question.answer, ...(question.accept ?? [])];
+  /* A reader shown a Spanish prompt will type a Spanish answer, so the
+     translation of each accepted answer is accepted too. Without this,
+     translating a fill-in-the-blank question silently marks every correct
+     answer wrong — the worst possible outcome of adding a language. In
+     English t() returns its argument, so the list is unchanged. */
+  const authored = [question.answer, ...(question.accept ?? [])];
+  const candidates = [...new Set(authored.flatMap(c =>
+    typeof c === 'string' ? [c, t(c)] : [c]))];
   const g = normalise(given);
   if (!g) return false;
   for (const c of candidates) {

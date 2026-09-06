@@ -23,12 +23,15 @@ globalThis.MutationObserver = class { observe() {} disconnect() {} };
 globalThis.localStorage = { getItem: () => null, setItem() {} };
 
 const { LANGUAGES, setLanguage, loadContent, t } = await import('../assets/js/core/i18n.js');
-const { FAMILIES, getExercise } = await import('../assets/js/data/exercises.js');
+const { FAMILIES, AUTHORED, getExercise } = await import('../assets/js/data/exercises.js');
 const { SUBJECTS } = await import('../assets/js/data/catalog.js');
 
 /* The floors. Raise them as content lands; never lower them to make a run
    pass. Prompts are near-complete; options wait on the unit content banks. */
 const FLOOR = { prompt: 0.95, option: 0.00, overall: 0.25 };
+/* Spanish has content packs for every subject; the other languages do not yet,
+   so the floor that matters is per-language rather than global. */
+const ES_FLOOR = { option: 0.23, overall: 0.44 };
 
 const SAMPLE = 400;
 const step = Math.max(1, Math.floor(FAMILIES.length / SAMPLE));
@@ -47,8 +50,16 @@ for (const { code, name } of LANGUAGES.filter(l => l.code !== 'en')) {
   const hit = { prompt: 0, option: 0 };
   const misses = new Map();
 
-  for (let i = 0; i < FAMILIES.length; i += step) {
-    const ex = getExercise(FAMILIES[i].at(0).id);
+  /* The twenty-six authored worksheets are counted in full rather than
+     sampled: they are what the home page features and what the library lists
+     first, so leaving them to a one-in-eighty sample lets the average look
+     healthy while the first sheet a reader opens is untouched. */
+  const ids = [];
+  for (let i = 0; i < FAMILIES.length; i += step) ids.push(FAMILIES[i].at(0).id);
+  for (const a of AUTHORED) ids.push(a.id);
+
+  for (const id of ids) {
+    const ex = getExercise(id);
     if (!ex?.questions) continue;
     for (const q of ex.questions) {
       seen.prompt++;
@@ -74,7 +85,8 @@ for (const { code, name } of LANGUAGES.filter(l => l.code !== 'en')) {
   console.log(`  options : ${show(hit.option, seen.option)}`);
   console.log(`  ON SCREEN: ${show(done, total)}`);
 
-  for (const [key, floor] of Object.entries(FLOOR)) {
+  const floors = { ...FLOOR, ...(code === 'es' ? ES_FLOOR : {}) };
+  for (const [key, floor] of Object.entries(floors)) {
     const got = key === 'overall' ? pct(done, total) : pct(hit[key], seen[key]);
     if (got < floor) {
       console.log(`  ✗ ${key} below the floor of ${(100 * floor).toFixed(0)}%`);
