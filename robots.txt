@@ -17,3 +17,4 @@ Disallow: /teacher/
 # but there is no reason to spend crawl budget discovering that.
 Disallow: /library.html?
 
+Sitemap: https://worksheethub.org/sitemap.xml
