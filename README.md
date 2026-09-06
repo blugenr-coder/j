@@ -673,26 +673,54 @@ worksheet summary whose subject is itself a translatable phrase.
 
 Three deliberate boundaries:
 
-- **The questions are asked in your language; the subject matter is still in
-  English.** This one moved, and it is worth being exact about where it now
-  sits. Every generated question is built from one of about two dozen
-  templates — *Which statement about X is correct?*, *Select every term that
-  belongs to X*, *Label the numbered parts of the diagram: X* — and those are
-  now translated into all five languages. They frame the questions on **1.9
-  million worksheets, 92% of the library**, so a Spanish reader gets
-  *«¿Qué afirmación sobre X NO es correcta?»* rather than a Spanish menu
-  wrapped round an English quiz.
+- **Spanish is translated through to the answer options; the other four are
+  not, yet.** This is where the honesty has to be exact, because the first
+  number I quoted here was misleading. Measuring the share of question
+  *templates* translated gave 92%, which sounded like success and described
+  almost nothing: a prompt is about 30% of the text on a worksheet and the
+  answer options are most of the rest. Weighted by what a reader actually sees
+  the figure was 27%, and a Spanish reader got a Spanish question followed by
+  four English answers.
 
-  What is still English is X: the unit names, the terms and the definitions
-  themselves. `$1!` looks a captured group up in the dictionary before
-  substituting, so the moment a unit name is in there the whole prompt
-  resolves — the mechanism is in place and it is the content that is missing.
-  Translating it is 715 unit names plus roughly 34,000 subject-matter strings
-  per language, which is a bulk content job with a right and a wrong answer
-  for each, not something to run a machine pass over: an answer key that
-  quietly disagrees with its own question is worse than one in the wrong
-  language. The language units are the exception throughout — they were
-  already in their target language.
+  `tools/check-translation-coverage.mjs` now counts every prompt and every
+  option, weighted as they appear on screen, and fails below a floor so the
+  number can rise and never quietly fall. Four things it took three separate
+  corrections to make it count honestly: the twenty-six authored worksheets
+  are counted in full rather than sampled (they are what the home page
+  features, and each of their strings appears once, so a frequency ranking
+  buried them); a language unit's own terms are excluded, since translating
+  "der Fisch" into Spanish deletes the question; an option with no letter in it
+  — "3/8", "145°", "●" — has no language; and print.js used to render each
+  option as one text node, "C.  Augustus", which no dictionary could ever match.
+
+  Where it stands, on that corrected denominator:
+
+  | | prompts | options | on screen |
+  |---|---|---|---|
+  | Spanish | 95.7% | 34.1% | **52.9%** |
+  | French, German, Portuguese, Italian | 93.0% | 0% | 27.7% |
+
+  The content is 715 unit names plus roughly 34,000 subject-matter strings per
+  language. It is split per subject under `assets/js/i18n/content/<lang>/` and
+  fetched only when a page is about to show that subject, because loading
+  36,000 strings on a page that may never show a worksheet is not a trade
+  worth making. Merging it into the same dictionary is the whole mechanism:
+  translation already matches on source text, so an answer option travels the
+  same path as a button label with no change to the generator that produced it.
+
+  Two tools do the work. `tools/rank-content.mjs` counts how often each string
+  is actually rendered and prints what is still English commonest first —
+  ordering matters more than it looks, because the commonest 500 strings are a
+  fifth of every option on screen and the tail of five thousand is the last
+  tenth. `tools/add-content.mjs` folds a translated batch back into a pack,
+  dropping anything mapped to itself so an empty file cannot inflate the
+  number.
+
+  Translating a fill-in-the-blank question introduces a defect worth naming:
+  marking compares a typed answer against the authored English, so a Spanish
+  prompt would mark a Spanish answer wrong — worse than leaving the question in
+  English. `marking.js` accepts the translation of each authored answer too,
+  and `tools/test-marking.mjs` pins all three cases.
 
   `tools/check-question-i18n.mjs` pushes every template through the real
   translator in every language and checks two things: that it is translated,
