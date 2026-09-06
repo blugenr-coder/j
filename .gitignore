@@ -1,4 +1,9 @@
 node_modules/
 .DS_Store
 *.log
-data/
+# Anchored to the repository root. Written as a bare "data/" it matched every
+# directory of that name at any depth — including assets/js/data/, the entire
+# content library — so new unit files were silently never committed. git add
+# reported success, git status was clean, and the live site's module graph
+# broke on a 404 nobody could see locally.
+/data/
