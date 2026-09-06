@@ -3,6 +3,7 @@
    Start a static server first, then: node tools/e2e-classes.mjs [baseUrl] */
 
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { signUp, signIn } from './e2e-signup.mjs';
 
 const BASE = process.argv[2] ?? 'http://127.0.0.1:8099';
 let pass = 0, fail = 0;
@@ -22,11 +23,7 @@ const open = async (path) => {
 };
 
 /* ----------------------------- teacher creates ----------------------------- */
-await open('signin.html');
-await page.fill('#name', 'Sam Ortega');
-await page.click('button[data-role="teacher"]');
-await page.click('button[type="submit"]');
-await page.waitForTimeout(500);
+const teacher = await signUp(page, BASE, { name: 'Sam Ortega', role: 'teacher' });
 
 await open('teacher/classes.html');
 const before = await page.locator('.class-card').count();
@@ -92,11 +89,7 @@ ok('the progress grid lists both students',
   await page.locator('#matrix tbody tr').count() === 2);
 
 /* -------------------------------- student -------------------------------- */
-await open('signin.html');
-await page.fill('#name', 'Ana Ruiz');
-await page.click('button[data-role="student"]');
-await page.click('button[type="submit"]');
-await page.waitForTimeout(500);
+await signUp(page, BASE, { name: 'Ana Ruiz', role: 'student' });
 
 await open('join.html');
 await page.fill('#code', code.replace('-', ''));
@@ -161,6 +154,10 @@ await page.waitForSelector('#results .result-hero');
 ok('the assigned worksheet can be completed', true);
 
 /* --------------------------- back to the teacher --------------------------- */
+/* Literally back: the browser is signed in as the student, and with a server
+   the teacher is a different account rather than the same profile wearing a
+   different role chip. */
+await signIn(page, BASE, { email: teacher.email });
 await page.goto(classUrl, { waitUntil: 'domcontentloaded' });
 await page.waitForTimeout(800);
 const matrix = await page.locator('#matrix').innerText();
@@ -178,12 +175,7 @@ await fresh.route('**://fonts.gstatic.com/**', r => r.abort());
 const blank = await fresh.newPage();
 blank.on('pageerror', e => errors.push(e.message));
 
-await blank.goto(`${BASE}/signin.html`, { waitUntil: 'domcontentloaded' });
-await blank.waitForTimeout(500);
-await blank.fill('#name', 'Dana Iqbal');
-await blank.click('button[data-role="teacher"]');
-await blank.click('button[type="submit"]');
-await blank.waitForTimeout(500);
+await signUp(blank, BASE, { name: 'Dana Iqbal', role: 'teacher' });
 
 await blank.goto(`${BASE}/teacher/create.html`, { waitUntil: 'domcontentloaded' });
 await blank.waitForTimeout(700);

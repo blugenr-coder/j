@@ -97,7 +97,10 @@ function start() {
         ...codesFor(ex.topic, ex.grade).map(c => el('code', { class: 'std-code', text: c }))));
   }
 
-  if (assignment && assignment.exerciseId === ex.id) {
+  /* An assignment can set several worksheets, and the server reports them as
+     worksheetIds where a locally created one carries a single exerciseId. */
+  const setsThis = a => (a.worksheetIds ?? [a.exerciseId]).includes(ex.id);
+  if (assignment && setsThis(assignment)) {
     const banner = () => el('div', { class: 'banner', style: 'margin-bottom:20px;grid-column:1/-1' },
       icon('send', { size: 18 }),
       el('p', {},

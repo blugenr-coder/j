@@ -12,7 +12,7 @@ import {
   isEnrolled, assignedToMe, currentUser
 } from '../core/store.js';
 import { lookupClass } from '../core/api.js';
-import { startSync } from '../core/sync.js';
+import { startSync, refreshClasses } from '../core/sync.js';
 
 mountShell({ page: 'join', nav: 'public' });
 
@@ -71,6 +71,12 @@ $('#join-form').addEventListener('submit', async (e) => {
   await joinClass({ ...cls, studentName });
   toast(`Joined ${cls.name}`);
   input.value = ''; $('#invite').hidden = true;
+  /* The work already set for this class was fetched before this account was in
+     it, so without asking again the student joins and is told there is no
+     homework — which is worse than an error, because it looks like an answer.
+     No-ops when there is no server, where the class travelled in the link and
+     brought its work with it. */
+  await refreshClasses();
   drawMine();
 });
 

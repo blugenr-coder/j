@@ -768,8 +768,15 @@ export async function createAssignment({ exerciseId, worksheetIds, classId, titl
 
 export function findAssignment(code) {
   const clean = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  return (state.teacher?.assignments ?? []).find(
-    a => a.code.replace('-', '') === clean) ?? null;
+  const matches = a => String(a.code ?? '').replace('-', '') === clean;
+  /* The student's own list first. Looking only at state.teacher.assignments
+     found nothing for anyone who was not the teacher, so a student following
+     an assignment link was never told which assignment they were doing — it
+     worked only while one browser profile was playing both parts. A teacher
+     opening their own assignment still finds it in the second list. */
+  return (state.assignedWork ?? []).find(matches)
+      ?? (state.teacher?.assignments ?? []).find(matches)
+      ?? null;
 }
 
 export async function deleteAssignment(code) {

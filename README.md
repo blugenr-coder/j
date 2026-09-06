@@ -833,6 +833,9 @@ npm run test:api       # the backend over HTTP, 94 assertions, no browser
 npm run test:backend   # two browser contexts: teacher sets work, student on
                        # another device joins and hands it in
 
+npm run test:e2e       # the browser suites, each against a server and an
+                       # empty database of their own — see below
+
 npm run start:static   # then, in another shell:
 npm run test:all       # everything below, in order
 npm run test:render    # asserts every page actually renders its content
@@ -849,6 +852,29 @@ npm run test:e2e       # drives a real browser through every question type, the
 running. Everything else is driven against the static site, which is the point:
 the front end has to keep working with no backend behind it, and these prove it
 does.
+
+That was the whole story until there was a backend, and then it was half of
+one. The sign-in page has two modes and picks between them by asking the server
+whether it is there: with none it wants a name, and with one an email and a
+password, hiding the name and role fields unless you are creating an account.
+The browser suites were written against the first mode and only ever tested it.
+Pointed at the real server they filled a name field that was no longer visible
+and sat waiting thirty seconds for it, and the timeout said nothing about why.
+
+They now sign up and sign in through `tools/e2e-signup.mjs`, which fills
+whichever fields are on screen, so the same suite covers both modes. Two things
+that only show up in the second one came out of it: joining a class did not
+refresh the work already set for it, so a student saw no homework until they
+reloaded; and `findAssignment()` searched only the teacher's own assignments,
+so a student following an assignment link was never told which assignment they
+were doing. Both worked while one browser profile played teacher and student,
+and neither works the moment they are two accounts.
+
+`node tools/e2e-run.mjs` runs them against a server and an empty database of
+its own, on a spare port, and throws the database away afterwards. Without it a
+suite that passes alone fails in a batch, because each run leaves accounts,
+classes and assignments behind for the next one to trip over — and a green
+result you cannot repeat is not a green result.
 
 Each of these exists because of a bug it caught:
 

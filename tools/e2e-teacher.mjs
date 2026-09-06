@@ -2,6 +2,7 @@
    Start a static server first, then: node tools/e2e-teacher.mjs [baseUrl] */
 
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
+import { signUp } from './e2e-signup.mjs';
 
 const BASE = process.argv[2] ?? 'http://127.0.0.1:8099';
 let pass = 0, fail = 0;
@@ -21,11 +22,7 @@ const open = async (path) => {
 };
 
 /* ------------------------------ become a teacher ------------------------------ */
-await open('signin.html');
-await page.fill('#name', 'Sam Ortega');
-await page.click('button[data-role="teacher"]');
-await page.click('button[type="submit"]');
-await page.waitForTimeout(500);
+await signUp(page, BASE, { name: 'Sam Ortega', role: 'teacher' });
 ok('signing in as a teacher lands on the teacher tools', page.url().includes('teacher/index.html'));
 ok('teacher visual mode is applied',
   await page.evaluate(() => document.documentElement.dataset.mode === 'teacher'));
@@ -76,14 +73,38 @@ ok('hardest questions are ordered worst first', nums.every((n, i) => i === 0 || 
 ok('only the students who handed work in have a row',
   await page.locator('#student-rows tr').count() === 2);
 
-/* Results must be stable across reloads, or a teacher cannot trust them. */
+/* Results must be stable across reloads, or a teacher cannot trust them.
+
+   Measured between two reloads rather than from the first render. The rows
+   above come from a fixture written straight into localStorage, and with a
+   server the account is authoritative: the first reload replaces the fixture
+   with what the account actually holds, which is not instability, it is the
+   sync doing its job. What must not happen is the number changing again
+   afterwards. */
+await page.reload({ waitUntil: 'domcontentloaded' });
+await page.waitForTimeout(900);
 const before = await page.locator('#student-rows').innerText();
 await page.reload({ waitUntil: 'domcontentloaded' });
-await page.waitForTimeout(400);
+await page.waitForTimeout(900);
 ok('results are stable across reloads',
   before === await page.locator('#student-rows').innerText());
 
 /* ------------------------- create and share an assignment ------------------------- */
+/* Through the interface, not into localStorage. An assignment has to be set
+   for someone, and with a server the class list comes from the account rather
+   than from whatever this browser happens to have cached — so a class injected
+   into storage leaves the class select empty and the create button correctly
+   refuses. */
+await open('teacher/classes.html');
+await page.click('#new-class-btn');
+await page.fill('#c-name', 'Grade 8 Maths — Period 3');
+await page.selectOption('#c-level', 'Grade 8');
+await page.selectOption('#c-subject', 'math');
+await page.click('#create-class-btn');
+await page.waitForTimeout(700);
+ok('a class can be created for the assignment to be set to',
+  await page.locator('.class-card').count() >= 1);
+
 await open('teacher/create.html');
 await page.selectOption('#f-subject', 'math');
 await page.waitForTimeout(200);
