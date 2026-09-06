@@ -1,5 +1,6 @@
 /* French interface strings. The worksheets stay in their own language. */
 export const DICT = {
+  "Hint:": "Indice :",
   "Answers are marked flexibly: 0.5, 1/2 and 50% all count as the same value.": "Les réponses sont corrigées avec souplesse : 0,5, 1/2 et 50 % comptent pour la même valeur.",
   "Spelling and capitalisation are forgiven; meaning is not.": "L’orthographe et les majuscules sont tolérées ; le sens ne l’est pas.",
   "Rule out the options you know are wrong before choosing.": "Élimine les options que tu sais fausses avant de choisir.",

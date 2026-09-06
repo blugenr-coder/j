@@ -1,5 +1,6 @@
 /* Portuguese interface strings. The worksheets stay in their own language. */
 export const DICT = {
+  "Hint:": "Pista:",
   "Answers are marked flexibly: 0.5, 1/2 and 50% all count as the same value.": "As respostas são corrigidas com flexibilidade: 0,5, 1/2 e 50 % contam como o mesmo valor.",
   "Spelling and capitalisation are forgiven; meaning is not.": "A ortografia e as maiúsculas perdoam-se; o significado não.",
   "Rule out the options you know are wrong before choosing.": "Elimina as opções que sabes estarem erradas antes de escolher.",

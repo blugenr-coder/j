@@ -211,7 +211,10 @@ function printQuestion(q, i, { withWork, withHints }) {
     wrap.append(el('div', { class: 'q-answer' }, 'Answer:', el('span', { class: 'line' })));
   }
   if (withHints && q.hint) {
-    wrap.append(el('div', { class: 'q-answer', style: 'font-style:italic' }, `Hint: ${q.hint}`));
+    /* Two nodes: "Hint: You can rule out “X”." in one text node is a string no
+       dictionary holds, so the label and the hint are looked up separately. */
+    wrap.append(el('div', { class: 'q-answer', style: 'font-style:italic' },
+      el('span', { text: 'Hint:' }), el('span', { text: String(q.hint) })));
   }
   return wrap;
 }
