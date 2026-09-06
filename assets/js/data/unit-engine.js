@@ -111,8 +111,21 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
      will run at. Declaring it beats probing it: working the types out by
      calling every maker of every format at every tier cost half a second on
      page load, and a try/catch around a guess is not knowledge. */
-  const add = (id, kind, type, minTier, make) =>
-    gens.push(Object.assign(make, { id, kind, type, minTier }));
+  /* In a language unit the terms are the words being taught — "der Fisch",
+     "venerdì" — so a question offering them as options is already in its
+     target language. Marking it says so once, wherever it was built, and
+     stops the coverage check reporting a gap that closing would be a bug:
+     translating "der Fisch" into Spanish deletes the question. */
+  const foreignTerms = lexicon ? new Set(terms) : null;
+  const add = (id, kind, type, minTier, make) => {
+    const fn = !foreignTerms ? make : (...args) => {
+      const q = make(...args);
+      const offered = (q?.options ?? []).map(o => (typeof o === 'string' ? o : o?.text));
+      if (q && offered.some(o => foreignTerms.has(o))) q.foreign = true;
+      return q;
+    };
+    gens.push(Object.assign(fn, { id, kind, type, minTier }));
+  };
 
   /* ------------------------------ recognise ------------------------------ */
   if (facts.length >= 4) {

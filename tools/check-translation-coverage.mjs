@@ -74,6 +74,9 @@ for (const { code, name } of LANGUAGES.filter(l => l.code !== 'en')) {
         const shape = q.prompt.replace(/[“"][^”"]*[”"]/g, '“X”').replace(/\d+/g, 'N').slice(0, 60);
         misses.set(shape, (misses.get(shape) ?? 0) + 1);
       }
+      /* A language unit's options are the foreign words themselves. Counting
+         them as untranslated reports a gap that closing would be a bug. */
+      if (q.foreign) continue;
       for (const o of q.options ?? []) {
         const s = typeof o === 'string' ? o : (o?.text ?? '');
         if (!s) continue;
