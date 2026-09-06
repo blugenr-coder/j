@@ -34,10 +34,10 @@ const { SUBJECTS } = await import('../assets/js/data/catalog.js');
    outside the sample and are now counted in full, which added several hundred
    untranslated prompts to the denominator in every language. 93.0% is what
    the four languages without content packs were worth all along. */
-const FLOOR = { prompt: 0.92, option: 0.00, overall: 0.25 };
+const FLOOR = { prompt: 0.94, option: 0.00, overall: 0.27 };
 /* Spanish has content packs for every subject, so it is held to its own,
    much higher marks. */
-const ES_FLOOR = { prompt: 0.95, option: 0.32, overall: 0.51 };
+const ES_FLOOR = { prompt: 0.96, option: 0.34, overall: 0.53 };
 
 const SAMPLE = 400;
 const step = Math.max(1, Math.floor(FAMILIES.length / SAMPLE));

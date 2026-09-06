@@ -697,8 +697,8 @@ Three deliberate boundaries:
 
   | | prompts | options | on screen |
   |---|---|---|---|
-  | Spanish | 95.7% | 34.1% | **52.9%** |
-  | French, German, Portuguese, Italian | 93.0% | 0% | 27.7% |
+  | Spanish | 96.6% | 34.9% | **53.7%** |
+  | French, German, Portuguese, Italian | 94.2% | 0% | 28.8% |
 
   The content is 715 unit names plus roughly 34,000 subject-matter strings per
   language. It is split per subject under `assets/js/i18n/content/<lang>/` and
