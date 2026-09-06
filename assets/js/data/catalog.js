@@ -156,11 +156,20 @@ export const SUBJECTS = [
   },
   {
     id: 'engineering', name: 'Engineering & Design', icon: 'settings', accent: 'orange',
-    blurb: 'How things get designed, wired and made to work reliably.',
+    blurb: 'Every discipline: mechanical, civil, electrical, chemical, aerospace and the rest.',
     topics: [
       { id: 'design',      name: 'Design and Materials' },
       { id: 'electronics', name: 'Electronics' },
-      { id: 'robotics',    name: 'Robotics and Control' }
+      { id: 'robotics',    name: 'Robotics and Control' },
+      { id: 'mechanical',  name: 'Mechanical Engineering' },
+      { id: 'civil',       name: 'Civil and Structural Engineering' },
+      { id: 'electrical',  name: 'Electrical and Power Engineering' },
+      { id: 'chemical-eng', name: 'Chemical and Process Engineering' },
+      { id: 'aerospace',   name: 'Aerospace Engineering' },
+      { id: 'materials',   name: 'Materials Science' },
+      { id: 'biomedical',  name: 'Biomedical Engineering' },
+      { id: 'industrial',  name: 'Industrial and Manufacturing' },
+      { id: 'thermo',      name: 'Thermodynamics and Fluids' }
     ]
   },
   {
@@ -202,6 +211,27 @@ export const SUBJECTS = [
     blurb: 'Reading the news critically, and how film makes meaning.',
     topics: [
       { id: 'media', name: 'Media and Film Studies' }
+    ]
+  },
+  {
+    id: 'law', name: 'Law', icon: 'social', accent: 'primary',
+    blurb: 'A law degree, year by year: the core subjects, the leading cases and the reasoning.',
+    topics: [
+      { id: 'legal-system',   name: 'Legal System and Method' },
+      { id: 'contract',       name: 'Contract Law' },
+      { id: 'tort',           name: 'Tort Law' },
+      { id: 'public-law',     name: 'Constitutional and Administrative Law' },
+      { id: 'criminal-law',   name: 'Criminal Law' },
+      { id: 'property-law',   name: 'Land and Property Law' },
+      { id: 'equity',         name: 'Equity and Trusts' },
+      { id: 'eu-intl',        name: 'EU and International Law' },
+      { id: 'commercial-law', name: 'Company and Commercial Law' },
+      { id: 'human-rights',   name: 'Human Rights and Civil Liberties' },
+      { id: 'family-law',     name: 'Family Law' },
+      { id: 'employment-law', name: 'Employment Law' },
+      { id: 'evidence',       name: 'Evidence and Procedure' },
+      { id: 'jurisprudence',  name: 'Jurisprudence and Legal Theory' },
+      { id: 'legal-practice', name: 'Professional Ethics and Practice' }
     ]
   }
 ];

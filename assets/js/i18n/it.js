@@ -650,6 +650,14 @@ export const DICT = {
   "Answer 100 questions correctly.": "Rispondi correttamente a 100 domande.",
   "Early Bird": "Mattiniero",
   "Finish a worksheet before 9am.": "Finisci una scheda prima delle 9 del mattino.",
+
+  /* The fixed wording of generated questions. */
+  "Match each term to its meaning.": "Abbina ogni termine al suo significato.",
+  "Match each description to the term it defines.": "Abbina ogni descrizione al termine che definisce.",
+  "Which one is true?": "Quale è vera?",
+  "Which one is NOT true?": "Quale NON è vera?",
+  "Three of these go together. Which one does not?": "Tre di questi vanno insieme. Quale no?",
+  "The statement is false. A correct version contradicts it directly and explains why.": "L’affermazione è falsa. Una versione corretta la contraddice direttamente e spiega perché.",
 };
 
 /* Strings that carry a number. $1 is the number; the third entry, when
@@ -684,4 +692,40 @@ export const PATTERNS = [
   ["^(\\d+) of (\\d+) worksheets? completed$", "$1 schede completate su $2"],
   ["^code (\\S+)$", "codice $1"],
   ["^Due (.+)$", "Scadenza $1"],
+
+  /* ------------------------- the worksheet questions -------------------------
+     The templates every generated question is built from. There are about two
+     dozen, and between them they frame the questions on 1.9 million
+     worksheets — 92% of the library — so translating them here puts the whole
+     question into this language rather than the interface around it.
+
+     `$1!` looks the captured group up in the dictionary before substituting,
+     which is what carries the unit name across too where the dictionary knows
+     it. The subject-matter terms themselves stay in English; see the README
+     for where that boundary falls and why. */
+
+  ["^Which statement about (.+) is correct\\?$", "Quale affermazione su $1! è corretta?"],
+  ["^Which statement about (.+) is NOT correct\\?$", "Quale affermazione su $1! NON è corretta?"],
+  ["^Select every statement about (.+) that is true\\.$", "Seleziona tutte le affermazioni vere su $1!."],
+  ["^Three of these six statements about (.+) are true\\. Select them\\.$", "Tre di queste sei affermazioni su $1! sono vere. Selezionale."],
+  ["^Three of these belong to (.+)\\. Which one does not\\?$", "Tre di questi appartengono a $1!. Quale no?"],
+  ["^Select every term that belongs to (.+)\\.$", "Seleziona tutti i termini che appartengono a $1!."],
+  ["^Which term matches this description\\? “(.+)”$", "Quale termine corrisponde a questa descrizione? «$1»"],
+  ["^Which of these best describes “(.+)”\\?$", "Quale di queste descrive meglio «$1»?"],
+  ["^Label the numbered parts of the diagram: (.+)\\.$", "Etichetta le parti numerate dello schema: $1."],
+  ["^Define “(.+)” in your own words\\.$", "Definisci «$1» con parole tue."],
+  ["^Explain why this is the case: “(.+)”$", "Spiega perché è così: «$1»"],
+  ["^This statement is wrong\\. Write the correct version: “(.+)”$", "Questa affermazione è falsa. Scrivi la versione corretta: «$1»"],
+  ["^Complete the sentence: (.+)$", "Completa la frase: $1"],
+  ["^Name the term: (.+)\\.$", "Indica il termine: $1."],
+  ["^Put these in the right order: (.+)\\.$", "Metti questi nell’ordine corretto: $1."],
+  ["^It begins with “(.+)”\\.$", "Inizia con «$1»."],
+  ["^The correct order is: (.+)\\.$", "L’ordine corretto è: $1."],
+  ["^Finish the term: (.+)… — (.+)$", "Completa il termine: $1… — $2"],
+  ["^How do you say “(.+)” in (.+)\\?$", "Come si dice «$1» in $2!?"],
+  ["^What does “(.+)” mean in English\\?$", "Che cosa significa «$1» in inglese?"],
+  ["^Match each (.+) word to its meaning\\.$", "Abbina ogni parola in $1! al suo significato."],
+  ["^Match each English meaning to its (.+) word\\.$", "Abbina ogni significato inglese alla sua parola in $1!."],
+  ["^Pick the one that matches “(.+)”\\.$", "Scegli quello che corrisponde a «$1»."],
+  ["^Any correct sentence using (.+) \\((.+)\\)\\.$", "Qualsiasi frase corretta che usi $1 ($2)."],
 ];

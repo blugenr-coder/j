@@ -44,7 +44,14 @@ function spaced(parts, want, gap = 26) {
 }
 const lowerOpen = title => /^(?:The|A|An|Parts|Cross|Inside|Angles|Forces)\b/.test(title)
   ? title.charAt(0).toLowerCase() + title.slice(1) : title;
-const lower = s => String(s).charAt(0).toLowerCase() + String(s).slice(1);
+/* Lowercased where the name reads as a phrase — "cell structure" — and left
+   alone where it carries internal capitals. Chopping only the first letter of
+   a title-cased name produced "sources of Law and the Court Hierarchy", which
+   is the worst of both: neither a title nor a phrase. */
+const lower = s => {
+  const str = String(s);
+  return /\s[A-Z]/.test(str) ? str : str.charAt(0).toLowerCase() + str.slice(1);
+};
 
 /** Escape a term for use inside a regular expression. */
 const rx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

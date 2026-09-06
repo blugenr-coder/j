@@ -67,7 +67,15 @@ const TOPIC_SUBJECT = {
   climate: 'environment', conservation: 'environment',
   psychology: 'mind', sociology: 'mind',
   philosophy: 'humanities', religions: 'humanities',
-  media: 'media'
+  media: 'media',
+  'legal-system': 'law', contract: 'law', tort: 'law', 'public-law': 'law',
+  'criminal-law': 'law', 'property-law': 'law', equity: 'law', 'eu-intl': 'law',
+  'commercial-law': 'law', 'human-rights': 'law', 'family-law': 'law',
+  'employment-law': 'law', evidence: 'law', jurisprudence: 'law',
+  'legal-practice': 'law',
+  mechanical: 'engineering', civil: 'engineering', electrical: 'engineering',
+  'chemical-eng': 'engineering', aerospace: 'engineering', materials: 'engineering',
+  biomedical: 'engineering', industrial: 'engineering', thermo: 'engineering'
 };
 
 /* ------------------------------- micro-units -------------------------------

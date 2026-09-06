@@ -650,6 +650,14 @@ export const DICT = {
   "Answer 100 questions correctly.": "Réponds correctement à 100 questions.",
   "Early Bird": "Lève-tôt",
   "Finish a worksheet before 9am.": "Termine une fiche avant 9 h.",
+
+  /* The fixed wording of generated questions. */
+  "Match each term to its meaning.": "Associe chaque terme à sa signification.",
+  "Match each description to the term it defines.": "Associe chaque description au terme qu’elle définit.",
+  "Which one is true?": "Laquelle est vraie ?",
+  "Which one is NOT true?": "Laquelle n’est PAS vraie ?",
+  "Three of these go together. Which one does not?": "Trois d’entre eux vont ensemble. Lequel non ?",
+  "The statement is false. A correct version contradicts it directly and explains why.": "L’affirmation est fausse. Une version correcte la contredit directement et explique pourquoi.",
 };
 
 /* Strings that carry a number. $1 is the number; the third entry, when
@@ -684,4 +692,40 @@ export const PATTERNS = [
   ["^(\\d+) of (\\d+) worksheets? completed$", "$1 fiches terminées sur $2"],
   ["^code (\\S+)$", "code $1"],
   ["^Due (.+)$", "À rendre $1"],
+
+  /* ------------------------- the worksheet questions -------------------------
+     The templates every generated question is built from. There are about two
+     dozen, and between them they frame the questions on 1.9 million
+     worksheets — 92% of the library — so translating them here puts the whole
+     question into this language rather than the interface around it.
+
+     `$1!` looks the captured group up in the dictionary before substituting,
+     which is what carries the unit name across too where the dictionary knows
+     it. The subject-matter terms themselves stay in English; see the README
+     for where that boundary falls and why. */
+
+  ["^Which statement about (.+) is correct\\?$", "Quelle affirmation sur $1! est correcte ?"],
+  ["^Which statement about (.+) is NOT correct\\?$", "Quelle affirmation sur $1! n’est PAS correcte ?"],
+  ["^Select every statement about (.+) that is true\\.$", "Sélectionne toutes les affirmations vraies sur $1!."],
+  ["^Three of these six statements about (.+) are true\\. Select them\\.$", "Trois de ces six affirmations sur $1! sont vraies. Sélectionne-les."],
+  ["^Three of these belong to (.+)\\. Which one does not\\?$", "Trois d’entre eux relèvent de $1!. Lequel n’en fait pas partie ?"],
+  ["^Select every term that belongs to (.+)\\.$", "Sélectionne tous les termes qui relèvent de $1!."],
+  ["^Which term matches this description\\? “(.+)”$", "Quel terme correspond à cette description ? « $1 »"],
+  ["^Which of these best describes “(.+)”\\?$", "Laquelle décrit le mieux « $1 » ?"],
+  ["^Label the numbered parts of the diagram: (.+)\\.$", "Nomme les parties numérotées du schéma : $1."],
+  ["^Define “(.+)” in your own words\\.$", "Définis « $1 » avec tes propres mots."],
+  ["^Explain why this is the case: “(.+)”$", "Explique pourquoi c’est le cas : « $1 »"],
+  ["^This statement is wrong\\. Write the correct version: “(.+)”$", "Cette affirmation est fausse. Écris la version correcte : « $1 »"],
+  ["^Complete the sentence: (.+)$", "Complète la phrase : $1"],
+  ["^Name the term: (.+)\\.$", "Nomme le terme : $1."],
+  ["^Put these in the right order: (.+)\\.$", "Mets ceci dans le bon ordre : $1."],
+  ["^It begins with “(.+)”\\.$", "Cela commence par « $1 »."],
+  ["^The correct order is: (.+)\\.$", "L’ordre correct est : $1."],
+  ["^Finish the term: (.+)… — (.+)$", "Complète le terme : $1… — $2"],
+  ["^How do you say “(.+)” in (.+)\\?$", "Comment dit-on « $1 » en $2! ?"],
+  ["^What does “(.+)” mean in English\\?$", "Que signifie « $1 » en anglais ?"],
+  ["^Match each (.+) word to its meaning\\.$", "Associe chaque mot en $1! à sa signification."],
+  ["^Match each English meaning to its (.+) word\\.$", "Associe chaque signification anglaise à son mot en $1!."],
+  ["^Pick the one that matches “(.+)”\\.$", "Choisis celui qui correspond à « $1 »."],
+  ["^Any correct sentence using (.+) \\((.+)\\)\\.$", "Toute phrase correcte utilisant $1 ($2)."],
 ];

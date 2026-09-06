@@ -9,7 +9,7 @@
   },
   "scripts": {
     "start": "node server/index.mjs",
-    "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs && node tools/check-coverage.mjs",
+    "check": "./tools/check-syntax.sh && node tools/validate-content.mjs && node tools/test-marking.mjs && node tools/check-coverage.mjs && node tools/check-question-i18n.mjs",
     "test:e2e": "node tools/e2e.mjs && node tools/e2e-teacher.mjs && node tools/e2e-classes.mjs && node tools/e2e-language.mjs",
     "test:links": "node tools/check-links.mjs",
     "test:render": "node tools/check-render.mjs",
@@ -24,6 +24,7 @@
     "test:api": "node tools/test-api.mjs",
     "test:backend": "node tools/e2e-backend.mjs",
     "sitemap": "node tools/make-sitemap.mjs",
-    "test:seo": "node tools/check-seo.mjs"
+    "test:seo": "node tools/check-seo.mjs",
+    "test:qi18n": "node tools/check-question-i18n.mjs"
   }
 }

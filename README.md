@@ -2,7 +2,7 @@
 
 **Practice anything. Learn everything.**
 
-A library of **2,019,183 worksheets** across **17 subjects**, for every grade from
+A library of **2,067,397 worksheets** across **17 subjects**, for every grade from
 Pre-K to college, where the same worksheet works online *and* on paper —
 including multi-page packs of up to ten printed pages and 100 questions, and
 labelled diagrams that work both on screen and in print. Search it, practise it
@@ -134,7 +134,7 @@ Teacher pages switch the interface into a denser, more sober visual mode
 
 ### The library
 
-**2,019,183 worksheets** across 679 curriculum micro-units, 70 topics, 17
+**2,067,397 worksheets** across 715 curriculum micro-units, 96 topics, 18
 subjects and every level from Pre-K to college — from letter sounds to the
 Krebs cycle, and from nutrition and personal finance to cyber security,
 philosophy and world religions. Sheets run from 6 to 100 questions; 800,946 are
@@ -143,15 +143,15 @@ about 34.6 million questions.
 
 | Subject | Worksheets | | Subject | Worksheets |
 |---|--:|---|---|--:|
-| Science | 268,231 | | Early Learning | 84,855 |
-| Social Studies | 261,334 | | Engineering & Design | 70,497 |
-| Languages | 193,782 | | Philosophy & Religion | 64,448 |
-| Mathematics | 184,422 | | Business & Finance | 63,933 |
-| English / Language Arts | 183,321 | | Environment & Sustainability | 63,521 |
-| Computer Science | 132,582 | | Psychology & Sociology | 53,467 |
-| Art & Music | 103,292 | | Study Skills | 52,545 |
-| Health & Physical Education | 99,226 | | Media & Film | 45,633 |
-| Life Skills & Careers | 94,068 | | | |
+| Science | 268,231 | | Health & Physical Education | 99,226 |
+| Social Studies | 261,334 | | Life Skills & Careers | 94,068 |
+| Languages | 193,782 | | Engineering & Design | 87,919 |
+| Mathematics | 184,422 | | Early Learning | 84,855 |
+| English / Language Arts | 183,321 | | Philosophy & Religion | 64,448 |
+| Computer Science | 132,582 | | Business & Finance | 63,933 |
+| Art & Music | 103,292 | | Environment & Sustainability | 63,521 |
+| Psychology & Sociology | 53,467 | | Study Skills | 52,545 |
+| Media & Film | 45,633 | | **Law** | **30,792** |
 
 The subjects outside the core were the ones that needed this most. Media & Film
 had two units and now has eight named ones — film language, genre and
@@ -182,7 +182,7 @@ paint under half a second.
 A subject is not one thing you practise; it is thirty. Biology is *Cell
 Structure*, *Photosynthesis*, *Cellular Respiration and the Krebs Cycle*,
 *Homeostasis* — the units a scheme of work is actually built from, and the
-units a student is actually weak at. So **679 curriculum micro-units** each
+units a student is actually weak at. So **715 curriculum micro-units** each
 carry their own item bank and their own level range, in
 `assets/js/data/units-*.js`:
 
@@ -615,6 +615,36 @@ does not remove three, and the URL stays readable — `?subject=science,math`.
 
 ---
 
+## Law, and every engineering discipline
+
+**Law** is a new subject built round a qualifying degree rather than a topic
+list: fifteen topics covering the four years, from Legal System and Method
+through contract, tort and public law, into land, equity, criminal and EU, and
+out to company, human rights, family, employment, evidence, jurisprudence and
+professional ethics. Twenty-five units, named the way a syllabus names them —
+*Offer and Acceptance*, *Duty of Care and the Neighbour Principle*,
+*Parliamentary Sovereignty and the Rule of Law*, *The Three Certainties and
+Express Trusts*.
+
+Two things shape how they are written. The vocabulary **is** the discipline: a
+student who cannot separate an offer from an invitation to treat cannot do
+contract at all, so the term banks carry the weight. And the myths are real
+student errors rather than inventions — *consideration must be sufficient but
+need not be adequate* is the single most misstated rule in first-year contract,
+and it is in there as a myth because that is where it belongs.
+
+These follow the common law of England and Wales, which is what the named cases
+belong to. A syllabus in another jurisdiction would need its own units rather
+than a relabelling of these.
+
+**Engineering** went from three topics to twelve. It had design, electronics
+and robotics, which is a design-and-technology syllabus rather than
+engineering; it now has mechanical, civil and structural, electrical and power,
+chemical and process, aerospace, materials, biomedical, industrial and
+thermodynamics as well. Where a unit overlaps physics the treatment is the
+engineering one: not what the law says, but what it forces you to size, choose
+or check.
+
 ## Six languages, and an honest boundary
 
 A selector in the header switches the interface between **English, Español,
@@ -643,12 +673,32 @@ worksheet summary whose subject is itself a translatable phrase.
 
 Three deliberate boundaries:
 
-- **The worksheet questions stay in English.** A Spanish reading of a chemistry
-  question is a translation job with a right and a wrong answer, and a machine
-  pass over an answer key would produce sheets that quietly disagree with their
-  own marking. The interface, the taxonomy, the titles and the summaries are
-  translated; the question text is not. The language units are the exception —
-  they were already in their own language.
+- **The questions are asked in your language; the subject matter is still in
+  English.** This one moved, and it is worth being exact about where it now
+  sits. Every generated question is built from one of about two dozen
+  templates — *Which statement about X is correct?*, *Select every term that
+  belongs to X*, *Label the numbered parts of the diagram: X* — and those are
+  now translated into all five languages. They frame the questions on **1.9
+  million worksheets, 92% of the library**, so a Spanish reader gets
+  *«¿Qué afirmación sobre X NO es correcta?»* rather than a Spanish menu
+  wrapped round an English quiz.
+
+  What is still English is X: the unit names, the terms and the definitions
+  themselves. `$1!` looks a captured group up in the dictionary before
+  substituting, so the moment a unit name is in there the whole prompt
+  resolves — the mechanism is in place and it is the content that is missing.
+  Translating it is 715 unit names plus roughly 34,000 subject-matter strings
+  per language, which is a bulk content job with a right and a wrong answer
+  for each, not something to run a machine pass over: an answer key that
+  quietly disagrees with its own question is worse than one in the wrong
+  language. The language units are the exception throughout — they were
+  already in their target language.
+
+  `tools/check-question-i18n.mjs` pushes every template through the real
+  translator in every language and checks two things: that it is translated,
+  and that the captured subject survives the substitution. A pattern that
+  matches and then drops its subject produces a fluent sentence about nothing,
+  which reads like a success.
 - **The brand name is not a word to look up.** `translate="no"` marks it, and the
   walker skips anything inside such an element. Without it, the Italian pass
   turned "WorksheetHub" into "SchedaHub".
@@ -675,7 +725,7 @@ assets/css/     tokens → base → components → pages → print
 assets/js/
   core/         store, marking, search, i18n, question renderers, app shell,
                 cards, icons
-  data/         taxonomy, authored content, 679 micro-unit banks, the figure
+  data/         taxonomy, authored content, 715 micro-unit banks, the figure
                 library, the unit engine and the family catalogue
   i18n/         one dictionary per language
   pages/        one module per page
