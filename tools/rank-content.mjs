@@ -69,6 +69,8 @@ for (const id of sampled) {
     for (const o of q.options ?? []) {
       const s = typeof o === 'string' ? o : (o?.text ?? '');
       if (!s) continue;
+      /* An option with no letter in it has no language to be translated into. */
+      if (!/\p{L}/u.test(s)) continue;
       slots.set(subject, (slots.get(subject) ?? 0) + 1);
       if (t(s) !== s) continue;
       counts.set(s, (counts.get(s) ?? 0) + 1);

@@ -37,7 +37,7 @@ const { SUBJECTS } = await import('../assets/js/data/catalog.js');
 const FLOOR = { prompt: 0.92, option: 0.00, overall: 0.25 };
 /* Spanish has content packs for every subject, so it is held to its own,
    much higher marks. */
-const ES_FLOOR = { prompt: 0.95, option: 0.24, overall: 0.45 };
+const ES_FLOOR = { prompt: 0.95, option: 0.32, overall: 0.51 };
 
 const SAMPLE = 400;
 const step = Math.max(1, Math.floor(FAMILIES.length / SAMPLE));
@@ -80,6 +80,9 @@ for (const { code, name } of LANGUAGES.filter(l => l.code !== 'en')) {
       for (const o of q.options ?? []) {
         const s = typeof o === 'string' ? o : (o?.text ?? '');
         if (!s) continue;
+        /* "3/8", "145\u00b0", "2 + 8", "\u25cf". An option with no letter in it
+           has no language, so counting it as untranslated invents a gap. */
+        if (!/\p{L}/u.test(s)) continue;
         seen.option++;
         if (t(s) !== s) hit.option++;
       }
