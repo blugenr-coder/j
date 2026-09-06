@@ -151,10 +151,26 @@ ok('results screen offers the printable', resultText.includes('Print this worksh
 ok('results screen offers another attempt', resultText.includes('Try again'));
 
 /* ------------------------- progress reaches dashboard ------------------------- */
-await open('signin.html?next=dashboard.html');
-await page.fill('#name', 'Ana Ruiz');
+/* The page has two modes and chooses by asking the server whether it is there,
+   so this fills whichever fields are actually on screen. Written to assume the
+   local-only form, it timed out the moment the real API server existed: the
+   name field is hidden when signing in against a server, and the test sat
+   waiting thirty seconds for an input that was never going to appear. */
+await open('signin.html?new=1&next=dashboard.html');
+for (const [sel, value] of [
+  ['#name', 'Ana Ruiz'],
+  ['#email', `ana.${Date.now()}@example.org`],
+  /* Letters and a number: the server's own policy. A password that fails it
+     leaves the page sitting on the form, and the only symptom downstream is a
+     dashboard that mysteriously knows nothing. */
+  ['#password', 'practice-run-2024']
+]) {
+  if (await page.locator(sel).isVisible()) await page.fill(sel, value);
+}
 await page.click('button[type="submit"]');
-await page.waitForTimeout(400);
+await page.waitForTimeout(1200);
+ok('creating an account leaves the sign-in form',
+  !page.url().includes('signin.html'));
 await open('dashboard.html');
 const dash = await page.locator('#main').innerText();
 ok('dashboard reflects the practice just done', dash.includes('Linear Equations'));

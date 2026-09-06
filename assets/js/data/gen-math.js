@@ -457,7 +457,7 @@ export const geometry = [
   (r, t) => {
     const n = int(r, 3, span(t, 6, 10, 12));
     return blankQ(`What is the sum of the interior angles of a ${n}-sided polygon, in degrees?`,
-      (n - 2) * 180, { hint: 'Use (n − 2) × 180.', explanation: `(${n} − 2) × 180 = ${(n - 2) * 180}°.` });
+      (n - 2) * 180, { hint: 'Split the shape into triangles from one corner. How many do you get, and what does each contribute?', explanation: `(${n} − 2) × 180 = ${(n - 2) * 180}°.` });
   }
 ];
 

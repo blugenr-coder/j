@@ -316,6 +316,36 @@ Two rules keep the generated set honest, both added after the first pass broke t
 Every question carries a hint and a worked explanation; the explanation is also what
 prints on the answer key.
 
+That sentence was in this README before it was true. The player reads `q.hint`
+and greys the button out when there is none, and only 23% of questions had one —
+on a generated worksheet it was nearer zero, so the Show hint button was a
+disabled lie on most of the library. Three things fixed it. `matchQ`, `orderQ`
+and `writtenQ` did not accept a hint at all, so no matching, ordering or written
+question could have carried one. The makers in `unit-engine.js` now write a real
+hint each. And anything still arriving without one gets a hint derived from the
+question itself in `withHint()`, so a maker added later cannot reintroduce the
+hole.
+
+A derived hint has to unstick without answering, which is a sharper constraint
+than it looks:
+
+| Type | What the hint gives |
+|---|---|
+| choice | one option taken off the table — the one *least* like the answer, because ruling out the near-miss removes the discrimination being tested |
+| multi | how many of the options are correct |
+| match | one item named, its partner pointed at by a first word or letter |
+| order | which item comes first |
+| blank | the shape of the word: letter count, and the first letter when the word is long enough that it does not give it away |
+| math | the form of the answer — fraction, decimal, percentage, whole number — never its size, because "between 4 and 6" is the answer 5 |
+| written | the two parts the answer needs |
+
+`node tools/check-hints.mjs` holds both halves: every question has a hint, and no
+hint contains its own answer. The second assertion is the one that earns its
+keep — it caught 255 leaks on its first run, including a formula hint that
+states the answer for a triangle, a matching hint quoting a definition that
+contained a different pair's answer, and a punctuation question where all four
+options read alike so naming one ruled out nothing.
+
 Nine question types, each with its own interaction:
 
 | Type | Interaction |

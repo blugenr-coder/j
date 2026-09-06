@@ -104,14 +104,19 @@ export const multiQ = (r, { prompt, correct, wrong, hint, explanation }) => {
   };
 };
 
-export const matchQ = (r, { prompt, pairs, explanation }) =>
-  ({ type: 'match', prompt, pairs: sample(r, pairs, Math.min(4, pairs.length)), explanation });
+/* These three carry a hint like every other shell. They did not, which is why
+   the "Show hint" button was greyed out on every matching, ordering and
+   written question in the library — the player asks for `q.hint` and there was
+   nowhere to put one. The hint is last and optional, so no existing call site
+   changes. */
+export const matchQ = (r, { prompt, pairs, hint, explanation }) =>
+  ({ type: 'match', prompt, pairs: sample(r, pairs, Math.min(4, pairs.length)), hint, explanation });
 
-export const orderQ = (prompt, items, explanation) =>
-  ({ type: 'order', prompt, items, explanation });
+export const orderQ = (prompt, items, explanation, hint) =>
+  ({ type: 'order', prompt, items, explanation, hint });
 
-export const writtenQ = (prompt, sample_, explanation) =>
-  ({ type: 'written', prompt, sample: sample_, explanation });
+export const writtenQ = (prompt, sample_, explanation, hint) =>
+  ({ type: 'written', prompt, sample: sample_, explanation, hint });
 
 /**
  * A diagram-labelling question.
@@ -131,6 +136,151 @@ export const labelQ = (r, { figure, parts, extras = [], prompt, hint, explanatio
     hint, explanation
   };
 };
+
+/* ------------------------------- hints ----------------------------------
+   Every question shell accepts a hint, and most makers now write one, but
+   "most" is not a promise a learner can act on: the Show hint button is either
+   there or it is a greyed-out lie. So anything that reaches the player without
+   an authored hint gets one derived from the question itself.
+
+   The rule for a derived hint is the same as for a written one — unstick
+   without answering. For a choice, that is taking one option off the table.
+   For a fill-in, it is the shape of the word rather than the word. For a
+   number it is the form the answer takes, not its size: a numeric range is
+   tempting and leaks, because "between 4 and 6" is the answer 5. Getting the
+   form wrong — a decimal where a fraction was wanted, an unsimplified
+   result — is a real and common way to lose the mark, and saying so gives
+   nothing away. */
+/* Which option to take off the table. Not the first one to hand: the wrong
+   option most like the answer is the one the question is really testing —
+   ruling out "uncodified constitution" when the answer is "codified
+   constitution" removes the whole discrimination. So rule out the option
+   least like the answer, and leave the near-miss in play. */
+const words = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ');
+export function farthestFrom(correct, wrongs) {
+  const target = new Set(words(correct));
+  const flat = words(correct).join(' ');
+  /* Scored once each rather than inside the comparator: sort calls it O(n log n)
+     times and every call re-splits the string. */
+  const scored = wrongs.map(w => {
+    const parts = words(w);
+    const one = parts.join(' ');
+    const shared = parts.filter(x => target.has(x)).length;
+    return { w, near: shared + (one.includes(flat) || flat.includes(one) ? 10 : 0) };
+  });
+  return scored.sort((a, b) => a.near - b.near)[0]?.w;
+}
+
+const formOf = (answer) => {
+  const str = String(answer).trim();
+  if (/^-?\d+\/\d+$/.test(str)) return 'The answer is a fraction. Give it in its simplest form.';
+  if (/^-?\d*\.\d+$/.test(str)) return 'The answer is a decimal, not a whole number.';
+  if (/%$/.test(str)) return 'The answer is a percentage — remember the % sign.';
+  if (/^-?\d+$/.test(str)) return 'The answer is a whole number. If yours has a decimal point, check the working.';
+  return null;
+};
+
+/* Below four letters the count and the first letter together are the word, so
+   the count goes out on its own. */
+const shapeOf = (answer) => {
+  const str = String(answer).trim();
+  if (!str) return null;
+  const words = str.split(/\s+/);
+  if (words.length > 1) return `${words.length} words, beginning “${str[0]}”.`;
+  if (str.length < 4) return `A single short word — ${str.length} letters.`;
+  return `${str.length} letters, beginning “${str[0]}”.`;
+};
+
+/* The hint for a matching question, shared by the makers that write one and
+   by the fallback below.
+
+   Two things it has to avoid. Quoting a partner whole hands over the pair
+   rather than pointing at it, so one word becomes its first letter and a
+   leading article takes the next word's initial with it. And the item it
+   names is quoted in full, so an item that happens to contain another pair's
+   answer — "obtaining a solid from a solution by evaporating the solvent",
+   sitting in the same question as "solvent" — gives away a pair nobody
+   pointed at. Those are skipped, and if every candidate is compromised the
+   hint falls back to method. */
+const asWords = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ');
+const pointsAt = value => {
+  const str = String(value).trim();
+  const w = str.split(/\s+/);
+  /* A first word that is most of the answer is the answer — "xīngqīyī (星期一)"
+     is one word with a gloss stuck to it, not two. */
+  const oneWord = w.length === 1 || w[0].length / str.replace(/\s+/g, '').length > 0.6;
+  if (oneWord) return str.length > 3 ? `“${str[0]}”` : null;
+  return w[0].length <= 3 && w[1] ? `“${w[0]} ${w[1][0]}…”` : `“${w[0]}…”`;
+};
+
+export function matchHint(pairs) {
+  const list = pairs ?? [];
+  /* Each pair's right normalised once, not once per comparison. */
+  const rights = list.map(o => asWords(o.right));
+  const safe = list.filter((p, i) => {
+    const opens = pointsAt(p.right);
+    if (!opens) return false;
+    /* The word used to point can itself be another pair's whole answer. */
+    const word = asWords(opens.replace(/[“”…]/g, '')).join(' ');
+    const inLeft = new Set(asWords(p.left));
+    for (let j = 0; j < list.length; j++) {
+      if (j === i) continue;
+      if (word.length >= 4 && rights[j].join(' ') === word) return false;
+      const content = rights[j].filter(w => w.length >= 4);
+      if (content.length > 0 && content.every(w => inLeft.has(w))) return false;
+    }
+    return true;
+  });
+  const p = [...safe].sort((a, b) => String(b.right).length - String(a.right).length)[0];
+  if (!p) return 'Place the pairs you are sure of first — with four pairs, being certain of two leaves only two ways to finish.';
+  const left = String(p.left);
+  const shown = left.length <= 60 ? left : left.slice(0, 59).replace(/\s+\S*$/, '') + '…';
+  return `Start with “${shown}”: it goes with the one beginning ${pointsAt(p.right)}.`;
+}
+
+/** Fill in a hint for a question that has none. Idempotent. */
+export function withHint(q) {
+  if (!q || q.hint) return q;
+  const set = hint => hint ? { ...q, hint } : q;
+  switch (q.type) {
+    case 'choice': {
+      const wrong = (q.options ?? []).filter((_, i) => i !== q.answer);
+      if (!wrong.length) return q;
+      const correct = q.options[q.answer];
+      const out = farthestFrom(correct, wrong);
+      /* A punctuation question offers the same sentence four times. Naming one
+         of them rules out nothing, because they read alike — what the reader
+         needs is to be told where to look. */
+      return set(words(out).join(' ') === words(correct).join(' ')
+        ? 'These options differ only in capital letters and punctuation. Check the first letter and the final mark.'
+        : `You can rule out “${out}”.`);
+    }
+    case 'multi': {
+      const n = (q.answer ?? []).length;
+      const total = (q.options ?? []).length;
+      return set(n && total
+        ? `Exactly ${n} of the ${total} are correct, so ${total - n} are not. Rule those out first.`
+        : null);
+    }
+    case 'match':
+      return set((q.pairs ?? []).length ? matchHint(q.pairs) : null);
+    case 'order':
+      return set((q.items ?? [])[0]
+        ? `“${q.items[0]}” comes first. Work forwards from there.`
+        : null);
+    case 'blank':
+      return set(shapeOf(q.answer));
+    case 'math':
+      return set(formOf(q.answer)
+        ?? 'Write down what you are solving for before you calculate, then check the answer against the question.');
+    case 'graph':
+      return set('Read both axes before you place anything, then work out the value the question asks for.');
+    case 'written':
+      return set('Answer in two parts: what is the case, and why. One clear sentence each is enough.');
+    default:
+      return q;
+  }
+}
 
 /**
  * Assemble a worksheet from a weighted list of question makers.

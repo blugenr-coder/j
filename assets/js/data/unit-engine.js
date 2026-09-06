@@ -23,7 +23,7 @@
    response are different sheets a teacher prints for different lessons, and
    generated.js builds each of them by selecting kinds. */
 
-import { pick, sample, choice, blankQ, multiQ, matchQ, orderQ, writtenQ, labelQ } from './gen-core.js';
+import { pick, sample, choice, blankQ, multiQ, matchQ, orderQ, writtenQ, labelQ, farthestFrom, matchHint } from './gen-core.js';
 import { figure } from './figures.js';
 import { proceduralMakers } from './gen-early.js';
 
@@ -55,6 +55,29 @@ const lower = s => {
 
 /** Escape a term for use inside a regular expression. */
 const rx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/* A hint has to unstick without answering. On a multiple-choice question the
+   move a teacher actually makes is to take one option off the table: it is
+   derivable for every such question, it leaves a real choice still to make,
+   and eliminating is the discrimination the question is testing. Long
+   statements are trimmed so the hint stays readable in a toast. */
+const clip = (s, n = 90) => {
+  const str = String(s);
+  return str.length <= n ? str : str.slice(0, n - 1).replace(/\s+\S*$/, '') + '…';
+};
+const bare = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const ruleOut = (correct, wrongs, because) => {
+  const wrong = farthestFrom(correct, wrongs ?? []);
+  if (wrong == null) return undefined;
+  /* Options that differ only in case and punctuation cannot be ruled out by
+     quoting one of them: they read the same. */
+  if (bare(wrong) === bare(correct)) return undefined;
+  return `You can rule out “${clip(wrong)}”${because ? ` — ${because}` : ''}.`;
+};
+
+/* A matching question is unstuck by being given one pair, not four. Naming how
+   the partner starts is enough to place it and leaves the other three to work
+   out — a single word for a term, the opening words for a definition. */
 
 /**
  * Sentences in which one of the unit's own terms appears, so a cloze question
@@ -131,24 +154,28 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
   if (facts.length >= 4) {
     add('term-from-meaning', 'recognise', 'choice', 1, r => {
       const [term, meaning] = pick(r, facts);
+      const dist = other(r, terms, term, 3);
       return choice(r, {
         prompt: lexicon ? `How do you say “${meaning}” in ${lang}?`
               : early   ? `Which ${noun} ${meaning}?`
               :           `Which term matches this description? “${meaning}”`,
         correct: term,
-        distractors: other(r, terms, term, 3),
+        distractors: dist,
+        hint: ruleOut(term, dist),
         explanation: lexicon ? `“${meaning}” is ${term}.` : `${term} — ${meaning}.`
       });
     });
 
     add('meaning-from-term', 'recognise', 'choice', 1, r => {
       const [term, meaning] = pick(r, facts);
+      const dist = other(r, meanings, meaning, 3);
       return choice(r, {
         prompt: lexicon ? `What does “${term}” mean in English?`
               : early   ? `Pick the one that matches “${term}”.`
               :           `Which of these best describes “${term}”?`,
         correct: meaning,
-        distractors: other(r, meanings, meaning, 3),
+        distractors: dist,
+        hint: ruleOut(meaning, dist),
         explanation: `${term} — ${meaning}.`
       });
     });
@@ -194,21 +221,29 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
 
   /* -------------------------------- match -------------------------------- */
   if (facts.length >= 4) {
-    add('match-term-meaning', 'match', 'match', 1, r => matchQ(r, {
-      prompt: lexicon ? `Match each ${lang} word to its meaning.`
-            : early   ? `Match each ${noun} to the one that goes with it.`
-            :           'Match each term to its meaning.',
-      pairs: sample(r, facts, 4).map(([term, meaning]) => ({ left: term, right: meaning })),
-      explanation: `${name}: the pairs above are the ones to know.`
-    }));
+    add('match-term-meaning', 'match', 'match', 1, r => {
+      /* Sampled here rather than inside matchQ so the hint can name a pair
+         that is certain to be on the page. */
+      const chosen = sample(r, facts, 4).map(([term, meaning]) => ({ left: term, right: meaning }));
+      return matchQ(r, {
+        prompt: lexicon ? `Match each ${lang} word to its meaning.`
+              : early   ? `Match each ${noun} to the one that goes with it.`
+              :           'Match each term to its meaning.',
+        pairs: chosen,
+        hint: matchHint(chosen),
+        explanation: `${name}: the pairs above are the ones to know.`
+      });
+    });
 
     add('match-meaning-term', 'match', 'match', 2, (r, tier = 2) => {
       if (tier < 2) return null;
+      const chosen = sample(r, facts, 4).map(([term, meaning]) => ({ left: meaning, right: term }));
       return matchQ(r, {
         prompt: lexicon ? `Match each English meaning to its ${lang} word.`
               : early   ? `Match each clue to the ${noun} it goes with.`
               :           'Match each description to the term it defines.',
-        pairs: sample(r, facts, 4).map(([term, meaning]) => ({ left: meaning, right: term })),
+        pairs: chosen,
+        hint: matchHint(chosen),
         explanation: `${name}: the pairs above are the ones to know.`
       });
     });
@@ -218,9 +253,12 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
   if (truths.length >= 1 && myths.length >= 3) {
     add('pick-truth', 'judge', 'choice', 1, r => {
       const t = pick(r, truths);
+      const dist = sample(r, myths, 3);
       return choice(r, {
         prompt: early ? `Which one is true?` : `Which statement about ${lower(name)} is correct?`,
-        correct: t, distractors: sample(r, myths, 3), explanation: t
+        correct: t, distractors: dist,
+        hint: ruleOut(t, dist, 'that one is not true'),
+        explanation: t
       });
     });
   }
@@ -228,9 +266,11 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
   if (myths.length >= 1 && truths.length >= 3) {
     add('pick-myth', 'judge', 'choice', 1, r => {
       const m = pick(r, myths);
+      const dist = sample(r, truths, 3);
       return choice(r, {
         prompt: early ? `Which one is NOT true?` : `Which statement about ${lower(name)} is NOT correct?`,
-        correct: m, distractors: sample(r, truths, 3),
+        correct: m, distractors: dist,
+        hint: ruleOut(m, dist, 'that one is accurate, so it is not the answer'),
         explanation: 'That claim is false. The other three are accurate.'
       });
     });
@@ -242,6 +282,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return multiQ(r, {
         prompt: `Select every statement about ${lower(name)} that is true.`,
         correct: sample(r, truths, 2), wrong: sample(r, myths, 2),
+        hint: 'Exactly two of the four are true, so two are false. Find the false ones first — they are usually easier to spot.',
         explanation: 'Two of the four statements are accurate.'
       });
     });
@@ -253,6 +294,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return multiQ(r, {
         prompt: `Three of these six statements about ${lower(name)} are true. Select them.`,
         correct: sample(r, truths, 3), wrong: sample(r, myths, 3),
+        hint: 'Three are true and three are false. Rule out the three you can show are wrong, and what is left is the answer.',
         explanation: 'Three of the six statements are accurate.'
       });
     });
@@ -273,6 +315,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
         prompt: early ? `Three of these go together. Which one does not?`
                       : `Three of these belong to ${lower(name)}. Which one does not?`,
         correct: outsider, distractors: mine,
+        hint: ruleOut(outsider, mine, `it is part of ${lower(name)}`),
         explanation: `${mine.join(', ')} all belong to ${lower(name)}; ${outsider} does not.`
       });
     });
@@ -288,6 +331,7 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return multiQ(r, {
         prompt: `Select every term that belongs to ${lower(name)}.`,
         correct: mine, wrong: theirs,
+        hint: 'Two of the four are from this unit and two are borrowed from elsewhere. Take each in turn and ask whether you could define it from what you have just revised.',
         explanation: `${mine.join(' and ')} belong to this unit; the others do not.`
       });
     });
@@ -298,7 +342,8 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('sequence', 'sequence', 'order', 1, r => {
       const [label, steps] = pick(r, sequences);
       return orderQ(`Put these in the right order: ${label}.`, steps,
-        `The correct order is: ${steps.join(' → ')}.`);
+        `The correct order is: ${steps.join(' → ')}.`,
+        `“${clip(steps[0], 60)}” comes first. Work forwards from there.`);
     });
   }
 
@@ -307,10 +352,12 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
     add('apply', 'apply', 'choice', 1, r => {
       const [scenario, answer] = pick(r, applications);
       const wrong = applications.filter(a => a[1] !== answer).map(a => a[1]);
+      const dist = sample(r, [...new Set([...wrong, ...terms])].filter(t => t !== answer), 3);
       return choice(r, {
         prompt: scenario,
         correct: answer,
-        distractors: sample(r, [...new Set([...wrong, ...terms])].filter(t => t !== answer), 3),
+        distractors: dist,
+        hint: ruleOut(answer, dist, 'it does not fit this case'),
         explanation: `${answer} — ${facts.find(f => f[0] === answer)?.[1] ?? 'the term that fits this case'}.`
       });
     });
@@ -358,7 +405,10 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
           ? `Write a short sentence in ${lang} using “${term}”.`
           : `Define “${term}” in your own words.`,
         lexicon ? `Any correct sentence using ${term} (${meaning}).` : meaning,
-        'Marked by you against the key.');
+        'Marked by you against the key.',
+        lexicon
+          ? `Write a sentence that only works with “${term}” in it — one that would still make sense with any other word in its place does not show that you understand it.`
+          : `Name the wider thing it belongs to first, then what makes this one different from the rest of that group.`);
     });
   }
 
@@ -370,7 +420,8 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return writtenQ(
         `Explain why this is the case: “${t}”`,
         `${t} A full answer uses the key terms: ${key.join(', ')}.`,
-        'Marked by you against the key.');
+        'Marked by you against the key.',
+        `Build the answer round these terms: ${key.join(', ')}. Say what happens, then why it happens.`);
     });
   }
 
@@ -381,7 +432,8 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return writtenQ(
         `This statement is wrong. Write the correct version: “${m}”`,
         `The statement is false. A correct version contradicts it directly and explains why.`,
-        'Marked by you against the key.');
+        'Marked by you against the key.',
+        `Find the one word or claim that is doing the damage, write what is actually true instead, then say why the original is wrong.`);
     });
   }
 

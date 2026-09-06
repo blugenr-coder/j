@@ -14,15 +14,21 @@ import { GRADE_MAP } from './catalog.js';
 import { STANDARDS } from './standards.js';
 import { STORAGE_KEY } from '../core/storage-key.js';
 import { buildFamilies, generateQuestions } from './generated.js';
+import { withHint } from './gen-core.js';
 
 /* Everything the UI needs but a content author should not have to repeat. */
 function decorate(ex) {
   const types = ex.types ?? [...new Set(ex.questions.map(q => q.type))];
+  /* Every question reaches the player with a hint, authored or derived. The
+     alternative is a Show hint button that is greyed out on most of the
+     library, which reads as a broken feature rather than a missing one. */
+  const questions = ex.questions.map(withHint);
   return {
     printable: true, online: true, featured: false, generated: false,
     /* Authored worksheets predate the page count; derive one from their length. */
     pages: Math.max(1, Math.min(4, Math.round((ex.count ?? ex.questions?.length ?? 10) / 10) || 1)),
     ...ex,
+    questions,
     types,
     framework: STANDARDS[ex.topic]?.framework ?? null,
     count: ex.count ?? ex.questions.length,
@@ -162,7 +168,7 @@ export function getExercise(id) {
 
   /* Hydrating is the one place a blueprint is flattened, because the caller is
      about to read all of it anyway. */
-  const questions = generateQuestions(ex);
+  const questions = generateQuestions(ex).map(withHint);
   const full = {
     id: ex.id, title: ex.title, subject: ex.subject, topic: ex.topic,
     grade: ex.grade, level: ex.level, difficulty: ex.difficulty,
