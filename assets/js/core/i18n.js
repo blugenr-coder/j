@@ -105,6 +105,11 @@ export function t(text) {
   return text;
 }
 
+/* The English a node started with, so a later dictionary can be applied to
+   the source rather than to a half-translated sentence. A WeakMap, so a node
+   removed from the document takes its entry with it. */
+const SOURCE = new WeakMap();
+
 function translateTree(root) {
   if (!active || !root) return;
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -122,8 +127,18 @@ function translateTree(root) {
   const nodes = [];
   for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
   for (const n of nodes) {
-    const next = t(n.textContent);
-    if (next !== n.textContent) n.textContent = next;
+    /* Translate from the ORIGINAL text, not from whatever is on the node now.
+       Content packs arrive after the first pass, and a second pass over
+       already-translated text can match nothing — the sentence is in the new
+       language with an English term still embedded in it, which is exactly
+       the shape no pattern is written for. Keeping the source means a
+       dictionary that grows later applies retroactively. */
+    const source = SOURCE.get(n) ?? n.textContent;
+    const next = t(source);
+    if (next !== n.textContent) {
+      if (next !== source) SOURCE.set(n, source);
+      n.textContent = next;
+    }
   }
 
   const scope = root.nodeType === 1 ? [root, ...root.querySelectorAll('*')] : [...root.querySelectorAll('*')];
@@ -133,8 +148,17 @@ function translateTree(root) {
     for (const a of ATTRS) {
       const v = el.getAttribute(a);
       if (!v) continue;
-      const next = t(v);
-      if (next !== v) el.setAttribute(a, next);
+      const key = `${a}:${v}`;
+      const source = SOURCE.get(el)?.get(a) ?? v;
+      const next = t(source);
+      if (next !== v) {
+        if (next !== source) {
+          const map = SOURCE.get(el) ?? new Map();
+          map.set(a, source);
+          SOURCE.set(el, map);
+        }
+        el.setAttribute(a, next);
+      }
     }
   }
 }
@@ -157,6 +181,50 @@ function watch() {
     observer.observe(document.body, { childList: true, subtree: true });
   });
   observer.observe(document.body, { childList: true, subtree: true });
+}
+
+/* ----------------------------- content packs -----------------------------
+   The interface is a few hundred strings and ships with the language. The
+   worksheet *content* — every term, definition and statement in 715 units —
+   is 36,000 strings per language, which is far too much to load on a page
+   that may never show a worksheet.
+
+   So content is split per subject and fetched only when a page is about to
+   show that subject. Merging it into the same dictionary is all that is
+   needed: translation already works by matching source text, so an answer
+   option is translated by the same path as a button label, with no change to
+   the generator that produced it. */
+const contentLoaded = new Set();
+
+/**
+ * Load the content dictionary for one subject, then re-translate the page.
+ * Safe to call repeatedly and safe to call when there is no pack: a subject
+ * that has not been translated yet simply leaves its content in English
+ * rather than failing.
+ */
+export async function loadContent(subject) {
+  if (!subject) return false;
+  /* A page calls this while it renders, which is before initLanguage() has
+     finished fetching the pack — so without this wait `active` is still null,
+     the call returns immediately, and the content is silently never loaded.
+     That failure looks exactly like a missing translation. */
+  await whenReady();
+  if (!active) return false;
+  const key = `${active.code}/${subject}`;
+  if (contentLoaded.has(key)) return true;
+  contentLoaded.add(key);
+  try {
+    const mod = await import(`../i18n/content/${active.code}/${subject}.js`);
+    for (const [en, translated] of Object.entries(mod.DICT ?? {})) {
+      if (!active.dict.has(en)) active.dict.set(en, translated);
+    }
+    if (document.body) translateTree(document.body);
+    return true;
+  } catch {
+    /* No pack for this subject yet. Not an error: the content stays English
+       and every other language feature keeps working. */
+    return false;
+  }
 }
 
 /* -------------------------------- loading -------------------------------- */

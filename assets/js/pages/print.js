@@ -4,6 +4,7 @@
    the answers while working. */
 
 import { $, $$, el, qs, esc, shuffle, hashCode } from '../core/util.js';
+import { loadContent } from '../core/i18n.js';
 import { mountShell, href } from '../core/shell.js';
 import { emptyState } from '../core/cards.js';
 import { getExercise } from '../data/exercises.js';
@@ -15,6 +16,7 @@ import { figure } from '../data/figures.js';
 mountShell({ page: 'library', nav: 'app', footer: false });
 
 const ex = getExercise(qs('id'));
+if (ex?.subject) loadContent(ex.subject);
 
 if (!ex) {
   $('.paper-toolbar').hidden = true;

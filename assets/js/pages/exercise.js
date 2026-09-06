@@ -4,6 +4,7 @@
    marking in core/marking.js, so this file stays about flow. */
 
 import { $, $$, el, qs, setQs, donut, toast, timeAgo, pct, clamp } from '../core/util.js';
+import { loadContent } from '../core/i18n.js';
 import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { favButton, difficultyBadge, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
@@ -33,6 +34,12 @@ if (canonical) {
   if (ex) canonical.href = `exercise.html?id=${encodeURIComponent(ex.id)}`;
   else canonical.remove();
 }
+
+/* The worksheet's own subject decides which content dictionary is worth
+   fetching. Not awaited: the questions render from local data immediately and
+   the translated text replaces them when the pack arrives, so a slow network
+   delays nothing. */
+if (ex) loadContent(ex.subject);
 
 if (!ex) {
   $('#not-found').hidden = false;
