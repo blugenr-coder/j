@@ -1,5 +1,9 @@
 /* Spanish interface strings. The worksheets stay in their own language. */
 export const DICT = {
+  "Instructions:": "Instrucciones:",
+  "Score:": "Puntuación:",
+  "Answer every question, showing your working where there is space. Write your final answer on the line provided.": "Responde a todas las preguntas y muestra el procedimiento donde haya espacio. Escribe la respuesta final en la línea indicada.",
+  "Tick every correct answer.": "Marca todas las respuestas correctas.",
   /* Worksheet summary phrases, used by the summary patterns below. */
   "A quiz": "Un cuestionario",
   "A vocabulary check": "Una comprobación de vocabulario",
@@ -388,7 +392,6 @@ export const DICT = {
   "Incorrect": "Incorrecto",
   "Instant marking with hints and worked explanations — never just a red cross.": "Corrección inmediata con pistas y explicaciones resueltas: nunca una simple cruz roja.",
   "Instant marking, hints and worked explanations. Your progress is saved.": "Corrección inmediata, pistas y explicaciones resueltas. Tu progreso se guarda.",
-  "Instructions: ": "Instrucciones: ",
   "Join a class": "Unirse a una clase",
   "Join class": "Unirse a la clase",
   "Join code": "Código de acceso",
@@ -703,6 +706,7 @@ export const DICT = {
 /* Strings that carry a number. $1 is the number; the third entry, when
    present, is the plural form. */
 export const PATTERNS = [
+  ["^This worksheet runs to (\\d+) pages\\.$", "Esta ficha ocupa $1 páginas."],
   ["^(.+) on (.+) for (.+), with (\\d+) questions and a separate answer key\\.$", "$1! sobre «$2» para $3!, con $4 preguntas y solucionario aparte."],
   ["^(.+) on (.+) for (.+), with (\\d+) questions and a separate answer key\\. Printed over (\\d+) pages\\.$", "$1! sobre «$2» para $3!, con $4 preguntas y solucionario aparte. Impreso en $5 páginas."],
   ["^(.+) at (.+) level — (.+) practice you can work through online or print\\.$", "$1 en nivel $2!: práctica de $3 para hacer en pantalla o imprimir."],

@@ -43,6 +43,12 @@
 .q-print .q-lines { margin: 3mm 0 0 12mm; }
 .q-print .q-lines .wline { border-bottom: 1px solid #CBD5E1; height: 8mm; }
 .q-print .q-match { margin: 3mm 0 0 12mm; display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 8mm; font-size: 10.5pt; }
+/* The item letter is a separate element so the text beside it can be looked
+   up in a dictionary; these put back the space that used to be typed into
+   the string. */
+.q-print .q-match .opt-letter { margin-right: 1.5mm; }
+.q-print .q-match span span + span { margin-left: 0; }
+.q-print .q-match span span[translate="no"]:last-child { margin-left: 2mm; white-space: pre; }
 .q-print .q-order { margin: 3mm 0 0 12mm; display: grid; gap: 2mm; font-size: 10.5pt; }
 .q-print .q-order .oline { display: flex; gap: 3mm; align-items: baseline; }
 .q-print .q-order .obox { width: 8mm; border-bottom: 1px solid #94A3B8; }

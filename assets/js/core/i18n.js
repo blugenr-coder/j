@@ -79,6 +79,19 @@ export function t(text) {
   const hit = active.dict.get(key) ?? active.dict.get(trimmed);
   if (hit !== undefined) return text.replace(trimmed, hit);
 
+  /* An answer option is written "Ribosome" where the unit bank writes
+     "ribosome": the same word, capitalised because it starts a line. Without
+     this the dictionary misses it and one option in four stays English on an
+     otherwise translated sheet. Only the first letter is allowed to differ,
+     so this cannot quietly match two genuinely different entries. */
+  if (/^[A-Z]/.test(key)) {
+    const lower = key.charAt(0).toLowerCase() + key.slice(1);
+    const alt = active.dict.get(lower);
+    if (alt !== undefined) {
+      return text.replace(trimmed, alt.charAt(0).toUpperCase() + alt.slice(1));
+    }
+  }
+
   for (const [re, one, many] of active.patterns) {
     const m = key.match(re);
     if (!m) continue;

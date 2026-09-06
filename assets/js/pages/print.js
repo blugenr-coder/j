@@ -101,11 +101,14 @@ function worksheet({ withWork, withHints, copy, copies }) {
     sheet.append(sheetHead({ page: page + 1, pages }));
 
     if (page === 0) {
+      /* Three nodes, not one concatenated string: the page-count sentence
+         carries a number, so it needs a pattern of its own, and a sentence
+         glued onto the end of another is a key no dictionary will hold. */
       sheet.append(el('div', { class: 'sheet-instructions' },
         el('strong', { text: 'Instructions: ' }),
         'Answer every question, showing your working where there is space. ' +
-        'Write your final answer on the line provided.' +
-        (pages > 1 ? ` This worksheet runs to ${pages} pages.` : '')
+        'Write your final answer on the line provided.',
+        ...(pages > 1 ? [' ', el('span', { text: `This worksheet runs to ${pages} pages.` })] : [])
       ));
     }
 
@@ -134,9 +137,14 @@ function printQuestion(q, i, { withWork, withHints }) {
     case 'choice':
     case 'multi': {
       const opts = el('div', { class: `q-options ${q.type === 'multi' ? 'multi' : ''}` });
+      /* The letter and the option are separate nodes on purpose. Translation
+         matches on the text of a node, so "C.  Augustus" in one node is a
+         string no dictionary will ever hold, and every option on a printed
+         sheet stays English however much content is translated. */
       q.options.forEach((o, oi) => opts.append(el('span', { class: 'opt-print' },
         el('span', { class: 'box' }),
-        el('span', { text: `${'ABCDEFGH'[oi]}.  ${o}` }))));
+        el('span', { class: 'opt-letter', translate: 'no', text: `${'ABCDEFGH'[oi]}.` }),
+        el('span', { text: String(o) }))));
       wrap.append(opts);
       if (q.type === 'multi') wrap.append(el('div', { class: 'q-answer' }, 'Tick every correct answer.'));
       break;
@@ -145,8 +153,13 @@ function printQuestion(q, i, { withWork, withHints }) {
       const grid = el('div', { class: 'q-match' });
       const rights = q.pairs.map(p => p.right).slice().sort();
       q.pairs.forEach((p, pi) => grid.append(
-        el('span', {}, `${pi + 1}. ${p.left}  ______`),
-        el('span', {}, `${'ABCDEFGH'[pi]}. ${rights[pi]}`)
+        el('span', {},
+          el('span', { class: 'opt-letter', translate: 'no', text: `${pi + 1}.` }),
+          el('span', { text: String(p.left) }),
+          el('span', { translate: 'no', text: '  ______' })),
+        el('span', {},
+          el('span', { class: 'opt-letter', translate: 'no', text: `${'ABCDEFGH'[pi]}.` }),
+          el('span', { text: String(rights[pi]) }))
       ));
       wrap.append(grid);
       break;
