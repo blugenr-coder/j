@@ -128,6 +128,87 @@ const param = target.match(/[?&]([a-z_]+)=\{search_term_string\}/)?.[1];
 ok('its search action names a parameter the library actually reads',
   param === 'text', target);
 
+/* ------------------------------- the logo ------------------------------- */
+/* Two different pictures, wanted by two different readers, and it is easy to
+   ship one and think you have shipped both.
+
+   Google puts a favicon beside a result. It reads the <link> in the home
+   page's head, and its documented list of formats is BMP, GIF, ICO, PNG,
+   JPEG, PPM and TIFF — no SVG — under rel="icon", "shortcut icon",
+   "apple-touch-icon" or "apple-touch-icon-precomposed". A site declaring only
+   an SVG under rel="icon" and a PNG under rel="alternate icon" has, as far as
+   that list is concerned, declared nothing.
+
+   Everything that unfurls a shared link — the messaging apps, the chat
+   clients — reads og:image, and Open Graph requires an absolute URL. A
+   relative one resolves against nothing on the machine doing the unfurling,
+   so the card comes out blank.
+   https://developers.google.com/search/docs/appearance/favicon-in-search */
+
+const GOOGLE_ICON_RELS = ['icon', 'shortcut icon', 'apple-touch-icon', 'apple-touch-icon-precomposed'];
+const GOOGLE_ICON_TYPES = /\.(bmp|gif|ico|png|jpe?g|ppm|tiff?)$/i;
+
+const iconLinks = [...index.matchAll(/<link\s+rel="([^"]+)"[^>]*href="([^"]+)"/g)]
+  .map(m => ({ rel: m[1], href: m[2] }))
+  .filter(l => GOOGLE_ICON_RELS.includes(l.rel));
+
+ok('the home page declares a favicon under a rel Google reads',
+  iconLinks.length > 0, iconLinks);
+const usable = iconLinks.filter(l => GOOGLE_ICON_TYPES.test(l.href.split('?')[0]));
+ok('at least one of them is in a format Google supports, so not only an SVG',
+  usable.length > 0, iconLinks);
+
+for (const l of usable) {
+  const r = await fetch(new URL(l.href, BASE));
+  ok(`  ${l.href} is served`, r.status === 200, r.status);
+}
+
+/* Browsers and other crawlers ask for this by name whether it is declared or
+   not, and it is the one Google is most likely to take. */
+res = await fetch(`${BASE}/favicon.ico`);
+const ico = Buffer.from(await res.arrayBuffer());
+ok('/favicon.ico is served from the root', res.status === 200, res.status);
+ok('it is really an icon, not an HTML error page wearing the name',
+  ico.length > 4 && ico.readUInt16LE(0) === 0 && ico.readUInt16LE(2) === 1,
+  ico.subarray(0, 8));
+
+/* Reads a PNG's dimensions from its header, to check the logo is big enough
+   for the use Google puts it to. */
+const pngSize = buf => (buf.subarray(0, 8).toString('hex') === '89504e470d0a1a0a')
+  ? { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) } : null;
+
+const relativeOg = [];
+for (const page of pages) {
+  const og = readFileSync(page, 'utf8').match(/<meta property="og:image" content="([^"]*)"/)?.[1];
+  if (!og || !/^https?:\/\//.test(og)) relativeOg.push(`${page}: ${og ?? '(none)'}`);
+}
+ok('every page gives og:image as an absolute URL, which the protocol requires',
+  relativeOg.length === 0, relativeOg);
+
+/* The URL points at the live domain, which this test cannot reach. What it can
+   check is that the file that URL names is actually in what we serve. */
+const ogPath = new URL(index.match(/<meta property="og:image" content="([^"]*)"/)[1]).pathname;
+res = await fetch(`${BASE}${ogPath}`);
+ok(`the file og:image names (${ogPath}) exists here`, res.status === 200, res.status);
+const ogPng = pngSize(Buffer.from(await res.arrayBuffer()));
+ok('the share image is 1200x630, the size the cards are cut for',
+  ogPng?.width === 1200 && ogPng?.height === 630, ogPng);
+
+const org = parsed?.['@graph']?.find(n => String(n['@type']).endsWith('Organization'));
+const logo = typeof org?.logo === 'string' ? org.logo : org?.logo?.url;
+ok('the organisation declares a logo, which is what Google reads for the mark '
+   + 'beside the name', Boolean(logo), org?.logo);
+ok('the logo URL is absolute, because structured data is read far from the page',
+  Boolean(logo) && /^https?:\/\//.test(logo), logo);
+if (logo && /^https?:\/\//.test(logo)) {
+  const logoPath = new URL(logo).pathname;
+  res = await fetch(`${BASE}${logoPath}`);
+  ok(`  the file it names (${logoPath}) exists here`, res.status === 200, res.status);
+  const size = pngSize(Buffer.from(await res.arrayBuffer()));
+  ok('  it is at least 112x112, the documented minimum',
+    Boolean(size) && size.width >= 112 && size.height >= 112, size);
+}
+
 await new Promise(r => app.close(r));
 console.log(`\n${pass} passed, ${fail} failed.`);
 process.exit(fail ? 1 : 0);

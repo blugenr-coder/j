@@ -908,6 +908,26 @@ Each of these exists because of a bug it caught:
   terms taken from published curricula that must all find worksheets, plus a
   subject × level grid, so a hole in a year group is visible rather than
   inferred.
+- `tools/check-seo.mjs` — the logo assertions were added after the site had
+  shipped a logo for months and shown one nowhere. Two different readers want
+  two different pictures and it is easy to ship one and believe you have
+  shipped both. Google puts a favicon beside a result, and its
+  [documented formats](https://developers.google.com/search/docs/appearance/favicon-in-search)
+  are BMP, GIF, ICO, PNG, JPEG, PPM and TIFF — no SVG — declared under
+  `rel="icon"`, `"shortcut icon"`, `"apple-touch-icon"` or
+  `"apple-touch-icon-precomposed"`. The home page declared an SVG under
+  `rel="icon"` and a PNG under `rel="alternate icon"`, which is, against that
+  list, nothing at all. Separately, everything that unfurls a shared link reads
+  `og:image`, and Open Graph requires an absolute URL; all twenty-one pages gave
+  a relative one, so the card came out blank in every messaging app. The check
+  now fails on both, on a bare `/favicon.ico`, and on an `Organization` without
+  a crawlable logo of at least 112×112.
+- `tools/make-og.mjs` — the share card is generated, not drawn, because the
+  drawn one went stale in silence: it advertised 99,817 worksheets and 248
+  curriculum units long after there were 2,067,397 and 715. A picture of a
+  number is a number nobody will ever update, so it reads the totals from the
+  same data the site does and renders the card in the browser, in the CSS the
+  site is designed in.
 - `tools/test-api.mjs` — the first cross-site rule refused every `DELETE`
   request, because it demanded a JSON content type from a verb that has no
   body. Nothing in the browser would have shown it: the calls simply came back

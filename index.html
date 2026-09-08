@@ -8,44 +8,63 @@
 <!-- Self-referencing, so every filter permutation in the query string
      collapses to one indexable URL. -->
 <link rel="canonical" href="/">
-<link rel="icon" type="image/svg+xml" href="assets/img/favicon.svg">
-<link rel="alternate icon" sizes="64x64" href="assets/img/favicon-64.png">
-<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="/assets/img/favicon.svg">
+<link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png">
 <meta name="theme-color" content="#4B3FD4">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="WorksheetHub">
 <meta property="og:title" content="WorksheetHub — Practice anything. Learn everything.">
 <meta property="og:description" content="Over two million worksheets across 715 curriculum units, for every grade from Pre-K to college. Practise online with instant marking, or print with an answer key — and track what you are actually weak at.">
-<meta property="og:image" content="assets/img/og.png">
+<meta property="og:image" content="https://worksheethub.org/assets/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="WorksheetHub — practice anything, learn everything">
 <meta name="twitter:card" content="summary_large_image">
-<!-- Structured data. Two things only, both of which Google actually uses:
-     what this site is, and that it has a search — which is what lets a
-     sitelinks search box appear under the result. Anything beyond that would
-     be markup written for a rich result this site does not qualify for. -->
+<!-- Structured data. Three things, all of which Google actually uses: what
+     this site is, that it has a search — which is what lets a sitelinks search
+     box appear under the result — and the logo, which is what Google reads
+     when it wants a mark to show beside the name. Anything beyond that would
+     be markup written for a rich result this site does not qualify for.
+
+     Every URL here is absolute. A relative one is not resolvable by whatever
+     fetched the page, and structured data is read far away from the document
+     it came from. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@graph": [
     {
       "@type": "WebSite",
-      "@id": "#website",
+      "@id": "https://worksheethub.org/#website",
+      "url": "https://worksheethub.org/",
       "name": "WorksheetHub",
+      "publisher": { "@id": "https://worksheethub.org/#organization" },
       "description": "Over two million worksheets across 715 curriculum units, for every grade from Pre-K to college.",
       "inLanguage": ["en", "es", "fr", "de", "it", "pt"],
       "potentialAction": {
         "@type": "SearchAction",
         "target": {
           "@type": "EntryPoint",
-          "urlTemplate": "library.html?text={search_term_string}"
+          "urlTemplate": "https://worksheethub.org/library.html?text={search_term_string}"
         },
         "query-input": "required name=search_term_string"
       }
     },
     {
       "@type": "EducationalOrganization",
-      "@id": "#organization",
+      "@id": "https://worksheethub.org/#organization",
+      "url": "https://worksheethub.org/",
       "name": "WorksheetHub",
-      "description": "A worksheet library that works online and on paper, for every grade from Pre-K to college."
+      "description": "A worksheet library that works online and on paper, for every grade from Pre-K to college.",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://worksheethub.org/assets/img/icon-512.png",
+        "width": 512,
+        "height": 512,
+        "caption": "WorksheetHub"
+      },
+      "image": "https://worksheethub.org/assets/img/og.png"
     }
   ]
 }
