@@ -917,7 +917,10 @@ Each of these exists because of a bug it caught:
   `rel="icon"`, `"shortcut icon"`, `"apple-touch-icon"` or
   `"apple-touch-icon-precomposed"`. The home page declared an SVG under
   `rel="icon"` and a PNG under `rel="alternate icon"`, which is, against that
-  list, nothing at all. Separately, everything that unfurls a shared link reads
+  list, nothing at all. The same guidance recommends *larger* than 48×48, so
+  the check also fails an icon set that tops out at exactly 48 — the kind of
+  gap that costs nothing to close and cannot be seen once it has shipped.
+  Separately, everything that unfurls a shared link reads
   `og:image`, and Open Graph requires an absolute URL; all twenty-one pages gave
   a relative one, so the card came out blank in every messaging app. The check
   now fails on both, on a bare `/favicon.ico`, and on an `Organization` without

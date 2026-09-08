@@ -163,6 +163,23 @@ for (const l of usable) {
   ok(`  ${l.href} is served`, r.status === 200, r.status);
 }
 
+/* Google's guidance is "larger than 48x48px". An icon set topping out at
+   exactly 48 meets the minimum and misses the recommendation, which is the
+   kind of gap that costs nothing to close and cannot be seen once it ships. */
+const iconPixels = [];
+for (const l of usable) {
+  const buf = Buffer.from(await (await fetch(new URL(l.href, BASE))).arrayBuffer());
+  if (buf.subarray(0, 8).toString('hex') === '89504e470d0a1a0a') {
+    iconPixels.push(buf.readUInt32BE(16));
+  } else if (buf.readUInt16LE(0) === 0 && buf.readUInt16LE(2) === 1) {
+    /* An .ico is a directory of images; a width byte of 0 means 256. */
+    const count = buf.readUInt16LE(4);
+    for (let i = 0; i < count; i++) iconPixels.push(buf.readUInt8(6 + i * 16) || 256);
+  }
+}
+ok('some declared icon is larger than 48px, which is what Google recommends',
+  iconPixels.some(px => px > 48), iconPixels.sort((a, b) => a - b));
+
 /* Browsers and other crawlers ask for this by name whether it is declared or
    not, and it is the one Google is most likely to take. */
 res = await fetch(`${BASE}/favicon.ico`);
