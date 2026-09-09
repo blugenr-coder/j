@@ -122,7 +122,19 @@ export const SUBJECTS = [
       { id: 'reading',    name: 'Reading' },
       { id: 'writing',    name: 'Writing' },
       { id: 'spelling',   name: 'Spelling' },
-      { id: 'literature', name: 'Literature' }
+      { id: 'literature', name: 'Literature' },
+      /* Drill topics: one rule, one answer, twenty times. */
+      { id: 'punctuation',      name: 'Punctuation' },
+      { id: 'apostrophes',      name: 'Apostrophes' },
+      { id: 'homophones',       name: 'Homophones and Confusables' },
+      { id: 'prefixsuffix',     name: 'Prefixes and Suffixes' },
+      { id: 'wordclasses',      name: 'Word Classes' },
+      { id: 'tenses',           name: 'Verb Tenses' },
+      { id: 'plurals',          name: 'Plurals' },
+      { id: 'sentencetypes',    name: 'Sentence Types' },
+      { id: 'synonymsantonyms', name: 'Synonyms and Antonyms' },
+      { id: 'figurative',       name: 'Figurative Language' },
+      { id: 'spellingrules',    name: 'Spelling Rules' }
     ]
   },
   {

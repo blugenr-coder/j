@@ -16,6 +16,7 @@ import { APPLIED_GENERATORS } from './gen-applied.js';
 import { POOL_GENERATORS } from './gen-pools.js';
 import { DRILL_GENERATORS } from './gen-drill.js';
 import { SCIENCE_DRILL_GENERATORS } from './gen-drill-science.js';
+import { ENGLISH_DRILL_GENERATORS } from './gen-drill-english.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
@@ -23,7 +24,7 @@ import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
   ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS,
-  ...SCIENCE_DRILL_GENERATORS
+  ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -67,6 +68,9 @@ const TOPIC_SUBJECT = {
   heatenergy: 'science', moles: 'science', balancing: 'science', atomicstructure: 'science',
   concentration: 'science', gaslaws: 'science', magnification: 'science', radioactivity: 'science',
   grammar: 'ela', vocabulary: 'ela', spelling: 'ela', reading: 'ela', writing: 'ela', literature: 'ela',
+  punctuation: 'ela', apostrophes: 'ela', homophones: 'ela', prefixsuffix: 'ela',
+  wordclasses: 'ela', tenses: 'ela', plurals: 'ela', sentencetypes: 'ela',
+  synonymsantonyms: 'ela', figurative: 'ela', spellingrules: 'ela',
   history: 'social', geography: 'social', civics: 'social', economics: 'social',
   spanish: 'languages', french: 'languages', german: 'languages', esl: 'languages',
   programming: 'cs', algorithms: 'cs', data: 'cs',
@@ -539,6 +543,54 @@ const PLAN = {
   literature:  ['Grade 6', 'College', [
     ['Figurative Language', [0, 1, 7, 8]], ['Narrative and Plot', [5, 6, 9]],
     ['Themes, Mood and Analysis', [3, 4, 10, 2]], 'Mixed Practice']],
+
+  /* -------------------------- English drills --------------------------
+     A column of sentences with one comma missing, twenty plurals, twenty past
+     tenses. These are the sheets a primary classroom prints most, and the
+     library had no way to make one. */
+  punctuation:  ['Grade 1', 'Grade 8', [
+    ['End Marks', [0, 5, 8]], ['Naming the Marks', [1, 7]],
+    ['Commas in Lists', [2, 9]], ['Speech Marks', [3, 1], 'Grade 3'],
+    ['Joining Sentences', [4, 7], 'Grade 4'], ['Capital Letters', [6, 8]],
+    'Mixed Practice']],
+  apostrophes:  ['Grade 2', 'Grade 9', [
+    ['Contractions', [0, 1, 5, 8]], ['Possession', [2, 3, 7]],
+    ['Its and It Is', [4, 9], 'Grade 4'], ['Counting Apostrophes', [6, 0]],
+    'Mixed Practice']],
+  homophones:   ['Grade 2', 'Grade 10', [
+    ['Choosing the Right Word', [0, 1, 5]], ['Correcting Mistakes', [2, 1]],
+    ['What the Word Means', [3, 4]], 'Mixed Practice']],
+  prefixsuffix: ['Grade 3', 'Grade 10', [
+    ['Prefixes', [0, 5, 8]], ['Suffixes', [1, 6, 9]],
+    ['Opposites With Prefixes', [2, 3]], ['Root Words', [3, 4]],
+    ['Adding -ful and -less', [7, 1]], 'Mixed Practice']],
+  wordclasses:  ['Grade 2', 'Grade 10', [
+    ['Naming the Class', [0, 1, 3]], ['Finding Words in a Sentence', [2, 5, 6]],
+    ['Odd One Out', [4, 0]], ['Conjunctions and Pronouns', [7, 8]],
+    ['Adjectives to Adverbs', [9, 3], 'Grade 4'], 'Mixed Practice']],
+  tenses:       ['Grade 2', 'Grade 10', [
+    ['Regular Past Tense', [2, 10]], ['Irregular Past Tense', [0, 4, 6]],
+    ['Past Participles', [1, 8, 9], 'Grade 5'], ['Present and Future', [3, 7]],
+    ['Naming the Tense', [5, 0]], 'Mixed Practice']],
+  plurals:      ['Grade 1', 'Grade 8', [
+    ['Adding -s and -es', [0, 3, 9]], ['Y to IES', [7, 2]],
+    ['Irregular Plurals', [5, 1]], ['Plurals That Do Not Change', [6, 0]],
+    ['Naming the Rule', [2, 4]], ['Counting Plurals', [8, 0]], 'Mixed Practice']],
+  sentencetypes: ['Grade 2', 'Grade 10', [
+    ['Statement, Question, Command', [0, 2, 5]],
+    ['Simple, Compound, Complex', [1, 4], 'Grade 5'],
+    ['Clauses and Joining Words', [3, 7], 'Grade 5'],
+    ['Subjects', [6, 0]], ['Building Sentences', [8, 9]], 'Mixed Practice']],
+  synonymsantonyms: ['Grade 3', 'Grade 11', [
+    ['Synonyms', [0, 2, 5, 9]], ['Antonyms', [1, 3, 6, 8]],
+    ['Telling Them Apart', [4, 0]], ['Word Choice', [7, 2]], 'Mixed Practice']],
+  figurative:   ['Grade 4', 'College', [
+    ['Naming the Device', [0, 3, 9]], ['Definitions', [1, 6]],
+    ['Spotting Examples', [2, 4, 5]], ['Simile and Metaphor', [7, 8]], 'Mixed Practice']],
+  spellingrules: ['Grade 2', 'Grade 10', [
+    ['I Before E', [0, 6]], ['Dropping the E', [1, 8]],
+    ['Doubling the Last Letter', [2, 8]], ['Y to I', [3, 7]],
+    ['Common Misspellings', [4, 5, 9]], 'Mixed Practice']],
 
   /* --------------------------- social studies --------------------------- */
   history:     ['Grade 6', 'College', [
