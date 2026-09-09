@@ -5,7 +5,7 @@
    questions are materialised from its seed the moment the worksheet is opened.
    That keeps a thousand-worksheet library instant to browse. */
 
-import { GRADES } from './catalog.js';
+import { GRADES, topicName as topicLabel } from './catalog.js';
 import { build, seedFrom } from './gen-core.js';
 import { MATH_GENERATORS } from './gen-math.js';
 import { SCIENCE_GENERATORS } from './gen-science.js';
@@ -754,7 +754,9 @@ class Blueprint {
   get seed() { return seedFrom(this.id); }
 
   get summary() {
-    const topicName = this.topic.replace(/-/g, ' ');
+    /* The catalogue's own name, not the id. "moneymath practice" and
+       "fractionops practice" are what a raw id reads like in a sentence. */
+    const topicName = topicLabel(this.topic).toLowerCase();
     if (this.unit) {
       const meta = UNIT_META[this.unit];
       const what = FORMAT_BLURB[this.format] ?? 'A quiz';
