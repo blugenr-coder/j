@@ -14,13 +14,14 @@ import { WORLD_GENERATORS } from './gen-world.js';
 import { LIFE_GENERATORS } from './gen-life.js';
 import { APPLIED_GENERATORS } from './gen-applied.js';
 import { POOL_GENERATORS } from './gen-pools.js';
+import { DRILL_GENERATORS } from './gen-drill.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
 
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
-  ...LIFE_GENERATORS, ...APPLIED_GENERATORS
+  ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -52,6 +53,12 @@ const TOPIC_SUBJECT = {
   method: 'science', cultures: 'social', italian: 'languages', mandarin: 'languages',
   arithmetic: 'math', fractions: 'math', decimals: 'math', percentages: 'math', algebra: 'math',
   geometry: 'math', trigonometry: 'math', statistics: 'math', calculus: 'math',
+  placevalue: 'math', addition: 'math', subtraction: 'math', timestables: 'math',
+  multiplication: 'math', division: 'math', bodmas: 'math', rounding: 'math',
+  factors: 'math', negatives: 'math', fractionops: 'math', decimalops: 'math',
+  percentops: 'math', ratio: 'math', powers: 'math', expressions: 'math',
+  equations: 'math', sequences: 'math', standardform: 'math', surds: 'math',
+  logarithms: 'math', conversions: 'math', timemath: 'math', moneymath: 'math',
   biology: 'science', chemistry: 'science', physics: 'science', earth: 'science', astronomy: 'science',
   grammar: 'ela', vocabulary: 'ela', spelling: 'ela', reading: 'ela', writing: 'ela', literature: 'ela',
   history: 'social', geography: 'social', civics: 'social', economics: 'social',
@@ -286,6 +293,118 @@ const PLAN = {
     ['Differentiation Basics', [0, 1, 3]], ['The Power Rule', [0, 7]],
     ['Gradients and Tangents', [2, 4]], ['Turning Points', [5, 2], 'Grade 12'],
     ['Integration Basics', [6, 0], 'Grade 12'], 'Mixed Practice']],
+
+  /* --------------------------- maths drills ---------------------------
+     Straight computation, one skill per topic. The focuses here are narrow on
+     purpose: "Column Addition" and "Missing Numbers" are two different sheets
+     a teacher goes looking for by name, and pinning each to its own makers is
+     what stops them from being the same sheet with a different heading. */
+  placevalue:  ['Grade 1', 'Grade 6', [
+    ['Value of a Digit', [0, 8]], ['Expanded Form', [1, 2]],
+    ['More and Less', [3, 4, 9]], ['Comparing and Ordering', [5, 6], 'Grade 2'],
+    ['Multiplying by 10 and 100', [7, 8], 'Grade 3'], 'Mixed Practice']],
+  addition:    ['Pre-K', 'Grade 5', [
+    ['Number Bonds to 20', [0, 2, 6]], ['Adding Two-Digit Numbers', [1, 8], 'Grade 1'],
+    ['Column Addition', [3, 5], 'Grade 2'], ['Adding Three Numbers', [4, 0], 'Grade 1'],
+    ['Missing Numbers', [6, 7], 'Grade 1'], ['Adding Large Numbers', [5, 9], 'Grade 4'],
+    'Mixed Practice']],
+  subtraction: ['Pre-K', 'Grade 5', [
+    ['Subtracting Within 20', [0, 1]], ['Two-Digit Subtraction', [2, 8], 'Grade 1'],
+    ['Column Subtraction', [3, 5], 'Grade 2'], ['Subtracting Across Zero', [4, 3], 'Grade 3'],
+    ['Missing Numbers', [6, 7], 'Grade 1'], ['Subtracting Large Numbers', [5, 9], 'Grade 4'],
+    'Mixed Practice']],
+  timestables: ['Grade 1', 'Grade 6', [
+    ['Tables to 10', [0, 1, 7]], ['Tables to 12', [2, 3], 'Grade 2'],
+    ['Dividing by a Table Fact', [4, 0], 'Grade 2'], ['Missing Factors', [5, 6], 'Grade 2'],
+    ['Multiplying Three Numbers', [8, 0], 'Grade 3'], ['Multiples of Ten', [9, 1], 'Grade 2'],
+    'Mixed Practice']],
+  multiplication: ['Grade 2', 'Grade 8', [
+    ['Short Multiplication', [0, 2, 8]], ['Long Multiplication', [1, 5], 'Grade 4'],
+    ['Multiplying by 10, 100 and 1000', [3, 4]], ['Multiplying Three Numbers', [6, 0], 'Grade 3'],
+    ['Missing Factors', [7, 0], 'Grade 3'], ['Squaring', [9, 0], 'Grade 5'],
+    'Mixed Practice']],
+  division:    ['Grade 2', 'Grade 8', [
+    ['Short Division', [0, 1, 9]], ['Long Division', [2, 3], 'Grade 5'],
+    ['Dividing by 10, 100 and 1000', [4, 8]], ['Division With Remainders', [5, 0], 'Grade 3'],
+    ['Missing Numbers', [6, 7], 'Grade 3'], ['Halving', [8, 0]],
+    'Mixed Practice']],
+  bodmas:      ['Grade 4', 'Grade 9', [
+    ['Multiply Before You Add', [0, 2, 7]], ['Brackets First', [1, 4, 8]],
+    ['Division in the Mix', [3, 9]], ['Powers in the Mix', [5, 6], 'Grade 6'],
+    'Mixed Practice']],
+  rounding:    ['Grade 2', 'Grade 10', [
+    ['Rounding to 10, 100 and 1000', [0, 1, 2]], ['Rounding Decimals', [3, 4, 5], 'Grade 4'],
+    ['Significant Figures', [6, 7, 8], 'Grade 6'], ['Numbers Below One', [9, 3], 'Grade 7'],
+    'Mixed Practice']],
+  factors:     ['Grade 3', 'Grade 9', [
+    ['Listing Factors', [0, 5, 6]], ['Highest Common Factor', [1, 9], 'Grade 5'],
+    ['Lowest Common Multiple', [2, 7], 'Grade 5'], ['Primes and Prime Factors', [3, 4], 'Grade 5'],
+    ['Square Numbers', [8, 0], 'Grade 4'], 'Mixed Practice']],
+  negatives:   ['Grade 4', 'Grade 9', [
+    ['Crossing Zero', [0, 1]], ['Adding and Subtracting Negatives', [2, 3, 4]],
+    ['Multiplying Negatives', [5, 6], 'Grade 6'], ['Dividing Negatives', [7, 8], 'Grade 6'],
+    ['Temperature Problems', [9, 10]], 'Mixed Practice']],
+  fractionops: ['Grade 3', 'Grade 9', [
+    ['Same Denominator', [0, 2]], ['Different Denominators', [1, 3], 'Grade 5'],
+    ['Multiplying Fractions', [4, 10], 'Grade 5'], ['Dividing Fractions', [5, 11], 'Grade 6'],
+    ['Simplifying', [6, 0]], ['Fractions of a Quantity', [7, 6]],
+    ['Mixed Numbers', [8, 9], 'Grade 4'], 'Mixed Practice']],
+  decimalops:  ['Grade 3', 'Grade 9', [
+    ['Adding and Subtracting Decimals', [0, 1, 7]], ['Multiplying by 10, 100 and 1000', [2, 3]],
+    ['Multiplying Decimals', [4, 6, 10], 'Grade 5'], ['Dividing Decimals', [5, 9], 'Grade 5'],
+    ['Decimals and Whole Numbers', [8, 11]], 'Mixed Practice']],
+  percentops:  ['Grade 4', 'Grade 11', [
+    ['Percentages of Amounts', [0, 1]], ['Increase and Decrease', [2, 3], 'Grade 6'],
+    ['Percentages, Decimals and Fractions', [4, 5, 6, 7]],
+    ['One Number as a Percentage of Another', [8, 4], 'Grade 6'],
+    ['Reverse Percentages', [9, 11], 'Grade 8'], ['Percentages of Money', [10, 0], 'Grade 5'],
+    'Mixed Practice']],
+  ratio:       ['Grade 5', 'Grade 11', [
+    ['Simplifying Ratios', [0, 1, 7]], ['Sharing in a Ratio', [2, 3, 8]],
+    ['Equivalent Ratios', [4, 5]], ['Ratio and Fractions', [6, 0], 'Grade 6'],
+    ['Scaling Up a Recipe', [9, 5]], 'Mixed Practice']],
+  powers:      ['Grade 5', 'Grade 11', [
+    ['Squares and Cubes', [0, 1]], ['Square and Cube Roots', [2, 3]],
+    ['Index Laws', [4, 5, 7], 'Grade 7'], ['Zero and Unit Powers', [6, 4], 'Grade 8'],
+    ['Combining Powers and Roots', [8, 9, 10], 'Grade 6'], 'Mixed Practice']],
+  expressions: ['Grade 6', 'College', [
+    ['Collecting Like Terms', [0, 1, 2]], ['Expanding Brackets', [3, 4, 5]],
+    ['Factorising', [6, 3], 'Grade 7'], ['Substitution', [7, 8]],
+    ['Multiplying Terms', [9, 0]], ['Index Laws in Algebra', [10, 11], 'Grade 8'],
+    'Mixed Practice']],
+  equations:   ['Grade 5', 'College', [
+    ['One-Step Equations', [0, 1, 2, 3, 4]], ['Two-Step Equations', [5, 6, 10], 'Grade 6'],
+    ['Equations With Brackets', [7, 5], 'Grade 7'], ['Unknowns on Both Sides', [8, 9], 'Grade 7'],
+    ['Negative Solutions', [11, 5], 'Grade 7'], 'Mixed Practice']],
+  sequences:   ['Grade 3', 'Grade 11', [
+    ['Continuing a Sequence', [0, 1, 5]], ['The Term-to-Term Rule', [4, 9]],
+    ['The nth Term', [2, 3, 8], 'Grade 6'], ['Geometric and Square Sequences', [6, 7], 'Grade 5'],
+    'Mixed Practice']],
+  standardform:['Grade 8', 'College', [
+    ['Writing Standard Form', [0, 1, 8]], ['Back to Ordinary Numbers', [2, 3, 6]],
+    ['Multiplying and Dividing', [4, 5]], ['Adding and Squaring', [7, 9]],
+    'Mixed Practice']],
+  surds:       ['Grade 9', 'College', [
+    ['Simplifying Surds', [0, 5, 7]], ['Multiplying and Dividing Surds', [1, 2, 9]],
+    ['Adding and Subtracting Surds', [3, 4]], ['Rationalising the Denominator', [6, 8]],
+    'Mixed Practice']],
+  logarithms:  ['Grade 10', 'Advanced', [
+    ['Evaluating Logarithms', [0, 1, 2, 3]], ['Laws of Logarithms', [4, 5, 8]],
+    ['Solving With Logarithms', [6, 7]], ['Natural Logarithms', [9, 0]],
+    'Mixed Practice']],
+  conversions: ['Grade 2', 'Grade 9', [
+    ['Length', [0, 1, 2, 5, 8]], ['Mass', [3, 6, 11]], ['Capacity', [4, 7]],
+    ['Units of Time', [9, 10]], ['Small Units to Large', [5, 6, 7, 8], 'Grade 4'],
+    'Mixed Practice']],
+  timemath:    ['Grade 2', 'Grade 8', [
+    ['Start and Finish Times', [0, 1]], ['How Long Did It Take?', [2, 7]],
+    ['Hours, Minutes and Seconds', [3, 4, 9]], ['The 24-Hour Clock', [5, 6], 'Grade 4'],
+    ['Days and Weeks', [8, 4]], 'Mixed Practice']],
+  moneymath:   ['Grade 1', 'Grade 8', [
+    ['Adding Amounts', [0, 4]], ['Giving Change', [1, 8]], ['Buying Several', [2, 9]],
+    ['Sharing a Bill', [3, 11]], ['Discounts', [5, 6], 'Grade 5'],
+    ['Budgeting', [7, 11], 'Grade 3'], ['Tax and Totals', [10, 0], 'Grade 6'],
+    'Mixed Practice']],
 
   /* ------------------------------ science ------------------------------ */
   biology:     ['Grade 6', 'College', [

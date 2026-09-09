@@ -70,8 +70,11 @@ const ruleOut = (correct, wrongs, because) => {
   const wrong = farthestFrom(correct, wrongs ?? []);
   if (wrong == null) return undefined;
   /* Options that differ only in case and punctuation cannot be ruled out by
-     quoting one of them: they read the same. */
-  if (bare(wrong) === bare(correct)) return undefined;
+     quoting one of them: they read the same. Nor can one that contains the
+     answer inside it — "a gross profit margin" hands over "gross profit
+     margin", which is the answer, printed in the hint. */
+  const w = bare(wrong), c = bare(correct);
+  if (w === c || w.includes(c) || c.includes(w)) return undefined;
   return `You can rule out “${clip(wrong)}”${because ? ` — ${because}` : ''}.`;
 };
 
@@ -310,7 +313,14 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       if (!pool.length) return null;
       const outsider = pick(r, pool);
       const mine = sample(r, terms, 3);
-      if (mine.includes(outsider)) return null;
+      /* "gross profit margin" against "a gross profit margin" is not an odd
+         one out, it is a typo with four options. */
+      const key = bare(outsider);
+      if (mine.some(m => bare(m) === key || bare(m).includes(key) || key.includes(bare(m)))) return null;
+      /* Nor is "income" a fair outsider for a unit called Income Statements:
+         the question names the unit, so the answer is printed in the stem. */
+      const unitWords = new Set(bare(name).split(' ').filter(w => w.length >= 4));
+      if (key.split(' ').some(w => w.length >= 4 && unitWords.has(w))) return null;
       return choice(r, {
         prompt: early ? `Three of these go together. Which one does not?`
                       : `Three of these belong to ${lower(name)}. Which one does not?`,

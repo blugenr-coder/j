@@ -55,7 +55,34 @@ export const SUBJECTS = [
       { id: 'statistics',   name: 'Statistics' },
       { id: 'calculus',     name: 'Calculus' },
       { id: 'measurement',  name: 'Measurement and Units' },
-      { id: 'discrete',     name: 'Discrete Mathematics' }
+      { id: 'discrete',     name: 'Discrete Mathematics' },
+      /* Drill topics: a column of operations and a space to write in. These
+         are deliberately narrow — a teacher looking for twenty subtractions
+         should not have to open a sheet called "Arithmetic" and hope. */
+      { id: 'placevalue',   name: 'Place Value' },
+      { id: 'addition',     name: 'Addition' },
+      { id: 'subtraction',  name: 'Subtraction' },
+      { id: 'timestables',  name: 'Times Tables' },
+      { id: 'multiplication', name: 'Multiplication' },
+      { id: 'division',     name: 'Division' },
+      { id: 'bodmas',       name: 'Order of Operations' },
+      { id: 'rounding',     name: 'Rounding and Estimating' },
+      { id: 'factors',      name: 'Factors, Multiples and Primes' },
+      { id: 'negatives',    name: 'Negative Numbers' },
+      { id: 'fractionops',  name: 'Fraction Arithmetic' },
+      { id: 'decimalops',   name: 'Decimal Arithmetic' },
+      { id: 'percentops',   name: 'Percentage Calculations' },
+      { id: 'ratio',        name: 'Ratio and Proportion' },
+      { id: 'powers',       name: 'Powers and Roots' },
+      { id: 'expressions',  name: 'Algebraic Expressions' },
+      { id: 'equations',    name: 'Solving Equations' },
+      { id: 'sequences',    name: 'Sequences' },
+      { id: 'standardform', name: 'Standard Form' },
+      { id: 'surds',        name: 'Surds' },
+      { id: 'logarithms',   name: 'Logarithms' },
+      { id: 'conversions',  name: 'Unit Conversions' },
+      { id: 'timemath',     name: 'Time Calculations' },
+      { id: 'moneymath',    name: 'Money Calculations' }
     ]
   },
   {
