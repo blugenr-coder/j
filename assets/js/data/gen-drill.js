@@ -21,49 +21,52 @@
    to write: divisions come out exact, subtractions stay positive where the
    level says they should, and a fraction is reduced before it is asked for. */
 
-import { int, pick, mathQ, blankQ, gcd, simplify, frac, num, money } from './gen-core.js';
+import {
+  int, pick, mathQ, blankQ, gcd, simplify, frac, num, money,
+  WORK_WAYS, ADD_WAYS, SUB_WAYS, MUL_WAYS, DIV_WAYS,
+  SOLVE_WAYS, SIMPLIFY_WAYS, EVAL_WAYS, SIMPLEST_WAYS,
+  PEOPLE, THINGS, HOLDERS
+} from './gen-core.js';
 
 /* An instruction, kept to a small vocabulary on purpose: these strings appear
    on hundreds of thousands of sheets, so every one of them is worth
    translating, and a dozen is a translatable set where fifty is not. */
-const WORK = 'Work it out.';
-const SOLVE = 'Solve for x.';
-const SIMPLIFY = 'Simplify.';
-const EVALUATE = 'Evaluate.';
-const SIMPLEST = 'Write the answer in its simplest form.';
 
 /* A minus sign, not a hyphen. Marking treats the two as equal, so this is only
    about how the sheet reads — which is reason enough. */
 const sn = v => String(v).replace('-', '−');
 
+/* The shared instruction phrasings and everyday nouns live in gen-core.js,
+   because gen-math.js needs exactly the same ones and two copies would drift. */
+
 /* ============================== ADDITION ============================== */
 export const addition = [
   (r) => { const a = int(r, 1, 9), b = int(r, 1, 9);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Count on from the larger number.', explanation: `${a} + ${b} = ${a + b}.` }); },
 
   (r) => { const a = int(r, 10, 49), b = int(r, 10, 49);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Add the tens, then the ones.', explanation: `${a} + ${b} = ${a + b}.` }); },
 
   /* Deliberately crossing ten, which is the step that actually needs teaching. */
   (r) => { const a = int(r, 2, 9), b = int(r, 11 - a, 9);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Make ten first, then add what is left.',
         explanation: `${a} + ${b} = ${a + b}. Bridging ten: ${a} + ${10 - a} = 10, then + ${b - (10 - a)}.` }); },
 
   (r) => { const a = int(r, 100, 899), b = int(r, 100, 899);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Line up the columns and carry where a column passes nine.',
         explanation: `${a} + ${b} = ${a + b}.` }); },
 
   (r) => { const a = int(r, 3, 9), b = int(r, 3, 9), c = int(r, 3, 9);
-    return mathQ(WORK, `${a} + ${b} + ${c} = ?`, a + b + c,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} + ${c} = ?`, a + b + c,
       { hint: 'Look for a pair that makes ten and add that pair first.',
         explanation: `${a} + ${b} + ${c} = ${a + b + c}.` }); },
 
   (r) => { const a = int(r, 1000, 8999), b = int(r, 1000, 8999);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Ones, tens, hundreds, thousands — one column at a time.',
         explanation: `${a} + ${b} = ${a + b}.` }); },
 
@@ -79,46 +82,76 @@ export const addition = [
         explanation: `${total} − ${b} = ${a}.` }); },
 
   (r) => { const a = int(r, 11, 49) * 10, b = int(r, 11, 49) * 10;
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Both end in zero, so add the tens and put the zero back.',
         explanation: `${a} + ${b} = ${a + b}.` }); },
 
   (r) => { const a = int(r, 10000, 89999), b = int(r, 10000, 89999);
-    return mathQ(WORK, `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: 'Column addition. Keep the digits in line and carry as you go.',
-        explanation: `${a} + ${b} = ${a + b}.` }); }
+        explanation: `${a} + ${b} = ${a + b}.` }); },
+
+  /* Word-framed, but still one operation and one number to write. Two lists
+     of everyday nouns turn one maker into a few hundred openings. */
+  (r) => { const a = int(r, 11, 89), b = int(r, 11, 89), thing = pick(r, THINGS), who = pick(r, PEOPLE);
+    return blankQ(`${who} has ${a} ${thing} and is given ${b} more. How many ${thing} are there now?`, a + b,
+      { hint: 'Put the two amounts together.', explanation: `${a} + ${b} = ${a + b}.` }); },
+
+  (r) => { const a = int(r, 21, 79);
+    return mathQ('Complete the number bond to 100.', `${a} + ? = 100`, 100 - a,
+      { hint: 'Count on to the next ten, then on to 100.',
+        explanation: `${a} + ${100 - a} = 100.` }); },
+
+  (r) => { const a = int(r, 11, 49), b = int(r, 11, 49), c = int(r, 11, 49);
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} + ${c} = ?`, a + b + c,
+      { hint: 'Add the first two, then bring in the third.',
+        explanation: `${a} + ${b} = ${a + b}, and ${a + b} + ${c} = ${a + b + c}.` }); },
+
+  (r) => { const a = int(r, 12, 60), near = r() < 0.5;
+    return blankQ(near ? `What is ${a} + ${a + 1}?` : `Double ${a}.`, near ? a + a + 1 : a + a,
+      { hint: near ? 'Double it, then add one more.' : 'Add the number to itself.',
+        explanation: near ? `${a} + ${a} = ${a + a}, and one more is ${a + a + 1}.` : `${a} + ${a} = ${a + a}.` }); },
+
+  (r) => { const a = int(r, 5, 40), b = int(r, 5, 40), c = int(r, 5, 40), d = int(r, 5, 40);
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} + ${c} + ${d} = ?`, a + b + c + d,
+      { hint: 'Look for a pair that makes a round number and add those two first.',
+        explanation: `The total is ${a + b + c + d}.` }); },
+
+  (r) => { const a = int(r, 20, 400), b = int(r, 6, 90);
+    return blankQ(`What is ${b} more than ${a}?`, a + b,
+      { hint: '"More than" means add.', explanation: `${a} + ${b} = ${a + b}.` }); }
 ];
 
 /* ============================= SUBTRACTION ============================= */
 export const subtraction = [
   (r) => { const b = int(r, 1, 9), a = b + int(r, 0, 9 - b);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Count back from the first number.', explanation: `${a} − ${b} = ${a - b}.` }); },
 
   (r) => { const b = int(r, 10, 40), a = b + int(r, 5, 55);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Take away the tens, then the ones.', explanation: `${a} − ${b} = ${a - b}.` }); },
 
   /* Forced to need an exchange: the ones digit of the smaller number is bigger. */
   (r) => { const ao = int(r, 0, 4), bo = int(r, ao + 1, 9);
     const a = int(r, 3, 9) * 10 + ao, b = int(r, 1, 2) * 10 + bo;
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'The ones will not go — exchange a ten first.',
         explanation: `${a} − ${b} = ${a - b}.` }); },
 
   (r) => { const b = int(r, 100, 400), a = b + int(r, 50, 499);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Line up the columns and exchange wherever the top digit is smaller.',
         explanation: `${a} − ${b} = ${a - b}.` }); },
 
   /* Subtracting from a power of ten, where every column needs an exchange. */
   (r) => { const a = pick(r, [100, 200, 500, 1000]), b = int(r, 11, a - 11);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Every column needs an exchange. Counting up from the smaller number is quicker.',
         explanation: `${a} − ${b} = ${a - b}.` }); },
 
   (r) => { const b = int(r, 1000, 4000), a = b + int(r, 500, 4999);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Column subtraction, right to left.', explanation: `${a} − ${b} = ${a - b}.` }); },
 
   (r) => { const a = int(r, 20, 90), diff = int(r, 5, 19);
@@ -132,38 +165,66 @@ export const subtraction = [
         explanation: `${result} + ${b} = ${b + result}.` }); },
 
   (r) => { const a = int(r, 11, 49) * 10, b = int(r, 1, 10) * 10;
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Both end in zero: subtract the tens and put the zero back.',
         explanation: `${a} − ${b} = ${a - b}.` }); },
 
   (r) => { const b = int(r, 10000, 40000), a = b + int(r, 5000, 49999);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Keep the columns in line; exchange where the top digit is smaller.',
-        explanation: `${a} − ${b} = ${a - b}.` }); }
+        explanation: `${a} − ${b} = ${a - b}.` }); },
+
+  (r) => { const a = int(r, 20, 88), b = int(r, 5, a - 1), thing = pick(r, THINGS), who = pick(r, PEOPLE);
+    return blankQ(`${who} had ${a} ${thing} and gave ${b} away. How many are left?`, a - b,
+      { hint: 'Take the second number off the first.', explanation: `${a} − ${b} = ${a - b}.` }); },
+
+  (r) => { const a = int(r, 12, 88);
+    return mathQ('Complete the number bond to 100.', `100 − ${a} = ?`, 100 - a,
+      { hint: 'Count on from the number up to 100.', explanation: `${a} + ${100 - a} = 100.` }); },
+
+  (r) => { const b = int(r, 5, 40), c = int(r, 5, 40), a = int(r, b + c + 1, b + c + 60);
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} − ${c} = ?`, a - b - c,
+      { hint: 'Take them off one at a time, left to right.',
+        explanation: `${a} − ${b} = ${a - b}, and ${a - b} − ${c} = ${a - b - c}.` }); },
+
+  (r) => { const a = int(r, 40, 300), b = int(r, 5, 39);
+    return blankQ(`What is ${b} less than ${a}?`, a - b,
+      { hint: '"Less than" means subtract.', explanation: `${a} − ${b} = ${a - b}.` }); },
+
+  (r) => { const x = int(r, 20, 400), y = int(r, 20, 400);
+    const hi = Math.max(x, y), lo = Math.min(x, y);
+    return blankQ(`Find the difference between ${x} and ${y}.`, hi - lo,
+      { hint: 'Take the smaller number from the larger one.',
+        explanation: `${hi} − ${lo} = ${hi - lo}.` }); },
+
+  (r) => { const k = pick(r, [100, 200, 500, 1000]), b = int(r, 11, k - 11);
+    return mathQ(pick(r, SUB_WAYS), `${k} − ${b} = ?`, k - b,
+      { hint: 'Count on from the smaller number to the round one.',
+        explanation: `${k} − ${b} = ${k - b}.` }); }
 ];
 
 /* ============================ TIMES TABLES ============================ */
 export const timestables = [
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: `Count in ${a}s, ${b} times.`, explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = pick(r, [2, 5, 10]), b = int(r, 2, 12);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: `The ${a} times table.`, explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = pick(r, [3, 4, 6, 8]), b = int(r, 2, 12);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: `The ${a} times table.`, explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = pick(r, [7, 9, 11, 12]), b = int(r, 2, 12);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: `The ${a} times table — the one worth over-learning.`,
         explanation: `${a} × ${b} = ${a * b}.` }); },
 
   /* The division fact from the same pair, which is what makes a table usable. */
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${a * b} ÷ ${a} = ?`, b,
+    return mathQ(pick(r, MUL_WAYS), `${a * b} ÷ ${a} = ?`, b,
       { hint: `How many ${a}s make ${a * b}?`, explanation: `${a} × ${b} = ${a * b}, so ${a * b} ÷ ${a} = ${b}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
@@ -181,50 +242,78 @@ export const timestables = [
       { hint: 'A number multiplied by itself.', explanation: `${a} × ${a} = ${a * a}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12), c = int(r, 2, 5);
-    return mathQ(WORK, `${a} × ${b} × ${c} = ?`, a * b * c,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} × ${c} = ?`, a * b * c,
       { hint: 'Multiply two of them first, then multiply by the third.',
         explanation: `${a} × ${b} = ${a * b}, and ${a * b} × ${c} = ${a * b * c}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${a * 10} × ${b} = ?`, a * 10 * b,
+    return mathQ(pick(r, MUL_WAYS), `${a * 10} × ${b} = ?`, a * 10 * b,
       { hint: `${a} × ${b}, then multiply by ten.`,
-        explanation: `${a} × ${b} = ${a * b}, so ${a * 10} × ${b} = ${a * 10 * b}.` }); }
+        explanation: `${a} × ${b} = ${a * b}, so ${a * 10} × ${b} = ${a * 10 * b}.` }); },
+
+  (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
+    return blankQ(`What is ${a} multiplied by ${b}?`, a * b,
+      { hint: `Count on in ${a}s, ${b} times.`, explanation: `${a} × ${b} = ${a * b}.` }); },
+
+  (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
+    return blankQ(`What are ${b} lots of ${a}?`, a * b,
+      { hint: `That is ${a} added ${b} times.`, explanation: `${a} × ${b} = ${a * b}.` }); },
+
+  (r) => { const per = int(r, 2, 12), n = int(r, 2, 12), thing = pick(r, THINGS), holder = pick(r, HOLDERS);
+    return blankQ(`There are ${n} ${holder} with ${per} ${thing} in each. How many ${thing} altogether?`,
+      per * n,
+      { hint: 'Multiply how many are in one by how many there are.',
+        explanation: `${per} × ${n} = ${per * n}.` }); },
+
+  (r) => { const a = int(r, 2, 12);
+    return blankQ(`Count in ${a}s: ${a}, ${2 * a}, ${3 * a}, ?`, 4 * a,
+      { hint: `Add another ${a}.`, explanation: `${3 * a} + ${a} = ${4 * a}.` }); },
+
+  (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
+    return blankQ(`If ${a} × ${b} = ${a * b}, what is ${a * b} ÷ ${a}?`, b,
+      { hint: 'Division undoes multiplication.',
+        explanation: `${a * b} ÷ ${a} = ${b}, the other number in the pair.` }); },
+
+  (r) => { const a = pick(r, [11, 12]), b = int(r, 2, 12);
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
+      { hint: a === 11 ? 'Ten of them, plus one more.' : 'Ten of them, plus two more.',
+        explanation: `${10 * b} + ${(a - 10) * b} = ${a * b}.` }); }
 ];
 
 /* =========================== MULTIPLICATION =========================== */
 export const multiplication = [
   (r) => { const a = int(r, 12, 99), b = int(r, 2, 9);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: 'Multiply the ones, then the tens, and add the two results.',
         explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = int(r, 11, 99), b = int(r, 11, 99);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: 'Long multiplication: multiply by the ones, then by the tens, then add.',
         explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = int(r, 101, 999), b = int(r, 2, 9);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: 'One column at a time, carrying as you go.',
         explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = int(r, 2, 99), p = pick(r, [10, 100, 1000]);
-    return mathQ(WORK, `${a} × ${p} = ?`, a * p,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${p} = ?`, a * p,
       { hint: 'Multiplying by a power of ten shifts every digit left.',
         explanation: `${a} × ${p} = ${a * p}.` }); },
 
   (r) => { const a = int(r, 11, 49), b = pick(r, [20, 30, 40, 50, 60]);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: `Multiply by ${b / 10}, then by ten.`,
         explanation: `${a} × ${b / 10} = ${a * (b / 10)}, so ${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = int(r, 101, 999), b = int(r, 11, 49);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: 'Long multiplication. Remember the placeholder zero on the second row.',
         explanation: `${a} × ${b} = ${a * b}.` }); },
 
   (r) => { const a = int(r, 3, 15), b = int(r, 3, 15), c = int(r, 2, 6);
-    return mathQ(WORK, `${a} × ${b} × ${c} = ?`, a * b * c,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} × ${c} = ?`, a * b * c,
       { hint: 'Any order you like — pick the easiest pair first.',
         explanation: `${a} × ${b} = ${a * b}, and ${a * b} × ${c} = ${a * b * c}.` }); },
 
@@ -234,14 +323,43 @@ export const multiplication = [
         explanation: `${b * q} ÷ ${b} = ${q}.` }); },
 
   (r) => { const a = int(r, 21, 99), b = int(r, 3, 9);
-    return mathQ(WORK, `${a} × ${b} = ?`, a * b,
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
       { hint: 'Split the first number into tens and ones, multiply each, then add.',
         explanation: `${Math.floor(a / 10) * 10} × ${b} = ${Math.floor(a / 10) * 10 * b}, `
           + `${a % 10} × ${b} = ${(a % 10) * b}, and together ${a * b}.` }); },
 
   (r) => { const a = int(r, 11, 30);
     return mathQ('Write the square number.', `${a}² = ?`, a * a,
-      { hint: 'The number multiplied by itself.', explanation: `${a} × ${a} = ${a * a}.` }); }
+      { hint: 'The number multiplied by itself.', explanation: `${a} × ${a} = ${a * a}.` }); },
+
+  (r) => { const per = int(r, 3, 12), rows = int(r, 3, 12), thing = pick(r, THINGS);
+    return blankQ(`${rows} rows of ${per} ${thing}. How many altogether?`, per * rows,
+      { hint: 'Multiply the number in a row by the number of rows.',
+        explanation: `${per} × ${rows} = ${per * rows}.` }); },
+
+  (r) => { const a = int(r, 6, 40);
+    return blankQ(`Double ${a}, then double the answer.`, a * 4,
+      { hint: 'Doubling twice is the same as multiplying by four.',
+        explanation: `${a} × 2 = ${a * 2}, and ${a * 2} × 2 = ${a * 4}.` }); },
+
+  (r) => { const a = int(r, 4, 40), k = pick(r, [5, 25, 50]);
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${k} = ?`, a * k,
+      { hint: `${k} is ${100 / k === Math.round(100 / k) ? `100 ÷ ${100 / k}` : 'a friendly number'}, so multiply by 100 and divide.`,
+        explanation: `${a} × 100 = ${a * 100}, and ${a * 100} ÷ ${100 / k} = ${a * k}.` }); },
+
+  (r) => { const w = int(r, 3, 25), h = int(r, 3, 25);
+    return blankQ(`A rectangle is ${w} cm by ${h} cm. What is its area, in square centimetres?`, w * h,
+      { hint: 'Area is one side times the other.', explanation: `${w} × ${h} = ${w * h}.` }); },
+
+  (r) => { const a = int(r, 12, 60), b = int(r, 11, 19);
+    return mathQ(pick(r, MUL_WAYS), `${a} × ${b} = ?`, a * b,
+      { hint: `Split it: ${a} × 10 and then ${a} × ${b - 10}.`,
+        explanation: `${a * 10} + ${a * (b - 10)} = ${a * b}.` }); },
+
+  (r) => { const a = int(r, 3, 12), b = int(r, 3, 12);
+    return blankQ(`Multiply ${a} by ${b}, then double the answer.`, 2 * a * b,
+      { hint: 'Do the multiplication first.',
+        explanation: `${a} × ${b} = ${a * b}, and ${a * b} × 2 = ${2 * a * b}.` }); }
 ];
 
 /* ============================== DIVISION ============================== */
@@ -250,26 +368,26 @@ export const division = [
      a remainder it was never taught to write is a sheet that gets marked
      wrong for the wrong reason. Remainders get their own maker, labelled. */
   (r) => { const b = int(r, 2, 12), q = int(r, 2, 12);
-    return mathQ(WORK, `${b * q} ÷ ${b} = ?`, q,
+    return mathQ(pick(r, DIV_WAYS), `${b * q} ÷ ${b} = ?`, q,
       { hint: `How many ${b}s fit into ${b * q}?`, explanation: `${b} × ${q} = ${b * q}.` }); },
 
   (r) => { const b = int(r, 2, 9), q = int(r, 11, 99);
-    return mathQ(WORK, `${b * q} ÷ ${b} = ?`, q,
+    return mathQ(pick(r, DIV_WAYS), `${b * q} ÷ ${b} = ?`, q,
       { hint: 'Short division: work left to right, carrying the remainder along.',
         explanation: `${b} × ${q} = ${b * q}.` }); },
 
   (r) => { const b = int(r, 3, 12), q = int(r, 100, 800);
-    return mathQ(WORK, `${b * q} ÷ ${b} = ?`, q,
+    return mathQ(pick(r, DIV_WAYS), `${b * q} ÷ ${b} = ?`, q,
       { hint: 'Short division, one digit at a time.',
         explanation: `${b} × ${q} = ${b * q}.` }); },
 
   (r) => { const b = int(r, 11, 40), q = int(r, 11, 90);
-    return mathQ(WORK, `${b * q} ÷ ${b} = ?`, q,
+    return mathQ(pick(r, DIV_WAYS), `${b * q} ÷ ${b} = ?`, q,
       { hint: 'Long division. Estimate how many times it goes, then subtract.',
         explanation: `${b} × ${q} = ${b * q}.` }); },
 
   (r) => { const a = int(r, 2, 99), p = pick(r, [10, 100]);
-    return mathQ(WORK, `${a * p} ÷ ${p} = ?`, a,
+    return mathQ(pick(r, DIV_WAYS), `${a * p} ÷ ${p} = ?`, a,
       { hint: 'Dividing by a power of ten shifts every digit right.',
         explanation: `${a * p} ÷ ${p} = ${a}.` }); },
 
@@ -298,54 +416,83 @@ export const division = [
   (r) => { const q = int(r, 3, 40);
     return mathQ('Find a quarter.', `${q * 4} ÷ 4 = ?`, q,
       { hint: 'Halve it, then halve it again.',
-        explanation: `${q * 4} ÷ 2 = ${q * 2}, and ${q * 2} ÷ 2 = ${q}.` }); }
+        explanation: `${q * 4} ÷ 2 = ${q * 2}, and ${q * 2} ÷ 2 = ${q}.` }); },
+
+  (r) => { const each = int(r, 2, 12), people = int(r, 2, 9), thing = pick(r, THINGS), who = pick(r, PEOPLE);
+    return blankQ(`${who} shares ${each * people} ${thing} equally between ${people} people. How many does each person get?`,
+      each,
+      { hint: `Divide by ${people}.`, explanation: `${each * people} ÷ ${people} = ${each}.` }); },
+
+  (r) => { const q = int(r, 3, 25);
+    return blankQ(`What is a quarter of ${4 * q}?`, q,
+      { hint: 'Halve it, then halve it again.',
+        explanation: `${4 * q} ÷ 2 = ${2 * q}, and ${2 * q} ÷ 2 = ${q}.` }); },
+
+  (r) => { const b = int(r, 2, 12), q = int(r, 2, 20);
+    return blankQ(`How many ${b}s are there in ${b * q}?`, q,
+      { hint: `Count up in ${b}s, or divide.`, explanation: `${b * q} ÷ ${b} = ${q}.` }); },
+
+  (r) => { const k = pick(r, [5, 25, 50]), q = int(r, 2, 20);
+    return mathQ(pick(r, DIV_WAYS), `${k * q} ÷ ${k} = ?`, q,
+      { hint: `There are ${100 / k} lots of ${k} in every 100.`,
+        explanation: `${k * q} ÷ ${k} = ${q}.` }); },
+
+  (r) => { const b = int(r, 2, 6), c = int(r, 2, 6), q = int(r, 2, 12);
+    return mathQ(pick(r, DIV_WAYS), `${b * c * q} ÷ ${b} ÷ ${c} = ?`, q,
+      { hint: 'Divide by the first number, then by the second.',
+        explanation: `${b * c * q} ÷ ${b} = ${c * q}, and ${c * q} ÷ ${c} = ${q}.` }); },
+
+  (r) => { const a = int(r, 3, 12), b = int(r, 3, 12);
+    return blankQ(`${a} × ${b} = ${a * b}. Use this to work out ${a * b} ÷ ${b}.`, a,
+      { hint: 'The division undoes the multiplication you have been given.',
+        explanation: `${a * b} ÷ ${b} = ${a}.` }); }
 ];
 
 /* ========================== NEGATIVE NUMBERS ========================== */
 export const negatives = [
   (r) => { const a = int(r, 1, 12), b = int(r, a + 1, 20);
-    return mathQ(WORK, `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, WORK_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'The answer goes below zero. Count back past it.',
         explanation: `${a} − ${b} = ${sn(a - b)}.` }); },
 
   (r) => { const a = -int(r, 2, 15), b = int(r, 2, 15);
-    return mathQ(WORK, `${sn(a)} + ${b} = ?`, a + b,
+    return mathQ(pick(r, WORK_WAYS), `${sn(a)} + ${b} = ?`, a + b,
       { hint: 'Start at the negative number and count up.',
         explanation: `${sn(a)} + ${b} = ${sn(a + b)}.` }); },
 
   (r) => { const a = -int(r, 2, 15), b = int(r, 2, 15);
-    return mathQ(WORK, `${sn(a)} − ${b} = ?`, a - b,
+    return mathQ(pick(r, WORK_WAYS), `${sn(a)} − ${b} = ?`, a - b,
       { hint: 'Going further down from a negative number.',
         explanation: `${sn(a)} − ${b} = ${sn(a - b)}.` }); },
 
   /* Two signs together, which is where the marks are actually lost. */
   (r) => { const a = int(r, 2, 15), b = int(r, 2, 15);
-    return mathQ(WORK, `${a} − (−${b}) = ?`, a + b,
+    return mathQ(pick(r, WORK_WAYS), `${a} − (−${b}) = ?`, a + b,
       { hint: 'Subtracting a negative is the same as adding.',
         explanation: `${a} − (−${b}) = ${a} + ${b} = ${a + b}.` }); },
 
   (r) => { const a = int(r, 2, 15), b = int(r, 2, 15);
-    return mathQ(WORK, `${a} + (−${b}) = ?`, a - b,
+    return mathQ(pick(r, WORK_WAYS), `${a} + (−${b}) = ?`, a - b,
       { hint: 'Adding a negative is the same as subtracting.',
         explanation: `${a} + (−${b}) = ${a} − ${b} = ${sn(a - b)}.` }); },
 
   (r) => { const a = -int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${sn(a)} × ${b} = ?`, a * b,
+    return mathQ(pick(r, WORK_WAYS), `${sn(a)} × ${b} = ?`, a * b,
       { hint: 'One negative and one positive give a negative.',
         explanation: `${sn(a)} × ${b} = ${sn(a * b)}.` }); },
 
   (r) => { const a = -int(r, 2, 12), b = -int(r, 2, 12);
-    return mathQ(WORK, `${sn(a)} × (${sn(b)}) = ?`, a * b,
+    return mathQ(pick(r, WORK_WAYS), `${sn(a)} × (${sn(b)}) = ?`, a * b,
       { hint: 'Two negatives multiply to a positive.',
         explanation: `${sn(a)} × (${sn(b)}) = ${a * b}.` }); },
 
   (r) => { const q = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${sn(-b * q)} ÷ ${b} = ?`, -q,
+    return mathQ(pick(r, WORK_WAYS), `${sn(-b * q)} ÷ ${b} = ?`, -q,
       { hint: 'A negative divided by a positive is negative.',
         explanation: `${sn(-b * q)} ÷ ${b} = ${sn(-q)}.` }); },
 
   (r) => { const q = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(WORK, `${sn(-b * q)} ÷ (−${b}) = ?`, q,
+    return mathQ(pick(r, WORK_WAYS), `${sn(-b * q)} ÷ (−${b}) = ?`, q,
       { hint: 'Two negatives divide to a positive.',
         explanation: `${sn(-b * q)} ÷ (−${b}) = ${q}.` }); },
 
@@ -367,11 +514,11 @@ export const negatives = [
 /* =========================== POWERS AND ROOTS =========================== */
 export const powers = [
   (r) => { const a = int(r, 2, 15);
-    return mathQ(EVALUATE, `${a}² = ?`, a * a,
+    return mathQ(pick(r, EVAL_WAYS), `${a}² = ?`, a * a,
       { hint: 'The number multiplied by itself.', explanation: `${a} × ${a} = ${a * a}.` }); },
 
   (r) => { const a = int(r, 2, 10);
-    return mathQ(EVALUATE, `${a}³ = ?`, a * a * a,
+    return mathQ(pick(r, EVAL_WAYS), `${a}³ = ?`, a * a * a,
       { hint: 'The number multiplied by itself three times.',
         explanation: `${a} × ${a} × ${a} = ${a * a * a}.` }); },
 
@@ -386,36 +533,36 @@ export const powers = [
         explanation: `${a}³ = ${a * a * a}.` }); },
 
   (r) => { const a = int(r, 2, 5), m = int(r, 2, 5), n = int(r, 2, 4);
-    return mathQ(EVALUATE, `${a}^${m} × ${a}^${n} = ?`, Math.pow(a, m + n),
+    return mathQ(pick(r, EVAL_WAYS), `${a}^${m} × ${a}^${n} = ?`, Math.pow(a, m + n),
       { hint: 'Same base, so add the powers.',
         explanation: `${a}^${m} × ${a}^${n} = ${a}^${m + n} = ${Math.pow(a, m + n)}.` }); },
 
   (r) => { const a = int(r, 2, 5), n = int(r, 2, 4), m = n + int(r, 1, 3);
-    return mathQ(EVALUATE, `${a}^${m} ÷ ${a}^${n} = ?`, Math.pow(a, m - n),
+    return mathQ(pick(r, EVAL_WAYS), `${a}^${m} ÷ ${a}^${n} = ?`, Math.pow(a, m - n),
       { hint: 'Same base, so subtract the powers.',
         explanation: `${a}^${m} ÷ ${a}^${n} = ${a}^${m - n} = ${Math.pow(a, m - n)}.` }); },
 
   (r) => { const a = int(r, 2, 6);
-    return mathQ(EVALUATE, `${a}^0 = ?`, 1,
+    return mathQ(pick(r, EVAL_WAYS), `${a}^0 = ?`, 1,
       { hint: 'Anything to the power zero.', explanation: `Any non-zero number to the power 0 is 1.` }); },
 
   (r) => { const a = int(r, 2, 4), m = int(r, 2, 3), n = int(r, 2, 3);
-    return mathQ(EVALUATE, `(${a}^${m})^${n} = ?`, Math.pow(a, m * n),
+    return mathQ(pick(r, EVAL_WAYS), `(${a}^${m})^${n} = ?`, Math.pow(a, m * n),
       { hint: 'A power raised to a power: multiply the indices.',
         explanation: `(${a}^${m})^${n} = ${a}^${m * n} = ${Math.pow(a, m * n)}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(EVALUATE, `${a}² + ${b}² = ?`, a * a + b * b,
+    return mathQ(pick(r, EVAL_WAYS), `${a}² + ${b}² = ?`, a * a + b * b,
       { hint: 'Square each one first, then add.',
         explanation: `${a * a} + ${b * b} = ${a * a + b * b}.` }); },
 
   (r) => { const a = int(r, 3, 15), b = int(r, 2, a - 1);
-    return mathQ(EVALUATE, `${a}² − ${b}² = ?`, a * a - b * b,
+    return mathQ(pick(r, EVAL_WAYS), `${a}² − ${b}² = ?`, a * a - b * b,
       { hint: 'Square each one first, then subtract.',
         explanation: `${a * a} − ${b * b} = ${a * a - b * b}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 12);
-    return mathQ(EVALUATE, `√${a * a} + √${b * b} = ?`, a + b,
+    return mathQ(pick(r, EVAL_WAYS), `√${a * a} + √${b * b} = ?`, a + b,
       { hint: 'Take each root first, then add.',
         explanation: `${a} + ${b} = ${a + b}.` }); }
 ];
@@ -425,52 +572,52 @@ export const powers = [
    `3 + 2 × 4` is a real question; `3 + 2 × 1` teaches nothing. */
 export const bodmas = [
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), c = int(r, 2, 9);
-    return mathQ(WORK, `${a} + ${b} × ${c} = ?`, a + b * c,
+    return mathQ(pick(r, WORK_WAYS), `${a} + ${b} × ${c} = ?`, a + b * c,
       { hint: 'Multiply before you add.',
         explanation: `${b} × ${c} = ${b * c}, then ${a} + ${b * c} = ${a + b * c}.` }); },
 
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), c = int(r, 2, 9);
-    return mathQ(WORK, `(${a} + ${b}) × ${c} = ?`, (a + b) * c,
+    return mathQ(pick(r, WORK_WAYS), `(${a} + ${b}) × ${c} = ?`, (a + b) * c,
       { hint: 'The brackets go first.',
         explanation: `${a} + ${b} = ${a + b}, then ${a + b} × ${c} = ${(a + b) * c}.` }); },
 
   (r) => { const b = int(r, 2, 9), c = int(r, 2, 6), a = int(r, b * c + 1, b * c + 20);
-    return mathQ(WORK, `${a} − ${b} × ${c} = ?`, a - b * c,
+    return mathQ(pick(r, WORK_WAYS), `${a} − ${b} × ${c} = ?`, a - b * c,
       { hint: 'Multiply first, then subtract.',
         explanation: `${b} × ${c} = ${b * c}, then ${a} − ${b * c} = ${a - b * c}.` }); },
 
   (r) => { const c = int(r, 2, 9), q = int(r, 2, 9), a = int(r, 2, 20);
-    return mathQ(WORK, `${a} + ${c * q} ÷ ${c} = ?`, a + q,
+    return mathQ(pick(r, WORK_WAYS), `${a} + ${c * q} ÷ ${c} = ?`, a + q,
       { hint: 'Divide before you add.',
         explanation: `${c * q} ÷ ${c} = ${q}, then ${a} + ${q} = ${a + q}.` }); },
 
   (r) => { const c = int(r, 2, 9), q = int(r, 2, 12), b = int(r, 2, 15);
-    return mathQ(WORK, `(${c * q + b} − ${b}) ÷ ${c} = ?`, q,
+    return mathQ(pick(r, WORK_WAYS), `(${c * q + b} − ${b}) ÷ ${c} = ?`, q,
       { hint: 'Do the bracket, then divide.',
         explanation: `${c * q + b} − ${b} = ${c * q}, then ${c * q} ÷ ${c} = ${q}.` }); },
 
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), c = int(r, 2, 9);
-    return mathQ(WORK, `${a}² + ${b} × ${c} = ?`, a * a + b * c,
+    return mathQ(pick(r, WORK_WAYS), `${a}² + ${b} × ${c} = ?`, a * a + b * c,
       { hint: 'Powers first, then multiplication, then addition.',
         explanation: `${a}² = ${a * a} and ${b} × ${c} = ${b * c}, so the total is ${a * a + b * c}.` }); },
 
   (r) => { const a = int(r, 2, 8), b = int(r, 2, 9), c = int(r, 2, 9), d = int(r, 1, a * (b + c) - 1);
-    return mathQ(WORK, `${a} × (${b} + ${c}) − ${d} = ?`, a * (b + c) - d,
+    return mathQ(pick(r, WORK_WAYS), `${a} × (${b} + ${c}) − ${d} = ?`, a * (b + c) - d,
       { hint: 'Bracket, then multiply, then subtract.',
         explanation: `${b} + ${c} = ${b + c}; ${a} × ${b + c} = ${a * (b + c)}; minus ${d} leaves ${a * (b + c) - d}.` }); },
 
   (r) => { const a = int(r, 2, 12), b = int(r, 2, 9), c = int(r, 2, 9), d = int(r, 1, a + b * c - 1);
-    return mathQ(WORK, `${a} + ${b} × ${c} − ${d} = ?`, a + b * c - d,
+    return mathQ(pick(r, WORK_WAYS), `${a} + ${b} × ${c} − ${d} = ?`, a + b * c - d,
       { hint: 'The multiplication happens before either the plus or the minus.',
         explanation: `${b} × ${c} = ${b * c}, so ${a} + ${b * c} − ${d} = ${a + b * c - d}.` }); },
 
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), d = int(r, 2, 9), c = int(r, d + 1, d + 9);
-    return mathQ(WORK, `(${a} + ${b}) × (${c} − ${d}) = ?`, (a + b) * (c - d),
+    return mathQ(pick(r, WORK_WAYS), `(${a} + ${b}) × (${c} − ${d}) = ?`, (a + b) * (c - d),
       { hint: 'Two brackets: work out both, then multiply the results.',
         explanation: `${a + b} × ${c - d} = ${(a + b) * (c - d)}.` }); },
 
   (r) => { const c = int(r, 2, 6), q = int(r, 2, 9), a = int(r, 2, 9), b = int(r, 2, 9);
-    return mathQ(WORK, `${c * q} ÷ ${c} + ${a} × ${b} = ?`, q + a * b,
+    return mathQ(pick(r, WORK_WAYS), `${c * q} ÷ ${c} + ${a} × ${b} = ?`, q + a * b,
       { hint: 'Division and multiplication both come before the addition.',
         explanation: `${c * q} ÷ ${c} = ${q} and ${a} × ${b} = ${a * b}, so the answer is ${q + a * b}.` }); }
 ];
@@ -532,7 +679,34 @@ export const rounding = [
   (r) => { const c = int(r, 10, 98) * 10 + int(r, 1, 9);
     return mathQ('Round to 2 significant figures.', `${num(c / 1000)} → ?`, num(sig(c / 1000, 2)),
       { hint: 'For a number below 1 the leading zeros do not count as significant.',
-        explanation: `${num(c / 1000)} to 2 significant figures is ${num(sig(c / 1000, 2))}.` }); }
+        explanation: `${num(c / 1000)} to 2 significant figures is ${num(sig(c / 1000, 2))}.` }); },
+
+  (r) => { const n = int(r, 12, 490) * 2 + int(r, 1, 4) * 2 - 1;
+    return mathQ('Round to the nearest 5.', `${n} → ?`, Math.round(n / 5) * 5,
+      { hint: 'Which multiple of 5 is it closer to?',
+        explanation: `${n} sits between ${Math.floor(n / 5) * 5} and ${Math.ceil(n / 5) * 5}, and rounds to ${Math.round(n / 5) * 5}.` }); },
+
+  (r) => { const n = int(r, 12, 98) * 1000 + int(r, 1, 999);
+    return mathQ('Round to the nearest 10 000.', `${n} → ?`, Math.round(n / 10000) * 10000,
+      { hint: 'The thousands digit decides it.',
+        explanation: `${n} rounds to ${Math.round(n / 10000) * 10000}.` }); },
+
+  (r) => { const a = int(r, 21, 89), b = int(r, 21, 89);
+    return blankQ(`Estimate ${a} × ${b} by rounding each number to one significant figure.`,
+      sig(a, 1) * sig(b, 1),
+      { hint: 'Round first, then multiply the two round numbers.',
+        explanation: `${a} ≈ ${sig(a, 1)} and ${b} ≈ ${sig(b, 1)}, so the estimate is ${sig(a, 1) * sig(b, 1)}.` }); },
+
+  (r) => { const a = int(r, 120, 980), b = int(r, 120, 980);
+    return blankQ(`Estimate ${a} + ${b} by rounding each number to the nearest 100.`,
+      Math.round(a / 100) * 100 + Math.round(b / 100) * 100,
+      { hint: 'Round both, then add.',
+        explanation: `${Math.round(a / 100) * 100} + ${Math.round(b / 100) * 100} = ${Math.round(a / 100) * 100 + Math.round(b / 100) * 100}.` }); },
+
+  (r) => { const c = int(r, 105, 9995);
+    return blankQ(`Round $${money(c / 100)} to the nearest dollar.`, Math.round(c / 100),
+      { hint: '50 cents or more rounds up.',
+        explanation: `$${money(c / 100)} rounds to $${Math.round(c / 100)}.` }); }
 ];
 
 /* ======================= FACTORS, MULTIPLES, PRIMES ======================= */
@@ -605,7 +779,40 @@ export const factors = [
     return blankQ(`List all the common factors of ${a} and ${b}.`, cf.join(', '),
       { accept: [cf.join(','), cf.join(' ')],
         hint: 'Every common factor is a factor of their highest common factor.',
-        explanation: `Their highest common factor is ${gcd(a, b)}, and its factors are ${cf.join(', ')}.` }); }
+        explanation: `Their highest common factor is ${gcd(a, b)}, and its factors are ${cf.join(', ')}.` }); },
+
+  (r) => { const k = int(r, 3, 12), n = int(r, 30, 140);
+    return blankQ(`Write the largest multiple of ${k} that is less than ${n}.`,
+      (Math.ceil(n / k) - 1) * k,
+      { hint: 'Divide, drop the remainder, then multiply back.',
+        explanation: `${k} × ${Math.ceil(n / k) - 1} = ${(Math.ceil(n / k) - 1) * k}.` }); },
+
+  (r) => { const n = int(r, 3, 15);
+    return blankQ(`Write the first five multiples of ${n}.`,
+      [1, 2, 3, 4, 5].map(i => i * n).join(', '),
+      { accept: [[1, 2, 3, 4, 5].map(i => i * n).join(',')],
+        hint: `Count on in ${n}s from ${n}.`,
+        explanation: `${[1, 2, 3, 4, 5].map(i => i * n).join(', ')}.` }); },
+
+  (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), l = lcm(a, b);
+    return blankQ(`Write the second number that is a multiple of both ${a} and ${b}.`, 2 * l,
+      { hint: 'Find the first one, then double it.',
+        explanation: `The first is ${l}, so the second is ${2 * l}.` }); },
+
+  (r) => { const n = int(r, 12, 200);
+    return blankQ(`How many different prime numbers divide into ${n}?`,
+      new Set(primeFactors(n)).size,
+      { hint: 'Break it into primes first, then count the different ones.',
+        explanation: `${n} = ${primeFactors(n).join(' × ')}, so there are ${new Set(primeFactors(n)).size} different primes.` }); },
+
+  (r) => { const a = int(r, 10, 60), b = a + int(r, 10, 25);
+    const ps = []; for (let n = a; n <= b; n++) if (isPrime(n)) ps.push(n);
+    if (!ps.length) return blankQ('Write all the prime numbers between 10 and 20.', '11, 13, 17, 19',
+      { hint: 'Test each number for factors.', explanation: '11, 13, 17 and 19 have no factors but 1 and themselves.' });
+    return blankQ(`Write all the prime numbers between ${a} and ${b}.`, ps.join(', '),
+      { accept: [ps.join(',')],
+        hint: 'Cross out the multiples of 2, 3, 5 and 7 first.',
+        explanation: `${ps.join(', ')} have no factors except 1 and themselves.` }); }
 ];
 
 /* ============================== FRACTIONS ============================== */
@@ -614,19 +821,19 @@ const fracAns = ([n, d]) => (d === 1 ? String(n) : frac(n, d));
 export const fractionops = [
   (r) => { const d = int(r, 4, 12), a = int(r, 1, d - 2), b = int(r, 1, d - a - 1);
     const s = simplify(a + b, d);
-    return mathQ(SIMPLEST, `${frac(a, d)} + ${frac(b, d)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, d)} + ${frac(b, d)} = ?`, fracAns(s),
       { hint: 'The denominator does not change; add the top numbers.',
         explanation: `${a} + ${b} = ${a + b}, so the answer is ${frac(a + b, d)}${s[1] === d && s[0] === a + b ? '' : ` = ${fracAns(s)}`}.` }); },
 
   (r) => { const b = int(r, 2, 6), d = int(r, b + 1, 9), a = int(r, 1, b - 1), c = int(r, 1, d - 1);
     const s = simplify(a * d + c * b, b * d);
-    return mathQ(SIMPLEST, `${frac(a, b)} + ${frac(c, d)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, b)} + ${frac(c, d)} = ?`, fracAns(s),
       { hint: `Rewrite both over ${b * d} before you add.`,
         explanation: `${frac(a, b)} = ${frac(a * d, b * d)} and ${frac(c, d)} = ${frac(c * b, b * d)}, giving ${frac(a * d + c * b, b * d)} = ${fracAns(s)}.` }); },
 
   (r) => { const d = int(r, 4, 12), a = int(r, 2, d - 1), b = int(r, 1, a - 1);
     const s = simplify(a - b, d);
-    return mathQ(SIMPLEST, `${frac(a, d)} − ${frac(b, d)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, d)} − ${frac(b, d)} = ?`, fracAns(s),
       { hint: 'Subtract the top numbers and keep the bottom one.',
         explanation: `${a} − ${b} = ${a - b}, so the answer is ${fracAns(s)}.` }); },
 
@@ -637,29 +844,29 @@ export const fractionops = [
     let [n1, d1, n2, d2] = a * d > c * b ? [a, b, c, d] : [c, d, a, b];
     if (n1 * d2 === n2 * d1) { n1 = 1; d1 = 2; n2 = 1; d2 = 3; }
     const lo = d1 * d2, s = simplify(n1 * d2 - n2 * d1, lo);
-    return mathQ(SIMPLEST, `${frac(n1, d1)} − ${frac(n2, d2)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(n1, d1)} − ${frac(n2, d2)} = ?`, fracAns(s),
       { hint: `Put both over ${lo} first.`,
         explanation: `${frac(n1 * d2, lo)} − ${frac(n2 * d1, lo)} = ${frac(n1 * d2 - n2 * d1, lo)} = ${fracAns(s)}.` }); },
 
   (r) => { const b = int(r, 2, 9), d = int(r, 2, 9), a = int(r, 1, b - 1), c = int(r, 1, d - 1);
     const s = simplify(a * c, b * d);
-    return mathQ(SIMPLEST, `${frac(a, b)} × ${frac(c, d)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, b)} × ${frac(c, d)} = ?`, fracAns(s),
       { hint: 'Multiply the tops together and the bottoms together.',
         explanation: `${a} × ${c} = ${a * c} over ${b} × ${d} = ${b * d}, which simplifies to ${fracAns(s)}.` }); },
 
   (r) => { const b = int(r, 2, 9), d = int(r, 2, 9), a = int(r, 1, b - 1), c = int(r, 1, d - 1);
     const s = simplify(a * d, b * c);
-    return mathQ(SIMPLEST, `${frac(a, b)} ÷ ${frac(c, d)} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, b)} ÷ ${frac(c, d)} = ?`, fracAns(s),
       { hint: 'Turn the second fraction upside down and multiply.',
         explanation: `${frac(a, b)} × ${frac(d, c)} = ${frac(a * d, b * c)} = ${fracAns(s)}.` }); },
 
   (r) => { const k = int(r, 2, 8), d = int(r, 2, 9), n = int(r, 1, d - 1);
-    return mathQ(SIMPLIFY, `${frac(n * k, d * k)} = ?`, fracAns(simplify(n * k, d * k)),
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${frac(n * k, d * k)} = ?`, fracAns(simplify(n * k, d * k)),
       { hint: 'Find the largest number that divides both the top and the bottom.',
         explanation: `Both divide by ${gcd(n * k, d * k)}, leaving ${fracAns(simplify(n * k, d * k))}.` }); },
 
   (r) => { const d = int(r, 2, 9), a = int(r, 1, d - 1), q = int(r, 2, 12);
-    return mathQ(WORK, `${frac(a, d)} of ${d * q} = ?`, a * q,
+    return mathQ(pick(r, WORK_WAYS), `${frac(a, d)} of ${d * q} = ?`, a * q,
       { hint: `Divide by ${d} first, then multiply by ${a}.`,
         explanation: `${d * q} ÷ ${d} = ${q}, and ${q} × ${a} = ${a * q}.` }); },
 
@@ -678,13 +885,13 @@ export const fractionops = [
 
   (r) => { const b = int(r, 2, 9), a = int(r, 1, b - 1), k = int(r, 2, 9);
     const s = simplify(a * k, b);
-    return mathQ(SIMPLEST, `${frac(a, b)} × ${k} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, b)} × ${k} = ?`, fracAns(s),
       { hint: 'Multiply the top by the whole number and leave the bottom alone.',
         explanation: `${a} × ${k} = ${a * k}, so ${frac(a * k, b)} = ${fracAns(s)}.` }); },
 
   (r) => { const b = int(r, 2, 7), a = int(r, 1, b - 1), k = int(r, 2, 6);
     const s = simplify(a, b * k);
-    return mathQ(SIMPLEST, `${frac(a, b)} ÷ ${k} = ?`, fracAns(s),
+    return mathQ(pick(r, SIMPLEST_WAYS), `${frac(a, b)} ÷ ${k} = ?`, fracAns(s),
       { hint: 'Dividing by a whole number makes the pieces smaller, so the bottom grows.',
         explanation: `${frac(a, b)} ÷ ${k} = ${frac(a, b * k)} = ${fracAns(s)}.` }); }
 ];
@@ -694,62 +901,62 @@ export const fractionops = [
    at the moment it is printed, so no answer is ever 0.30000000000000004. */
 export const decimalops = [
   (r) => { const a = int(r, 105, 995), b = int(r, 105, 995);
-    return mathQ(WORK, `${num(a / 100)} + ${num(b / 100)} = ?`, num((a + b) / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} + ${num(b / 100)} = ?`, num((a + b) / 100),
       { hint: 'Line the decimal points up under each other.',
         explanation: `${num(a / 100)} + ${num(b / 100)} = ${num((a + b) / 100)}.` }); },
 
   (r) => { const b = int(r, 105, 495), a = int(r, b + 5, 995);
-    return mathQ(WORK, `${num(a / 100)} − ${num(b / 100)} = ?`, num((a - b) / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} − ${num(b / 100)} = ?`, num((a - b) / 100),
       { hint: 'Line the decimal points up, and fill any short column with a zero.',
         explanation: `${num(a / 100)} − ${num(b / 100)} = ${num((a - b) / 100)}.` }); },
 
   (r) => { const a = int(r, 105, 995), k = pick(r, [10, 100, 1000]);
-    return mathQ(WORK, `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
       { hint: `Multiplying by ${k} moves every digit ${String(k).length - 1} place${k === 10 ? '' : 's'} to the left.`,
         explanation: `${num(a / 100)} × ${k} = ${num(a * k / 100)}.` }); },
 
   (r) => { const a = int(r, 105, 995), k = pick(r, [10, 100]);
-    return mathQ(WORK, `${num(a / 100)} ÷ ${k} = ?`, num(a / 100 / k),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} ÷ ${k} = ?`, num(a / 100 / k),
       { hint: `Dividing by ${k} moves every digit ${String(k).length - 1} place${k === 10 ? '' : 's'} to the right.`,
         explanation: `${num(a / 100)} ÷ ${k} = ${num(a / 100 / k)}.` }); },
 
   (r) => { const a = int(r, 105, 995), k = int(r, 2, 9);
-    return mathQ(WORK, `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
       { hint: 'Multiply as if there were no decimal point, then put it back two places from the right.',
         explanation: `${a} × ${k} = ${a * k}, so ${num(a / 100)} × ${k} = ${num(a * k / 100)}.` }); },
 
   (r) => { const k = int(r, 2, 9), q = int(r, 12, 200);
-    return mathQ(WORK, `${num(k * q / 100)} ÷ ${k} = ?`, num(q / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(k * q / 100)} ÷ ${k} = ?`, num(q / 100),
       { hint: 'Divide as usual and keep the decimal point where it is.',
         explanation: `${k * q} ÷ ${k} = ${q}, so the answer is ${num(q / 100)}.` }); },
 
   (r) => { const a = int(r, 11, 99), b = int(r, 11, 99);
-    return mathQ(WORK, `${num(a / 10)} × ${num(b / 10)} = ?`, num(a * b / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 10)} × ${num(b / 10)} = ?`, num(a * b / 100),
       { hint: 'One decimal place times one decimal place gives two decimal places.',
         explanation: `${a} × ${b} = ${a * b}, and two decimal places gives ${num(a * b / 100)}.` }); },
 
   (r) => { const a = int(r, 11, 99), b = int(r, 11, 99), c = int(r, 11, 99);
-    return mathQ(WORK, `${num(a / 10)} + ${num(b / 10)} + ${num(c / 10)} = ?`, num((a + b + c) / 10),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 10)} + ${num(b / 10)} + ${num(c / 10)} = ?`, num((a + b + c) / 10),
       { hint: 'Add the tenths first and carry.',
         explanation: `${a} + ${b} + ${c} = ${a + b + c} tenths, which is ${num((a + b + c) / 10)}.` }); },
 
   (r) => { const w = int(r, 2, 20), b = int(r, 5, 99);
-    return mathQ(WORK, `${w} − ${num(b / 100)} = ?`, num((w * 100 - b) / 100),
+    return mathQ(pick(r, WORK_WAYS), `${w} − ${num(b / 100)} = ?`, num((w * 100 - b) / 100),
       { hint: `Write the whole number as ${w}.00 before you subtract.`,
         explanation: `${w}.00 − ${num(b / 100)} = ${num((w * 100 - b) / 100)}.` }); },
 
   (r) => { const b = int(r, 2, 25), q = int(r, 2, 40);
-    return mathQ(WORK, `${num(b * q / 10)} ÷ ${num(b / 10)} = ?`, q,
+    return mathQ(pick(r, WORK_WAYS), `${num(b * q / 10)} ÷ ${num(b / 10)} = ?`, q,
       { hint: 'Move both decimal points the same number of places until the divider is a whole number.',
         explanation: `${b * q} ÷ ${b} = ${q}, and moving both points changes nothing.` }); },
 
   (r) => { const a = int(r, 105, 995), k = int(r, 11, 25);
-    return mathQ(WORK, `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
+    return mathQ(pick(r, WORK_WAYS), `${num(a / 100)} × ${k} = ?`, num(a * k / 100),
       { hint: 'Ignore the point, do the long multiplication, then replace it.',
         explanation: `${a} × ${k} = ${a * k}, so the answer is ${num(a * k / 100)}.` }); },
 
   (r) => { const a = int(r, 105, 995), half = r() < 0.5;
-    return mathQ(WORK, half ? `Half of ${num(a * 2 / 100)} = ?` : `Double ${num(a / 100)} = ?`,
+    return mathQ(pick(r, WORK_WAYS), half ? `Half of ${num(a * 2 / 100)} = ?` : `Double ${num(a / 100)} = ?`,
       half ? num(a / 100) : num(a * 2 / 100),
       { hint: half ? 'Halve the whole part and the decimal part separately.' : 'Double the whole part and the decimal part separately.',
         explanation: half ? `Half of ${num(a * 2 / 100)} is ${num(a / 100)}.` : `${num(a / 100)} doubled is ${num(a * 2 / 100)}.` }); }
@@ -758,12 +965,12 @@ export const decimalops = [
 /* ============================== PERCENTAGES ============================== */
 export const percentops = [
   (r) => { const p = pick(r, [10, 20, 25, 50]), n = int(r, 1, 25) * 20;
-    return mathQ(WORK, `${p}% of ${n} = ?`, p * n / 100,
+    return mathQ(pick(r, WORK_WAYS), `${p}% of ${n} = ?`, p * n / 100,
       { hint: `${p}% is ${p === 50 ? 'a half' : p === 25 ? 'a quarter' : p === 20 ? 'a fifth' : 'a tenth'} of the amount.`,
         explanation: `${n} ÷ ${100 / p} = ${p * n / 100}.` }); },
 
   (r) => { const p = int(r, 1, 19) * 5, n = int(r, 1, 25) * 20;
-    return mathQ(WORK, `${p}% of ${n} = ?`, p * n / 100,
+    return mathQ(pick(r, WORK_WAYS), `${p}% of ${n} = ?`, p * n / 100,
       { hint: 'Find 10% first, then build the percentage you need from it.',
         explanation: `10% of ${n} is ${n / 10}, so ${p}% is ${p * n / 100}.` }); },
 
@@ -822,7 +1029,31 @@ export const percentops = [
     return blankQ(`A value went from ${a} to ${b}. What was the percentage increase?`, `${k}%`,
       { accept: [String(k)],
         hint: 'Divide the rise by the starting value.',
-        explanation: `The rise is ${b - a}, and ${b - a} ÷ ${a} = ${num((b - a) / a)} = ${k}%.` }); }
+        explanation: `The rise is ${b - a}, and ${b - a} ÷ ${a} = ${num((b - a) / a)} = ${k}%.` }); },
+
+  (r) => { const b = pick(r, [20, 25, 40, 50]), a = int(r, 1, b - 1), who = pick(r, PEOPLE);
+    if ((a * 100) % b !== 0) return blankQ(`${who} scored ${b / 2} out of ${b} in a test. What percentage is that?`,
+      '50%', { accept: ['50'], hint: 'Half the marks.', explanation: `${b / 2} out of ${b} is a half, which is 50%.` });
+    return blankQ(`${who} scored ${a} out of ${b} in a test. What percentage is that?`, `${a * 100 / b}%`,
+      { accept: [String(a * 100 / b)],
+        hint: 'Write the score as a fraction, then scale the bottom to 100.',
+        explanation: `${frac(a, b)} = ${a * 100 / b}%.` }); },
+
+  (r) => { const p = pick(r, [2, 4, 5, 10]), years = int(r, 2, 6), amount = int(r, 2, 40) * 100;
+    return blankQ(`$${amount} is invested at ${p}% simple interest for ${years} years. How much interest is earned, in dollars?`,
+      amount * p * years / 100,
+      { hint: 'Work out one year first, then multiply by the number of years.',
+        explanation: `${p}% of $${amount} is $${amount * p / 100}, and over ${years} years that is $${amount * p * years / 100}.` }); },
+
+  (r) => { const p = pick(r, [10, 20, 25, 50]), n = int(r, 2, 40) * 20;
+    return blankQ(`${p}% of a number is ${n * p / 100}. What is the number?`, n,
+      { hint: `If ${p}% is that much, 100% is ${100 / p} times as much.`,
+        explanation: `${n * p / 100} × ${100 / p} = ${n}.` }); },
+
+  (r) => { const p = pick(r, [5, 10, 20, 25]), n = int(r, 2, 40) * 20, who = pick(r, PEOPLE);
+    return blankQ(`${who} earns $${n} a week and ${p}% is deducted. How much is left, in dollars?`, n - n * p / 100,
+      { hint: 'Work out the deduction, then take it off.',
+        explanation: `${p}% of ${n} is ${n * p / 100}, leaving ${n - n * p / 100}.` }); }
 ];
 
 /* ================================ RATIO ================================ */
@@ -889,7 +1120,37 @@ export const ratio = [
     return blankQ(`A recipe for ${per} people uses ${amount * per} grams of flour. How much is needed for ${per * k} people?`,
       amount * per * k,
       { hint: `${per * k} people is ${k} times as many.`,
-        explanation: `${amount * per} × ${k} = ${amount * per * k} grams.` }); }
+        explanation: `${amount * per} × ${k} = ${amount * per * k} grams.` }); },
+
+  (r) => { const per = int(r, 2, 9), n = int(r, 2, 6), m = int(r, 2, 9), thing = pick(r, THINGS);
+    return blankQ(`${n} ${thing} cost $${per * n}. What do ${n * m} ${thing} cost, in dollars?`, per * n * m,
+      { hint: 'Work out the cost of one first.',
+        explanation: `One costs $${per}, so ${n * m} cost $${per * n * m}.` }); },
+
+  (r) => { const scale = pick(r, [100, 200, 500, 1000, 2500]), cm = int(r, 2, 30);
+    return blankQ(`A map has a scale of 1 : ${scale}. A length of ${cm} cm on the map is how many centimetres in real life?`,
+      cm * scale,
+      { hint: `Every centimetre on the map is ${scale} in real life.`,
+        explanation: `${cm} × ${scale} = ${cm * scale} cm.` }); },
+
+  (r) => { const a = int(r, 1, 5), b = int(r, 1, 5), k = int(r, 2, 12);
+    return blankQ(`There are ${a} red ${a === 1 ? 'counter' : 'counters'} for every ${b} blue ${b === 1 ? 'one' : 'ones'}. If there are ${a * k} red counters, how many counters are there altogether?`,
+      (a + b) * k,
+      { hint: `Find what one part is worth, then count all ${a + b} parts.`,
+        explanation: `One part is ${k}, and there are ${a + b} parts, so ${(a + b) * k}.` }); },
+
+  (r) => { const cm = int(r, 2, 90), m = int(r, 1, 8);
+    const d = gcd(cm, m * 100);
+    return blankQ(`Write ${cm} cm : ${m} m as a ratio in its simplest form.`,
+      `${cm / d} : ${m * 100 / d}`,
+      { accept: [`${cm / d}:${m * 100 / d}`],
+        hint: 'Put both sides in the same unit before you cancel.',
+        explanation: `${m} m is ${m * 100} cm, so the ratio is ${cm} : ${m * 100} = ${cm / d} : ${m * 100 / d}.` }); },
+
+  (r) => { const each = int(r, 2, 12), n = int(r, 2, 6), m = int(r, 3, 12);
+    return blankQ(`${n} identical boxes weigh ${each * n} kg. What do ${m} of them weigh, in kilograms?`, each * m,
+      { hint: 'Find the weight of one box first.',
+        explanation: `${each * n} ÷ ${n} = ${each} kg each, so ${m} weigh ${each * m} kg.` }); }
 ];
 
 /* ============================== PLACE VALUE ============================== */
@@ -943,7 +1204,7 @@ export const placevalue = [
         explanation: `In order: ${sorted.join(', ')}.` }); },
 
   (r) => { const n = int(r, 12, 999), k = pick(r, [10, 100]);
-    return mathQ(WORK, `${n} × ${k} = ?`, n * k,
+    return mathQ(pick(r, WORK_WAYS), `${n} × ${k} = ?`, n * k,
       { hint: `Every digit shifts ${k === 10 ? 'one place' : 'two places'} to the left and a zero fills the gap.`,
         explanation: `${n} × ${k} = ${n * k}.` }); },
 
@@ -956,7 +1217,35 @@ export const placevalue = [
     return blankQ(after ? `Write the number that comes after ${n}.` : `Write the number that comes before ${n}.`,
       after ? n + 1 : n - 1,
       { hint: after ? 'Count on one.' : 'Count back one.',
-        explanation: `${after ? `${n} + 1 = ${n + 1}` : `${n} − 1 = ${n - 1}`}.` }); }
+        explanation: `${after ? `${n} + 1 = ${n + 1}` : `${n} − 1 = ${n - 1}`}.` }); },
+
+  (r) => { const n = int(r, 1200, 9999);
+    return blankQ(`How many whole hundreds are there in ${n}?`, Math.floor(n / 100),
+      { hint: 'Ignore the last two digits.',
+        explanation: `${n} ÷ 100 = ${num(n / 100)}, so there are ${Math.floor(n / 100)} whole hundreds.` }); },
+
+  (r) => { const th = int(r, 1, 9), h = int(r, 0, 9), t = int(r, 0, 9), u = int(r, 0, 9);
+    return blankQ(`Write the number with ${th} thousand${th === 1 ? '' : 's'}, ${h} hundred${h === 1 ? '' : 's'}, ${t} ten${t === 1 ? '' : 's'} and ${u} unit${u === 1 ? '' : 's'}.`,
+      th * 1000 + h * 100 + t * 10 + u,
+      { hint: 'Write one digit per column, left to right.',
+        explanation: `That is ${th * 1000 + h * 100 + t * 10 + u}.` }); },
+
+  (r) => { const bag = [1, 2, 3, 4, 5, 6, 7, 8, 9], ds = [];
+    while (ds.length < 4) { const i = int(r, 0, bag.length - 1); ds.push(bag.splice(i, 1)[0]); }
+    const big = r() < 0.5;
+    const sorted = [...ds].sort((a, b) => big ? b - a : a - b);
+    return blankQ(`Using the digits ${ds.join(', ')} once each, write the ${big ? 'largest' : 'smallest'} possible number.`,
+      Number(sorted.join('')),
+      { hint: big ? 'Put the biggest digit in the thousands column.' : 'Put the smallest digit in the thousands column.',
+        explanation: `${sorted.join('')} is the ${big ? 'largest' : 'smallest'} arrangement.` }); },
+
+  (r) => { const bag = [1, 2, 3, 4, 5, 6, 7, 8, 9], ds = [];
+    while (ds.length < 4) { const i = int(r, 0, bag.length - 1); ds.push(bag.splice(i, 1)[0]); }
+    const pos = int(r, 1, 3), names = ['tenths', 'hundredths', 'thousandths'];
+    const value = ds[pos] / Math.pow(10, pos);
+    return blankQ(`Write the value of the digit ${ds[pos]} in ${ds[0]}.${ds.slice(1).join('')}.`, num(value),
+      { hint: 'The first column after the point is tenths.',
+        explanation: `It sits in the ${names[pos - 1]} column, so it is worth ${num(value)}.` }); }
 ];
 
 /* ============================== ALGEBRA ============================== */
@@ -967,12 +1256,12 @@ const trail = n => (n === 0 ? '' : n > 0 ? ` + ${n}` : ` − ${Math.abs(n)}`);
 
 export const expressions = [
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), v = pick(r, ['a', 'x', 'y', 'n', 'p']);
-    return mathQ(SIMPLIFY, `${co(a, v)} + ${co(b, v)}`, co(a + b, v),
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${co(a, v)} + ${co(b, v)}`, co(a + b, v),
       { accept: [`${a + b}`], hint: 'They are the same kind of term, so add the numbers in front.',
         explanation: `${a} + ${b} = ${a + b}, so the answer is ${co(a + b, v)}.` }); },
 
   (r) => { const a = int(r, 5, 12), b = int(r, 2, 4), c = int(r, 2, 6), v = pick(r, ['x', 'y', 'm', 't']);
-    return mathQ(SIMPLIFY, `${co(a, v)} − ${co(b, v)} + ${co(c, v)}`, co(a - b + c, v),
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${co(a, v)} − ${co(b, v)} + ${co(c, v)}`, co(a - b + c, v),
       { accept: [`${a - b + c}`], hint: 'Work left to right on the numbers in front.',
         explanation: `${a} − ${b} + ${c} = ${a - b + c}, so the answer is ${co(a - b + c, v)}.` }); },
 
@@ -1018,17 +1307,17 @@ export const expressions = [
         explanation: `${n}² = ${n * n}, then ${a} × ${n * n} = ${a * n * n}, minus ${b} leaves ${a * n * n - b}.` }); },
 
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9);
-    return mathQ(SIMPLIFY, `${co(a, 'x')} × ${co(b, 'y')}`, `${a * b}xy`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${co(a, 'x')} × ${co(b, 'y')}`, `${a * b}xy`,
       { accept: [`${a * b}yx`], hint: 'Multiply the numbers, then write the letters together.',
         explanation: `${a} × ${b} = ${a * b}, so the answer is ${a * b}xy.` }); },
 
   (r) => { const a = int(r, 2, 6), b = int(r, 2, 6);
-    return mathQ(SIMPLIFY, `x${a > 1 ? `^${a}` : ''} × x^${b}`, `x^${a + b}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `x${a > 1 ? `^${a}` : ''} × x^${b}`, `x^${a + b}`,
       { accept: [`x${a + b}`], hint: 'Multiplying powers of the same letter adds the indices.',
         explanation: `${a} + ${b} = ${a + b}, so the answer is x^${a + b}.` }); },
 
   (r) => { const b = int(r, 2, 5), a = int(r, b + 1, 9);
-    return mathQ(SIMPLIFY, `x^${a} ÷ x^${b}`, `x^${a - b}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `x^${a} ÷ x^${b}`, `x^${a - b}`,
       { accept: [`x${a - b}`, a - b === 1 ? 'x' : `x^${a - b}`],
         hint: 'Dividing powers of the same letter subtracts the indices.',
         explanation: `${a} − ${b} = ${a - b}, so the answer is x^${a - b}.` }); }
@@ -1036,58 +1325,58 @@ export const expressions = [
 
 export const equations = [
   (r) => { const x = int(r, 1, 20), a = int(r, 1, 20);
-    return mathQ(SOLVE, `x + ${a} = ${x + a}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `x + ${a} = ${x + a}`, x,
       { hint: `Take ${a} off both sides.`, explanation: `${x + a} − ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 2, 20), a = int(r, 1, x);
-    return mathQ(SOLVE, `x − ${a} = ${x - a}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `x − ${a} = ${x - a}`, x,
       { hint: `Add ${a} to both sides.`, explanation: `${x - a} + ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 1, 20), a = int(r, 1, 20);
-    return mathQ(SOLVE, `${a} + x = ${x + a}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a} + x = ${x + a}`, x,
       { hint: 'It does not matter which side x is written on.', explanation: `${x + a} − ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 2, 12), a = int(r, 2, 12);
-    return mathQ(SOLVE, `${co(a, 'x')} = ${a * x}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${co(a, 'x')} = ${a * x}`, x,
       { hint: `Divide both sides by ${a}.`, explanation: `${a * x} ÷ ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 2, 15), a = int(r, 2, 9);
-    return mathQ(SOLVE, `x ÷ ${a} = ${x}`, a * x,
+    return mathQ(pick(r, SOLVE_WAYS), `x ÷ ${a} = ${x}`, a * x,
       { hint: `Multiply both sides by ${a}.`, explanation: `${x} × ${a} = ${a * x}.` }); },
 
   (r) => { const x = int(r, 1, 12), a = int(r, 2, 9), b = int(r, 1, 15);
-    return mathQ(SOLVE, `${co(a, 'x')} + ${b} = ${a * x + b}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${co(a, 'x')} + ${b} = ${a * x + b}`, x,
       { hint: `Undo the + ${b} first, then the × ${a}.`,
         explanation: `${a * x + b} − ${b} = ${a * x}, and ${a * x} ÷ ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 2, 12), a = int(r, 2, 9), b = int(r, 1, Math.min(15, a * x));
-    return mathQ(SOLVE, `${co(a, 'x')} − ${b} = ${a * x - b}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${co(a, 'x')} − ${b} = ${a * x - b}`, x,
       { hint: `Add ${b} to both sides first.`,
         explanation: `${a * x - b} + ${b} = ${a * x}, and ${a * x} ÷ ${a} = ${x}.` }); },
 
   (r) => { const x = int(r, 1, 12), a = int(r, 2, 6), b = int(r, 1, 9);
-    return mathQ(SOLVE, `${a}(x + ${b}) = ${a * (x + b)}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a}(x + ${b}) = ${a * (x + b)}`, x,
       { hint: `Divide by ${a} first, or expand the bracket — either works.`,
         explanation: `${a * (x + b)} ÷ ${a} = ${x + b}, and ${x + b} − ${b} = ${x}.` }); },
 
   (r) => { const x = int(r, 1, 12), a = int(r, 3, 9), c = int(r, 1, a - 1), b = int(r, 1, 12);
     const d = (a - c) * x + b;
-    return mathQ(SOLVE, `${co(a, 'x')} + ${b} = ${co(c, 'x')} + ${d}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${co(a, 'x')} + ${b} = ${co(c, 'x')} + ${d}`, x,
       { hint: `Take ${co(c, 'x')} off both sides so all the x is on one side.`,
         explanation: `${co(a - c, 'x')} + ${b} = ${d}, so ${co(a - c, 'x')} = ${d - b} and x = ${x}.` }); },
 
   (r) => { const x = int(r, 1, 15), c = int(r, 1, 15);
-    return mathQ(SOLVE, `${x + c} − x = ${c}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${x + c} − x = ${c}`, x,
       { hint: 'Move x to the other side so it is positive.',
         explanation: `${x + c} − ${c} = ${x}.` }); },
 
   (r) => { const a = int(r, 2, 6), x = a * int(r, 1, 8), b = int(r, 1, 12);
-    return mathQ(SOLVE, `x ÷ ${a} + ${b} = ${x / a + b}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `x ÷ ${a} + ${b} = ${x / a + b}`, x,
       { hint: `Subtract ${b}, then multiply by ${a}.`,
         explanation: `${x / a + b} − ${b} = ${x / a}, and ${x / a} × ${a} = ${x}.` }); },
 
   (r) => { const x = -int(r, 1, 12), a = int(r, 2, 6), b = int(r, 1, 20);
-    return mathQ(SOLVE, `${co(a, 'x')} + ${b} = ${sn(a * x + b)}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${co(a, 'x')} + ${b} = ${sn(a * x + b)}`, x,
       { hint: 'The answer is below zero — keep the sign as you divide.',
         explanation: `${sn(a * x + b)} − ${b} = ${sn(a * x)}, and ${sn(a * x)} ÷ ${a} = ${sn(x)}.` }); }
 ];
@@ -1150,7 +1439,39 @@ export const sequences = [
   (r) => { const a = int(r, 30, 90), d = int(r, 2, 9);
     return blankQ(`Write the term before ${a} in a sequence that goes up by ${d} each time.`, a - d,
       { hint: 'Go backwards by one step.',
-        explanation: `${a} − ${d} = ${a - d}.` }); }
+        explanation: `${a} − ${d} = ${a - d}.` }); },
+
+  (r) => { const a = int(r, 1, 6), k = int(r, 2, 4);
+    return blankQ(`What is each term multiplied by in this sequence: ${[a, a * k, a * k * k, a * k * k * k].join(', ')}?`, k,
+      { hint: 'Divide one term by the one before it.',
+        explanation: `${a * k} ÷ ${a} = ${k}.` }); },
+
+  (r) => { const a = int(r, 1, 6), b = int(r, 2, 9);
+    const t = [a, b, a + b, a + 2 * b];
+    return blankQ(`Each term is the sum of the two before it. Write the next term: ${t.join(', ')}, …`,
+      2 * a + 3 * b,
+      { hint: 'Add the last two terms you can see.',
+        explanation: `${a + b} + ${a + 2 * b} = ${2 * a + 3 * b}.` }); },
+
+  (r) => { const s = int(r, 1, 6);
+    const tri = n => n * (n + 1) / 2;
+    const t = [s, s + 1, s + 2, s + 3].map(tri);
+    return blankQ(`Write the next term: ${t.join(', ')}, …`, tri(s + 4),
+      { hint: 'The gaps between the terms go up by one each time.',
+        explanation: `The gaps are ${s + 1}, ${s + 2}, ${s + 3}, so the next gap is ${s + 4} and the term is ${tri(s + 4)}.` }); },
+
+  (r) => { const d = int(r, 2, 9), c = int(r, -8, 9);
+    return blankQ(`The nth term of a sequence is ${co(d, 'n')}${trail(c)}. Write the first term.`, d + c,
+      { hint: 'Put n = 1 into the rule.',
+        explanation: `${d} × 1 = ${d}${c >= 0 ? ` plus ${c}` : ` minus ${Math.abs(c)}`} gives ${sn(d + c)}.` }); },
+
+  (r) => { const d = int(r, 2, 9), first = int(r, 30, 90);
+    const t = [first, first - d, first - 2 * d, first - 3 * d];
+    return blankQ(`Write the nth term rule for: ${t.join(', ')}, …`,
+      `${co(-d, 'n')}${trail(first + d)}`,
+      { accept: [`-${d}n+${first + d}`, `${first + d} − ${co(d, 'n')}`],
+        hint: 'A falling sequence has a negative number in front of n.',
+        explanation: `It falls by ${d}, so the rule starts ${co(-d, 'n')}; at n = 1 that gives ${-d}, and the first term is ${first}, so add ${first + d}.` }); }
 ];
 
 /* ============================== STANDARD FORM ============================== */
@@ -1243,19 +1564,47 @@ export const standardform = [
     return blankQ(`Work out (${SF(a, p)})². Give your answer in standard form.`, SF(a * a, 2 * p),
       { accept: [`${a * a}x10^${2 * p}`, `${a * a}*10^${2 * p}`],
         hint: 'Square the front number and double the power.',
-        explanation: `${a}² = ${a * a} and ${p} × 2 = ${2 * p}.` }); }
+        explanation: `${a}² = ${a * a} and ${p} × 2 = ${2 * p}.` }); },
+
+  (r) => { const a = int(r, 11, 99) / 10, p = int(r, 2, 6), k = pick(r, [10, 100]);
+    const pow = p + String(k).length - 1;
+    return blankQ(`A number is ${k} times as big as ${SF(num(a), p)}. Write it in standard form.`,
+      SF(num(a), pow),
+      { accept: [`${num(a)}x10^${pow}`, `${num(a)}*10^${pow}`],
+        hint: `Multiplying by ${k} raises the power by ${String(k).length - 1}.`,
+        explanation: `The front number does not change; the power goes from ${p} to ${pow}.` }); },
+
+  (r) => { const c = int(r, 2, 4), k = int(r, 2, 4), p = int(r, 2, 5), q = p + int(r, 1, 4);
+    return blankQ(`Work out (${SF(c * k, p)}) ÷ (${SF(c, q)}). Give your answer in standard form.`,
+      SF(k, p - q),
+      { accept: [`${k}x10^${p - q}`, `${k}*10^${p - q}`],
+        hint: 'Dividing by a bigger power gives a negative index.',
+        explanation: `${c * k} ÷ ${c} = ${k} and ${p} − ${q} = ${p - q}.` }); },
+
+  (r) => { const a = int(r, 45, 95) / 10, c = int(r, 11, 40) / 10, p = int(r, 3, 8);
+    return blankQ(`Work out (${SF(num(a), p)}) − (${SF(num(c), p)}). Give your answer in standard form.`,
+      SF(num(Math.round((a - c) * 10) / 10), p),
+      { accept: [`${num(Math.round((a - c) * 10) / 10)}x10^${p}`],
+        hint: 'The powers match, so subtract the front numbers.',
+        explanation: `${num(a)} − ${num(c)} = ${num(Math.round((a - c) * 10) / 10)}, and the power stays at ${p}.` }); },
+
+  (r) => { const k = int(r, 2, 8);
+    return blankQ(`Write 1 ÷ 10^${k} as a power of ten.`, `10^-${k}`,
+      { accept: [`10^(-${k})`, `1/10^${k}`],
+        hint: 'Dividing by a power of ten gives a negative index.',
+        explanation: `1 ÷ 10^${k} = 10^-${k}.` }); }
 ];
 
 /* ================================ SURDS ================================ */
 export const surds = [
   (r) => { const k = int(r, 2, 6), m = pick(r, [2, 3, 5, 6, 7, 10, 11]);
-    return mathQ(SIMPLIFY, `√${k * k * m}`, `${k}√${m}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `√${k * k * m}`, `${k}√${m}`,
       { accept: [`${k}sqrt${m}`, `${k} root ${m}`],
         hint: `Look for the largest square number that divides ${k * k * m}.`,
         explanation: `${k * k * m} = ${k * k} × ${m}, and √${k * k} = ${k}.` }); },
 
   (r) => { const a = pick(r, [2, 3, 5, 6, 7]), b = pick(r, [2, 3, 5, 6, 7]);
-    return mathQ(SIMPLIFY, `√${a} × √${b}`, a === b ? String(a) : `√${a * b}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `√${a} × √${b}`, a === b ? String(a) : `√${a * b}`,
       { accept: a === b ? [] : [`sqrt${a * b}`],
         hint: 'Two roots multiplied become one root of the product.',
         explanation: a === b ? `√${a} × √${a} = ${a}.` : `√${a} × √${b} = √${a * b}.` }); },
@@ -1264,25 +1613,25 @@ export const surds = [
     /* √25 ÷ √5 is a fair question and a confusing one: the left-hand root is a
        whole number, and the sheet reads as if it had a typo. */
     while (Number.isInteger(Math.sqrt(b * k))) k = k === 6 ? 2 : k + 1;
-    return mathQ(SIMPLIFY, `√${b * k} ÷ √${b}`, `√${k}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `√${b * k} ÷ √${b}`, `√${k}`,
       { accept: [`sqrt${k}`],
         hint: 'One root divided by another is the root of the quotient.',
         explanation: `${b * k} ÷ ${b} = ${k}, so the answer is √${k}.` }); },
 
   (r) => { const a = int(r, 2, 9), b = int(r, 2, 9), m = pick(r, [2, 3, 5, 7, 11]);
-    return mathQ(SIMPLIFY, `${a}√${m} + ${b}√${m}`, `${a + b}√${m}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${a}√${m} + ${b}√${m}`, `${a + b}√${m}`,
       { accept: [`${a + b}sqrt${m}`],
         hint: `They are both lots of √${m}, so add the numbers in front.`,
         explanation: `${a} + ${b} = ${a + b}, giving ${a + b}√${m}.` }); },
 
   (r) => { const b = int(r, 2, 6), a = int(r, b + 1, 12), m = pick(r, [2, 3, 5, 7, 11]);
-    return mathQ(SIMPLIFY, `${a}√${m} − ${b}√${m}`, a - b === 1 ? `√${m}` : `${a - b}√${m}`,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `${a}√${m} − ${b}√${m}`, a - b === 1 ? `√${m}` : `${a - b}√${m}`,
       { accept: [`${a - b}√${m}`, `${a - b}sqrt${m}`],
         hint: `Subtract the numbers in front and keep √${m}.`,
         explanation: `${a} − ${b} = ${a - b}, giving ${a - b === 1 ? `√${m}` : `${a - b}√${m}`}.` }); },
 
   (r) => { const m = int(r, 2, 30);
-    return mathQ(SIMPLIFY, `(√${m})²`, m,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `(√${m})²`, m,
       { hint: 'Squaring undoes a square root.', explanation: `(√${m})² = ${m}.` }); },
 
   (r) => { const m = pick(r, [2, 3, 5, 6, 7, 10, 11, 13]);
@@ -1292,7 +1641,7 @@ export const surds = [
         explanation: `1/√${m} × √${m}/√${m} = √${m}/${m}.` }); },
 
   (r) => { const m = pick(r, [2, 3, 5, 6, 7, 10]);
-    return mathQ(SIMPLIFY, `√${m} × √${m}`, m,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `√${m} × √${m}`, m,
       { hint: 'A root multiplied by itself gives the number back.',
         explanation: `√${m} × √${m} = ${m}.` }); },
 
@@ -1303,7 +1652,7 @@ export const surds = [
         explanation: `√${m} × √${m} = ${m}, and √${m} × ${b} = ${b}√${m}.` }); },
 
   (r) => { const k = int(r, 2, 5), m = pick(r, [2, 3, 5, 6, 7]);
-    return mathQ(SIMPLIFY, `(${k}√${m})²`, k * k * m,
+    return mathQ(pick(r, SIMPLIFY_WAYS), `(${k}√${m})²`, k * k * m,
       { hint: 'Square the number in front and square the root separately.',
         explanation: `${k}² = ${k * k} and (√${m})² = ${m}, so the answer is ${k * k * m}.` }); }
 ];
@@ -1311,35 +1660,35 @@ export const surds = [
 /* ============================== LOGARITHMS ============================== */
 export const logarithms = [
   (r) => { const b = pick(r, [2, 3, 5, 10]), k = int(r, 2, 6);
-    return mathQ(EVALUATE, `log_${b}(${Math.pow(b, k)})`, k,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(${Math.pow(b, k)})`, k,
       { hint: `Ask: ${b} to what power gives ${Math.pow(b, k)}?`,
         explanation: `${b}^${k} = ${Math.pow(b, k)}, so the logarithm is ${k}.` }); },
 
   (r) => { const k = int(r, 1, 6);
-    return mathQ(EVALUATE, `log(${Math.pow(10, k)})`, k,
+    return mathQ(pick(r, EVAL_WAYS), `log(${Math.pow(10, k)})`, k,
       { hint: 'A log with no base written means base 10.',
         explanation: `10^${k} = ${Math.pow(10, k)}.` }); },
 
   (r) => { const b = pick(r, [2, 3, 4, 5, 7, 10]);
-    return mathQ(EVALUATE, `log_${b}(1)`, 0,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(1)`, 0,
       { hint: 'Any number to the power zero is 1.', explanation: `${b}^0 = 1, so the answer is 0.` }); },
 
   (r) => { const b = pick(r, [2, 3, 4, 5, 7, 10]);
-    return mathQ(EVALUATE, `log_${b}(${b})`, 1,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(${b})`, 1,
       { hint: 'The base to the power one is the base itself.', explanation: `${b}^1 = ${b}, so the answer is 1.` }); },
 
   (r) => { const b = pick(r, [2, 3, 5]), p = int(r, 1, 4), q = int(r, 1, 4);
-    return mathQ(EVALUATE, `log_${b}(${Math.pow(b, p)}) + log_${b}(${Math.pow(b, q)})`, p + q,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(${Math.pow(b, p)}) + log_${b}(${Math.pow(b, q)})`, p + q,
       { hint: 'Adding two logs of the same base multiplies the numbers inside.',
         explanation: `${p} + ${q} = ${p + q}.` }); },
 
   (r) => { const b = pick(r, [2, 3, 5]), q = int(r, 1, 3), p = q + int(r, 1, 3);
-    return mathQ(EVALUATE, `log_${b}(${Math.pow(b, p)}) − log_${b}(${Math.pow(b, q)})`, p - q,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(${Math.pow(b, p)}) − log_${b}(${Math.pow(b, q)})`, p - q,
       { hint: 'Subtracting two logs of the same base divides the numbers inside.',
         explanation: `${p} − ${q} = ${p - q}.` }); },
 
   (r) => { const b = pick(r, [2, 3, 5, 10]), k = int(r, 2, 6);
-    return mathQ(SOLVE, `${b}^x = ${Math.pow(b, k)}`, k,
+    return mathQ(pick(r, SOLVE_WAYS), `${b}^x = ${Math.pow(b, k)}`, k,
       { hint: 'Write both sides as a power of the same number.',
         explanation: `${Math.pow(b, k)} = ${b}^${k}, so x = ${k}.` }); },
 
@@ -1349,12 +1698,12 @@ export const logarithms = [
         explanation: `x = ${b}^${k} = ${Math.pow(b, k)}.` }); },
 
   (r) => { const b = pick(r, [2, 3, 5]), k = int(r, 2, 5), p = int(r, 2, 4);
-    return mathQ(EVALUATE, `log_${b}(${Math.pow(b, k)}^${p})`, k * p,
+    return mathQ(pick(r, EVAL_WAYS), `log_${b}(${Math.pow(b, k)}^${p})`, k * p,
       { hint: 'A power inside a logarithm comes out in front.',
         explanation: `${p} × ${k} = ${k * p}.` }); },
 
   (r) => { const k = int(r, 2, 8);
-    return mathQ(EVALUATE, `ln(e^${k})`, k,
+    return mathQ(pick(r, EVAL_WAYS), `ln(e^${k})`, k,
       { hint: 'A natural logarithm undoes a power of e.', explanation: `ln(e^${k}) = ${k}.` }); }
 ];
 
@@ -1406,7 +1755,24 @@ export const conversions = [
 
   (r) => { const n = int(r, 2, 12);
     return blankQ(`Convert ${n} tonnes to kilograms.`, n * 1000,
-      { hint: 'A tonne is 1000 kilograms.', explanation: `${n} × 1000 = ${n * 1000} kg.` }); }
+      { hint: 'A tonne is 1000 kilograms.', explanation: `${n} × 1000 = ${n * 1000} kg.` }); },
+
+  (r) => { const n = int(r, 2, 90) * 10;
+    return blankQ(`Convert ${n} mm to centimetres.`, n / 10,
+      { hint: 'Divide by 10.', explanation: `${n} ÷ 10 = ${n / 10} cm.` }); },
+
+  (r) => { const n = int(r, 2, 40) * 60;
+    return blankQ(`Convert ${n} seconds to minutes.`, n / 60,
+      { hint: 'Divide by 60.', explanation: `${n} ÷ 60 = ${n / 60} minutes.` }); },
+
+  (r) => { const n = int(r, 2, 30);
+    return blankQ(`Convert ${n} days to hours.`, n * 24,
+      { hint: 'A day is 24 hours.', explanation: `${n} × 24 = ${n * 24} hours.` }); },
+
+  (r) => { const m = int(r, 1, 9), cm = int(r, 5, 95);
+    return blankQ(`Add ${m} m and ${cm} cm. Give the answer in centimetres.`, m * 100 + cm,
+      { hint: 'Put both lengths in centimetres first.',
+        explanation: `${m} m is ${m * 100} cm, and ${m * 100} + ${cm} = ${m * 100 + cm} cm.` }); }
 ];
 
 /* ================================= TIME ================================= */

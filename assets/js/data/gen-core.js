@@ -88,6 +88,40 @@ export const ordinal = n => {
   return n + (s[(v - 20) % 10] || s[v] || s[0]);
 };
 
+
+/* ------------------------- shared question wording -------------------------
+   One instruction repeated down a column is what a photocopied sheet looks
+   like, and it is also what makes twenty rows read as a single question asked
+   twenty times. Makers draw their instruction from a small themed set: the
+   maths does not change, the sheet stops looking like a copy of itself, and
+   the whole vocabulary is a few dozen short strings to translate.
+
+   People, things and places do the same job for word-framed questions. Twenty
+   names against eighteen objects is three hundred and sixty openings from a
+   single maker, which is the whole trick and costs nothing. */
+export const WORK_WAYS     = ['Work it out.', 'Calculate.', 'Write the answer.', 'Find the answer.'];
+export const ADD_WAYS      = ['Work it out.', 'Find the total.', 'Add these numbers.',
+                              'Calculate.', 'Find the sum.', 'Write the answer.'];
+export const SUB_WAYS      = ['Work it out.', 'Find the difference.', 'Subtract.',
+                              'Calculate.', 'Take the second number from the first.', 'Write the answer.'];
+export const MUL_WAYS      = ['Work it out.', 'Multiply.', 'Find the product.',
+                              'Calculate.', 'Write the answer.'];
+export const DIV_WAYS      = ['Work it out.', 'Divide.', 'Share it out equally.',
+                              'Calculate.', 'Write the answer.'];
+export const SOLVE_WAYS    = ['Solve for x.', 'Find the value of x.', 'What is x?', 'Solve the equation.'];
+export const SIMPLIFY_WAYS = ['Simplify.', 'Simplify the expression.', 'Write this more simply.'];
+export const EVAL_WAYS     = ['Evaluate.', 'Work out the value.', 'Calculate.', 'Write the answer.'];
+export const SIMPLEST_WAYS = ['Write the answer in its simplest form.',
+                              'Give your answer in its simplest form.',
+                              'Answer in the simplest form.'];
+export const PEOPLE = ['Maya', 'Omar', 'Priya', 'Ellis', 'Tomas', 'Nadia', 'Kofi', 'Lena',
+                       'Idris', 'Rosa', 'Hana', 'Jonas', 'Amara', 'Felix', 'Sofia', 'Bilal',
+                       'Noor', 'Theo', 'Ines', 'Yusuf'];
+export const THINGS = ['stickers', 'marbles', 'apples', 'pencils', 'coins', 'beads', 'cards',
+                       'shells', 'buttons', 'conkers', 'stamps', 'acorns', 'crayons', 'books',
+                       'seeds', 'grapes', 'tickets', 'counters'];
+export const HOLDERS = ['boxes', 'jars', 'trays', 'baskets', 'bags', 'crates', 'tins', 'pots'];
+
 /* ----------------------------- question shells ----------------------------- */
 export const mathQ = (prompt, math, answer, extra = {}) =>
   ({ type: 'math', prompt, math, answer: String(answer), ...extra });

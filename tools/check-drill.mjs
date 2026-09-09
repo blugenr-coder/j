@@ -79,7 +79,12 @@ function readRounding(q) {
   const v = Number(String(q.math ?? '').split('→')[0].trim());
   if (!Number.isFinite(v)) return null;
   let m;
-  if ((m = q.prompt.match(/nearest (\d+)/))) { const k = Number(m[1]); return Math.round(v / k) * k; }
+  /* "nearest 10 000" is one number with a space in it, and reading it as 10
+     made the check disagree with a key that was right. */
+  if ((m = q.prompt.match(/nearest ([\d ]+?)\./))) {
+    const k = Number(m[1].replace(/ /g, ''));
+    if (Number.isFinite(k) && k > 0) return Math.round(v / k) * k;
+  }
   if (/nearest whole number/.test(q.prompt)) return Math.round(v);
   if ((m = q.prompt.match(/(\d+) decimal place/)))
     return roundPrinted(String(q.math ?? '').split('→')[0].trim(), Number(m[1]));

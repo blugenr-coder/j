@@ -5,8 +5,19 @@
 
 import {
   int, pick, sample, choice, nearMisses, gcd, simplify, num, money, mathQ,
-  blankQ, multiQ, matchQ, orderQ, writtenQ
+  blankQ, multiQ, matchQ, orderQ, writtenQ,
+  WORK_WAYS, ADD_WAYS, SUB_WAYS, MUL_WAYS, DIV_WAYS, SOLVE_WAYS, SIMPLEST_WAYS,
+  PEOPLE, THINGS, HOLDERS
 } from './gen-core.js';
+
+/* Things a price can be attached to. One fixed noun turns every discount
+   question in the library into the same question about the same jacket. */
+const GOODS = ['a jacket', 'a backpack', 'a pair of trainers', 'a jumper', 'a bicycle',
+               'a desk lamp', 'a kettle', 'a coat', 'a games console', 'a guitar',
+               'a printer', 'a tent', 'a rug', 'a watch', 'a scooter'];
+const SHOP = ['a notebook', 'a pen', 'a folder', 'a poster', 'a mug', 'a phone case',
+              'a torch', 'a sketchpad', 'a water bottle', 'a lunchbox', 'a keyring'];
+const cap = w => `${w[0].toUpperCase()}${w.slice(1)}`;
 
 const span = (tier, a, b, c) => [a, b, c][tier - 1];
 
@@ -15,28 +26,28 @@ export const arithmetic = [
   (r, t) => {
     const hi = span(t, 20, 200, 2000);
     const a = int(r, 2, hi), b = int(r, 2, hi);
-    return mathQ('Add the numbers.', `${a} + ${b} = ?`, a + b,
+    return mathQ(pick(r, ADD_WAYS), `${a} + ${b} = ?`, a + b,
       { hint: t > 1 ? 'Add the units first, then carry.' : 'Count on from the larger number.',
         explanation: `${a} + ${b} = ${a + b}.` });
   },
   (r, t) => {
     const hi = span(t, 20, 200, 2000);
     const a = int(r, 5, hi), b = int(r, 2, a);
-    return mathQ('Subtract.', `${a} − ${b} = ?`, a - b,
+    return mathQ(pick(r, SUB_WAYS), `${a} − ${b} = ?`, a - b,
       { hint: 'Count back, or line up the columns.', explanation: `${a} − ${b} = ${a - b}.` });
   },
   (r, t) => {
     const [x, y] = t === 1 ? [int(r, 2, 9), int(r, 2, 9)]
                  : t === 2 ? [int(r, 3, 12), int(r, 3, 12)]
                            : [int(r, 12, 40), int(r, 6, 25)];
-    return mathQ('Multiply.', `${x} × ${y} = ?`, x * y,
+    return mathQ(pick(r, MUL_WAYS), `${x} × ${y} = ?`, x * y,
       { hint: t > 2 ? 'Split one factor into tens and units.' : 'Think of it as repeated addition.',
         explanation: `${x} × ${y} = ${x * y}.` });
   },
   (r, t) => {
     const b = int(r, 2, span(t, 9, 12, 25));
     const q = int(r, 2, span(t, 10, 12, 40));
-    return mathQ('Divide.', `${b * q} ÷ ${b} = ?`, q,
+    return mathQ(pick(r, DIV_WAYS), `${b * q} ÷ ${b} = ?`, q,
       { hint: `How many ${b}s fit into ${b * q}?`, explanation: `${b} × ${q} = ${b * q}, so ${b * q} ÷ ${b} = ${q}.` });
   },
   (r, t) => {
@@ -64,10 +75,12 @@ export const arithmetic = [
     });
   },
   (r, t) => {
-    const items = pick(r, ['pencils', 'apples', 'stickers', 'books', 'marbles']);
+    const items = pick(r, THINGS);
+    const holder = pick(r, HOLDERS);
+    const one = holder.replace(/e?s$/, '');
     const boxes = int(r, 3, span(t, 8, 15, 30));
     const per = int(r, 3, span(t, 9, 14, 40));
-    return blankQ(`A box holds ${per} ${items}. How many ${items} are in ${boxes} boxes?`, boxes * per,
+    return blankQ(`One ${one} holds ${per} ${items}. How many ${items} are in ${boxes} ${holder}?`, boxes * per,
       { hint: 'This is a multiplication.', explanation: `${per} × ${boxes} = ${boxes * per}.` });
   },
   (r, t) => {
@@ -126,7 +139,7 @@ export const fractions = [
     const a = int(r, 1, d - 2), b = int(r, 1, d - a - 1);
     const [sn, sd] = simplify(a + b, d);
     const same = sn === a + b && sd === d;
-    return mathQ('Add the fractions. Give your answer in its simplest form.', `${a}/${d} + ${b}/${d} = ?`,
+    return mathQ(pick(r, SIMPLEST_WAYS), `${a}/${d} + ${b}/${d} = ?`,
       `${sn}/${sd}`, {
         hint: 'The denominators match, so add the numerators.',
         explanation: `${a} + ${b} = ${a + b}, giving ${a + b}/${d}${same ? '.' : `, which simplifies to ${sn}/${sd}.`}`
@@ -137,14 +150,14 @@ export const fractions = [
       const d = pick(r, [4, 6, 8]);
       const a = int(r, 2, d - 1), b = int(r, 1, a - 1);
       const [sn, sd] = simplify(a - b, d);
-      return mathQ('Subtract the fractions.', `${a}/${d} − ${b}/${d} = ?`, `${sn}/${sd}`,
+      return mathQ(pick(r, SUB_WAYS), `${a}/${d} − ${b}/${d} = ?`, `${sn}/${sd}`,
         { explanation: `${a} − ${b} = ${a - b}, giving ${sn}/${sd}.` });
     }
     const [d1, d2] = sample(r, [2, 3, 4, 5, 6], 2);
     const [n1, n2] = [int(r, 1, d1 - 1), int(r, 1, d2 - 1)];
     const nd = d1 * d2, nn = n1 * d2 + n2 * d1;
     const [sn, sd] = simplify(nn, nd);
-    return mathQ('Add the fractions. Give your answer in its simplest form.', `${n1}/${d1} + ${n2}/${d2} = ?`,
+    return mathQ(pick(r, SIMPLEST_WAYS), `${n1}/${d1} + ${n2}/${d2} = ?`,
       `${sn}/${sd}`, {
         hint: `Use a common denominator of ${nd}.`,
         explanation: `${n1}/${d1} = ${n1 * d2}/${nd} and ${n2}/${d2} = ${n2 * d1}/${nd}. Adding gives ${nn}/${nd} = ${sn}/${sd}.`
@@ -191,19 +204,19 @@ export const decimals = [
   (r, t) => {
     const dp = span(t, 1, 2, 3);
     const a = int(r, 10, 999) / 10 ** dp, b = int(r, 10, 999) / 10 ** dp;
-    return mathQ('Add the decimals.', `${num(a)} + ${num(b)} = ?`, num(a + b),
+    return mathQ(pick(r, ADD_WAYS), `${num(a)} + ${num(b)} = ?`, num(a + b),
       { hint: 'Line up the decimal points.', explanation: `${num(a)} + ${num(b)} = ${num(a + b)}.` });
   },
   (r, t) => {
     const dp = span(t, 1, 2, 2);
     const a = int(r, 100, 999) / 10 ** dp, b = int(r, 10, 99) / 10 ** dp;
-    return mathQ('Subtract the decimals.', `${num(a)} − ${num(b)} = ?`, num(a - b),
+    return mathQ(pick(r, SUB_WAYS), `${num(a)} − ${num(b)} = ?`, num(a - b),
       { explanation: `${num(a)} − ${num(b)} = ${num(a - b)}.` });
   },
   (r, t) => {
     const a = int(r, 11, 99) / 10;
     const b = int(r, 2, span(t, 6, 12, 25));
-    return mathQ('Multiply.', `${num(a)} × ${b} = ?`, num(a * b),
+    return mathQ(pick(r, MUL_WAYS), `${num(a)} × ${b} = ?`, num(a * b),
       { hint: 'Multiply as whole numbers, then put the point back.',
         explanation: `${a * 10} × ${b} = ${a * 10 * b}, so ${num(a)} × ${b} = ${num(a * b)}.` });
   },
@@ -233,7 +246,8 @@ export const decimals = [
   (r, t) => {
     const price = int(r, 150, 4999) / 100;
     const qty = int(r, 2, 9);
-    return blankQ(`One notebook costs $${money(price)}. What do ${qty} cost, in dollars?`,
+    const item = pick(r, SHOP);
+    return blankQ(`${cap(item)} costs $${money(price)}. What do ${qty} of them cost, in dollars?`,
       money(price * qty), { explanation: `${money(price)} × ${qty} = ${money(price * qty)}.` });
   }
 ];
@@ -243,7 +257,7 @@ export const percentages = [
   (r, t) => {
     const p = pick(r, span(t, [10, 25, 50], [5, 15, 20, 30, 40], [12, 17.5, 35, 65, 85]));
     const base = int(r, 2, span(t, 20, 60, 200)) * span(t, 10, 5, 4);
-    return mathQ('Work it out.', `${p}% of ${base} = ?`, num(base * p / 100),
+    return mathQ(pick(r, WORK_WAYS), `${p}% of ${base} = ?`, num(base * p / 100),
       { hint: `10% of ${base} is ${num(base / 10)}.`,
         explanation: `${p}% of ${base} = ${base} × ${p / 100} = ${num(base * p / 100)}.` });
   },
@@ -259,7 +273,7 @@ export const percentages = [
     const base = int(r, 4, 40) * 5;
     const p = pick(r, [10, 15, 20, 25, 30]);
     const dec = base * (1 - p / 100);
-    return blankQ(`A jacket costs $${base} and is reduced by ${p}%. What is the new price in dollars?`,
+    return blankQ(`${cap(pick(r, GOODS))} costs $${base} and is reduced by ${p}%. What is the new price in dollars?`,
       money(dec), { hint: `${p}% of ${base} is ${num(base * p / 100)}.`,
         explanation: `${p}% of $${base} is $${num(base * p / 100)}, and $${base} − $${num(base * p / 100)} = $${money(dec)}.` });
   },
@@ -308,7 +322,7 @@ export const algebra = [
     const x = int(r, 2, span(t, 10, 15, 25));
     const a = int(r, 2, span(t, 5, 9, 12));
     const b = int(r, 1, span(t, 12, 30, 60));
-    return mathQ('Solve for x:', `${a}x + ${b} = ${a * x + b}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a}x + ${b} = ${a * x + b}`, x,
       { hint: `Subtract ${b} from both sides, then divide by ${a}.`,
         explanation: `${a}x = ${a * x}, so x = ${x}.` });
   },
@@ -316,13 +330,13 @@ export const algebra = [
     const x = int(r, 2, span(t, 10, 15, 25));
     const a = int(r, 2, span(t, 6, 9, 12));
     const b = int(r, 1, span(t, 12, 30, 60));
-    return mathQ('Solve for x:', `${a}x − ${b} = ${a * x - b}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a}x − ${b} = ${a * x - b}`, x,
       { hint: `Add ${b} to both sides first.`, explanation: `${a}x = ${a * x}, so x = ${x}.` });
   },
   (r, t) => {
     const x = int(r, 2, 14);
     const a = int(r, 2, 6), b = int(r, 1, 9);
-    return mathQ('Solve for x:', `${a}(x + ${b}) = ${a * (x + b)}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a}(x + ${b}) = ${a * (x + b)}`, x,
       { hint: `Divide both sides by ${a} first — it is quicker than expanding.`,
         explanation: `x + ${b} = ${x + b}, so x = ${x}.` });
   },
@@ -330,7 +344,7 @@ export const algebra = [
     const x = int(r, 2, 12);
     const a = int(r, 4, 9), b = int(r, 2, a - 1);
     const c = (a - b) * x;
-    return mathQ('Solve for x:', `${a}x = ${b}x + ${c}`, x,
+    return mathQ(pick(r, SOLVE_WAYS), `${a}x = ${b}x + ${c}`, x,
       { hint: 'Collect the x terms on one side.',
         explanation: `${a}x − ${b}x = ${c}, so ${a - b}x = ${c} and x = ${x}.` });
   },
