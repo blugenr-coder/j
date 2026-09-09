@@ -12,9 +12,30 @@
    can look at rather than a hope.                                            */
 
 import { DRILL_GENERATORS } from '../assets/js/data/gen-drill.js';
+import { SCIENCE_DRILL_GENERATORS } from '../assets/js/data/gen-drill-science.js';
 import { rng } from '../assets/js/data/gen-core.js';
 
 const SEEDS = 400;
+
+/* A science line reads `speed = 72 m ÷ 8 s = ? m/s`: a name, an expression
+   carrying units, and the unit of the answer. Strip the name and the units and
+   what is left is arithmetic, so the units cost nothing in checkability.
+   Longest first, or "m" eats the "m" out of "mol". */
+const UNIT_TOKENS = ['J/kg°C', 'kg m/s', 'g/cm³', 'kg/m³', 'm/s²', 'N/kg', 'km/h',
+  'mol/dm³', 'g/dm³', 'N/m', 'm/s', 'dm³', 'cm³', 'kWh', 'kPa', 'µm', 'nm',
+  'mm', 'cm', 'km', 'kg', 'Nm', 'Hz', 'Pa', 'm²', '°C', 'mol', 'C', 'K', 'N',
+  'J', 'W', 'V', 'A', 'Ω', 'g', 's', 'm', 'h'];
+
+function stripUnits(text) {
+  let e = String(text);
+  const named = e.match(/^([^=]*?)=(.*)$/);
+  /* Drop a leading label like "speed = " — anything before the first equals
+     that carries no digits of its own. */
+  if (named && !/\d/.test(named[1])) e = named[2];
+  e = e.replace(/=\s*\?[^=]*$/, '');
+  for (const u of UNIT_TOKENS) e = e.split(` ${u}`).join('').split(u).join('');
+  return e.trim();
+}
 
 /** Turn a printed expression into something JavaScript can evaluate, or null. */
 function toJs(text) {
@@ -71,6 +92,55 @@ function sigfig(v, figs) {
   if (v === 0) return 0;
   const f = Math.pow(10, figs - 1 - Math.floor(Math.log10(Math.abs(v))));
   return Math.round((Math.round(v * f) / f) * 1e9) / 1e9;
+}
+
+/* Every explanation states its own sums: "72 ÷ 8 = 9". Those are written
+   separately from the answer key, so checking them catches a maker whose
+   working and whose key disagree — and the reader sees the working, so a wrong
+   one is a visible error even when the key is right. */
+function checkExplanation(q) {
+  /* A root is not a number the claim scanner can read, and stripping the sign
+     turned "√100 = 10" into "100 = 10" and reported working that was right as
+     wrong. Blank them out so those claims are skipped rather than misread. */
+  const text = stripUnits2(String(q.explanation ?? ''))
+    .replace(/[√∛]\s*\d+(\.\d+)?/g, '#root#')
+    /* "49 ÷ 8 = 6 remainder 1" is a true sentence that the scanner would read
+       as "49 ÷ 8 = 6". A division with a remainder is not an equation. */
+    .replace(/=\s*\d+\s*(remainder|r)\s*\d+/g, '= #rem#')
+    /* "7/10 = 70/100 = 70%" is true; 70/100 and 70 are not equal. A percentage
+       is a different unit, so blank it rather than compare it. */
+    .replace(/\d+(\.\d+)?\s*%/g, '#pc#')
+    /* A ratio is two numbers, not one. Without this the scanner reads
+       "13 : 400 = 13 : 400" as the claim "400 = 13". */
+    .replace(/\d+(\s*:\s*\d+)+/g, '#ratio#')
+    /* Algebra is not arithmetic. "2x + 4 + 3x + 3 = 5x + 7" is true, and a
+       scanner that cannot see the x reads "3 = 5" out of the middle of it. */
+    .replace(/\d*[a-z](\^\d+)?(?![a-zA-Z])/g, (m2, _g, at, whole) =>
+      /\d/.test(m2) || m2.length <= 2 ? '#term#' : m2);
+  /* A chain like "4^2 × 4^2 = 4^4 = 256" states two claims, not one, so every
+     segment is evaluated and they must all agree. Comparing only the first two
+     read "4^2 × 4^2 = 4" and reported a bug in working that was right. */
+  /* A claim must start at the beginning of its own sum. Without the lookbehind
+     the scanner starts reading in the middle of one — "#term# + 1 = 37" gave
+     the claim "1 = 37" — and reports working that is right as wrong. */
+  const claims = text.match(/(?<![-−+×÷*/^\d.]\s{0,3})[-−(]?[\d.]+(?:\s*[-−+×÷*/^]\s*[-−(]?[\d.)^]+)*(?:\s*=\s*[-−(]?[\d.]+(?:\s*[-−+×÷*/^]\s*[-−(]?[\d.)^]+)*)+/g);
+  if (!claims) return null;
+  const bad = [];
+  for (const claim of claims) {
+    const values = claim.split('=').map(evaluate).filter(v => v !== null);
+    if (values.length < 2) continue;
+    const first = values[0];
+    if (values.some(v => Math.abs(v - first) > 1e-6 * Math.max(1, Math.abs(first))))
+      bad.push(claim.trim());
+  }
+  return bad.length ? bad : true;
+}
+/* The same unit strip, but safe to run on prose: only tokens that follow a
+   digit are removed, so the word "as" keeps its s and "Watts" is untouched. */
+function stripUnits2(text) {
+  let e = String(text);
+  for (const u of UNIT_TOKENS) e = e.replace(new RegExp(`(\\d)\\s*${u.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![a-zA-Z])`, 'g'), '$1');
+  return e;
 }
 
 /** Rounding: "Round to the nearest 100." with math "1383 → ?" */
@@ -208,11 +278,14 @@ function readStandardForm(q) {
   return null;
 }
 
-let checked = 0, verified = 0, failures = [];
+let checked = 0, verified = 0, explained = 0, failures = [];
 const unverified = new Map();
 const skeletons = new Set();
 
-for (const [topic, makers] of Object.entries(DRILL_GENERATORS)) {
+const ALL = { ...DRILL_GENERATORS, ...SCIENCE_DRILL_GENERATORS };
+const SCIENCE = new Set(Object.keys(SCIENCE_DRILL_GENERATORS));
+
+for (const [topic, makers] of Object.entries(ALL)) {
   makers.forEach((maker, i) => {
     for (let s = 0; s < SEEDS; s++) {
       const q = maker(rng(s * 7919 + i * 104729 + topic.length));
@@ -225,9 +298,17 @@ for (const [topic, makers] of Object.entries(DRILL_GENERATORS)) {
       if (!q.hint) { failures.push(`${where}: no hint`); continue; }
       if (!q.explanation) { failures.push(`${where}: no explanation`); continue; }
       if (/NaN|undefined|Infinity/.test(text)) { failures.push(`${where}: ${text.slice(0, 90)}`); continue; }
-      if (/\s-\d/.test(`${q.prompt} ${q.math ?? ''}`)) failures.push(`${where}: hyphen where a minus sign belongs — ${q.math ?? q.prompt}`);
+      if (/\s-\d/.test(`${q.prompt} ${q.math ?? ''}`))
+        failures.push(`${where}: hyphen where a minus sign belongs — ${q.math ?? q.prompt}`);
 
       skeletons.add((q.prompt + ' ¶ ' + (q.math ?? '')).replace(/-?\d+(\.\d+)?/g, '#'));
+
+      const working = checkExplanation(q);
+      if (working === true) explained++;
+      else if (Array.isArray(working)) {
+        explained++;
+        failures.push(`${where}: the working says ${working.join('; ')} — ${q.prompt}`);
+      }
 
       const holds = checkEquation(q);
       if (holds !== null) {
@@ -260,7 +341,8 @@ for (const [topic, makers] of Object.entries(DRILL_GENERATORS)) {
         continue;
       }
 
-      const lhs = evaluate(q.math ?? q.prompt);
+      const line = q.math ?? q.prompt;
+      const lhs = evaluate(SCIENCE.has(topic) ? stripUnits(line) : line);
       const rhs = evaluate(q.answer);
       if (lhs === null || rhs === null) {
         unverified.set(topic, (unverified.get(topic) ?? 0) + 1);
@@ -272,10 +354,11 @@ for (const [topic, makers] of Object.entries(DRILL_GENERATORS)) {
   });
 }
 
-const topics = Object.keys(DRILL_GENERATORS).length;
-const makers = Object.values(DRILL_GENERATORS).reduce((n, a) => n + a.length, 0);
+const topics = Object.keys(ALL).length;
+const makers = Object.values(ALL).reduce((n, a) => n + a.length, 0);
 console.log(`drill topics ${topics}, makers ${makers}, question skeletons ${skeletons.size}`);
 console.log(`questions built ${checked}, re-evaluated independently ${verified} (${(verified / checked * 100).toFixed(1)}%)`);
+console.log(`questions whose printed working was re-checked sum by sum: ${explained} (${(explained / checked * 100).toFixed(1)}%)`);
 if (unverified.size) {
   console.log('not numerically checkable (answer is a ratio, surd, expression or mixed number):');
   for (const [t, n] of [...unverified].sort((a, b) => b[1] - a[1])) console.log(`  ${t}: ${n}`);

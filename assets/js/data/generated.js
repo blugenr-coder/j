@@ -15,13 +15,15 @@ import { LIFE_GENERATORS } from './gen-life.js';
 import { APPLIED_GENERATORS } from './gen-applied.js';
 import { POOL_GENERATORS } from './gen-pools.js';
 import { DRILL_GENERATORS } from './gen-drill.js';
+import { SCIENCE_DRILL_GENERATORS } from './gen-drill-science.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
 
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
-  ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS
+  ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS,
+  ...SCIENCE_DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -60,6 +62,10 @@ const TOPIC_SUBJECT = {
   equations: 'math', sequences: 'math', standardform: 'math', surds: 'math',
   logarithms: 'math', conversions: 'math', timemath: 'math', moneymath: 'math',
   biology: 'science', chemistry: 'science', physics: 'science', earth: 'science', astronomy: 'science',
+  speeddistancetime: 'science', forcesmotion: 'science', energywork: 'science',
+  densitypressure: 'science', electricity: 'science', waves: 'science', moments: 'science',
+  heatenergy: 'science', moles: 'science', balancing: 'science', atomicstructure: 'science',
+  concentration: 'science', gaslaws: 'science', magnification: 'science', radioactivity: 'science',
   grammar: 'ela', vocabulary: 'ela', spelling: 'ela', reading: 'ela', writing: 'ela', literature: 'ela',
   history: 'social', geography: 'social', civics: 'social', economics: 'social',
   spanish: 'languages', french: 'languages', german: 'languages', esl: 'languages',
@@ -434,14 +440,83 @@ const PLAN = {
     ['Balancing Equations', [4, 11, 12, 14, 18]], ['Reactions and Acids', [5, 8, 15, 16]],
     ['States of Matter', [10, 17, 16]], 'Mixed Practice']],
   physics:     ['Grade 7', 'College', [
-    ['Calculations', [0, 1, 2, 3]], ['Forces and Movement', [0, 1, 2]],
-    ['Energy Calculations', [1, 3]], ['Waves and Light', [2, 3]], 'Mixed Practice']],
+    ['Calculations', [0, 1, 2, 3]], ['Forces and Movement', [1, 3, 5, 12]],
+    ['Energy', [6, 11, 12]], ['Waves and Sound', [7, 10]],
+    ['Electricity', [8, 9, 10]], ['Quantities and Units', [4, 10, 8]], 'Mixed Practice']],
   earth:       ['Grade 4', 'Grade 10', [
     ['Rocks and Fossils', [0, 8, 9]], ['Plate Tectonics and Earthquakes', [1, 5, 6, 2]],
     ['The Water Cycle and Weather', [4, 7, 3]], 'Mixed Practice']],
   astronomy:   ['Grade 4', 'Grade 12', [
     ['Planets and Orbits', [0, 2, 6, 7]], ['Stars and Distances', [1, 4, 5]],
     ['The Moon, Gravity and Seasons', [3, 8, 2]], 'Mixed Practice']],
+
+  /* -------------------------- science drills --------------------------
+     One quantity per topic, the way a physics or chemistry teacher sets
+     homework. "Speed, Distance and Time" is a sheet someone goes looking for
+     by name; "Physics — Calculations" is not. */
+  speeddistancetime: ['Grade 5', 'Grade 12', [
+    ['Finding Speed', [0, 3, 9]], ['Finding Distance', [1, 6]], ['Finding Time', [2, 6]],
+    ['Unit Conversions', [4, 5, 11], 'Grade 7'], ['Acceleration', [7, 10], 'Grade 8'],
+    ['Multi-Stage Journeys', [8, 9], 'Grade 7'], 'Mixed Practice']],
+  forcesmotion: ['Grade 6', 'College', [
+    ['Force, Mass and Acceleration', [0, 1, 2, 7]], ['Weight and Gravity', [3, 4, 10]],
+    ['Resultant Forces', [5, 6]], ['Springs and Momentum', [8, 9], 'Grade 9'],
+    'Mixed Practice']],
+  energywork:   ['Grade 6', 'College', [
+    ['Work Done', [0, 8, 10]], ['Power', [1, 2, 7]],
+    ['Potential and Kinetic Energy', [3, 4], 'Grade 8'],
+    ['Efficiency', [5, 9], 'Grade 8'], ['Energy at Home', [6, 2], 'Grade 7'],
+    'Mixed Practice']],
+  densitypressure: ['Grade 6', 'College', [
+    ['Density', [0, 1, 2, 10]], ['Pressure', [3, 4, 5, 9]],
+    ['Volume and Density Together', [6, 8], 'Grade 8'],
+    ['Pressure in Liquids', [7, 3], 'Grade 9'], 'Mixed Practice']],
+  electricity:  ['Grade 6', 'College', [
+    ['Voltage, Current and Resistance', [0, 1, 2]], ['Electrical Power', [3, 10, 11]],
+    ['Charge and Current', [4, 5]], ['Series Circuits', [6, 9]],
+    ['Parallel Circuits', [7, 8]], 'Mixed Practice']],
+  waves:        ['Grade 6', 'College', [
+    ['The Wave Equation', [0, 1, 2, 13]], ['Frequency and Period', [3, 4, 5, 9, 11]],
+    ['Sound and Echoes', [6, 8]], ['Measuring Wavelength', [7, 12, 13]],
+    ['The Speed of Light', [10, 1], 'Grade 8'], 'Mixed Practice']],
+  moments:      ['Grade 7', 'College', [
+    ['Calculating Moments', [0, 1, 2, 8]], ['Balanced Beams', [3, 4, 5]],
+    ['Levers in Use', [6, 7, 9]], 'Mixed Practice']],
+  heatenergy:   ['Grade 7', 'College', [
+    ['Specific Heat Capacity', [0, 1, 2, 10]], ['Temperature Scales', [4, 5, 3, 15]],
+    ['Latent Heat', [6, 7], 'Grade 9'], ['Heating and Power', [8, 9, 13]],
+    ['Warming Water', [10, 11], 'Grade 7'],
+    ['Cost and Efficiency', [12, 14], 'Grade 8'], 'Mixed Practice']],
+  moles:        ['Grade 8', 'College', [
+    ['Moles from Mass', [0, 11]], ['Mass from Moles', [1, 6]],
+    ['Relative Formula Mass', [2, 3]], ['Gas Volumes', [4, 5], 'Grade 9'],
+    ['Percentage by Mass', [7, 2], 'Grade 9'], ['Reacting Ratios', [8, 9], 'Grade 9'],
+    ['Particles and the Avogadro Number', [10, 0], 'Grade 10'], 'Mixed Practice']],
+  balancing:    ['Grade 7', 'College', [
+    ['Balancing Equations', [0, 1]], ['Counting Atoms', [2, 3, 4, 5]],
+    ['Moles from an Equation', [6, 7, 8, 9], 'Grade 9'], 'Mixed Practice']],
+  atomicstructure: ['Grade 6', 'College', [
+    ['Protons, Neutrons and Electrons', [0, 1, 2, 3, 4]], ['Ions', [5, 7], 'Grade 8'],
+    ['Electron Arrangement', [6, 7, 9]], ['Groups and Periods', [8, 9]],
+    ['Isotopes', [10, 2], 'Grade 9'], 'Mixed Practice']],
+  concentration: ['Grade 8', 'College', [
+    ['Concentration in Moles', [0, 1, 2, 9, 11]], ['Volume Conversions', [3, 4]],
+    ['Concentration in Grams', [5, 6, 13, 14]], ['Dilution', [7, 15]],
+    ['Making a Solution', [8, 12]], ['Titrations', [10, 0], 'Grade 10'],
+    'Mixed Practice']],
+  gaslaws:      ['Grade 9', 'College', [
+    ['Pressure and Volume', [0, 1, 8, 13]], ['Volume and Temperature', [2, 9]],
+    ['Pressure and Temperature', [3, 4]], ['Molar Volume', [5, 6, 7, 12]],
+    ['Pressure Units', [10, 11]], 'Mixed Practice']],
+  magnification: ['Grade 6', 'College', [
+    ['Magnification', [0, 1, 2, 5, 11]], ['Units of Length', [3, 4, 8, 13]],
+    ['Field of View', [6, 7, 12]], ['Scale Bars', [10, 0], 'Grade 8'],
+    ['Population Growth', [9, 15], 'Grade 8'], ['Comparing Sizes', [14, 2]],
+    'Mixed Practice']],
+  radioactivity: ['Grade 8', 'College', [
+    ['Half-Life', [0, 1, 2, 3, 4, 13]], ['Alpha Decay', [5, 6]], ['Beta Decay', [7, 8]],
+    ['Background Radiation', [9, 15]], ['Fractions Remaining', [10, 11], 'Grade 9'],
+    ['Activity', [12, 14], 'Grade 9'], 'Mixed Practice']],
 
   /* -------------------------------- ELA -------------------------------- */
   grammar:     ['Grade 2', 'Grade 10', [

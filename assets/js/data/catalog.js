@@ -94,6 +94,22 @@ export const SUBJECTS = [
       { id: 'physics',   name: 'Physics' },
       { id: 'earth',     name: 'Earth Science' },
       { id: 'astronomy', name: 'Astronomy' },
+      /* Drill topics: a quantity, a formula, and a number to write. */
+      { id: 'speeddistancetime', name: 'Speed, Distance and Time' },
+      { id: 'forcesmotion',      name: 'Forces and Acceleration' },
+      { id: 'energywork',        name: 'Energy, Work and Power' },
+      { id: 'densitypressure',   name: 'Density and Pressure' },
+      { id: 'electricity',       name: 'Current, Voltage and Resistance' },
+      { id: 'waves',             name: 'Waves and Frequency' },
+      { id: 'moments',           name: 'Moments and Levers' },
+      { id: 'heatenergy',        name: 'Heat and Temperature' },
+      { id: 'moles',             name: 'Moles and Masses' },
+      { id: 'balancing',         name: 'Balancing Equations' },
+      { id: 'atomicstructure',   name: 'Atomic Structure' },
+      { id: 'concentration',     name: 'Concentration and Solutions' },
+      { id: 'gaslaws',           name: 'Gas Laws' },
+      { id: 'magnification',     name: 'Microscopy and Magnification' },
+      { id: 'radioactivity',     name: 'Radioactivity and Half-Life' },
       { id: 'method',    name: 'Working Scientifically' }
     ]
   },

@@ -775,6 +775,11 @@ export const DICT = {
   "Expand the brackets.": "Sviluppa le parentesi.",
   "Expand and simplify.": "Sviluppa e semplifica.",
   "Factorise.": "Scomponi in fattori.",
+
+  /* Science drill instructions. */
+  "Calculate the answer.": "Calcola la risposta.",
+  "Write the value.": "Scrivi il valore.",
+  "Find the value.": "Trova il valore.",
 };
 
 /* Strings that carry a number. $1 is the number; the third entry, when
