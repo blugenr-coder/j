@@ -20,6 +20,7 @@ import { ENGLISH_DRILL_GENERATORS } from './gen-drill-english.js';
 import { LANG_DRILL_GENERATORS } from './gen-drill-lang.js';
 import { CS_DRILL_GENERATORS } from './gen-drill-cs.js';
 import { BUSINESS_DRILL_GENERATORS } from './gen-drill-business.js';
+import { APPLIED_DRILL_GENERATORS } from './gen-drill-applied.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
@@ -28,7 +29,7 @@ const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
   ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS,
   ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS, ...LANG_DRILL_GENERATORS,
-  ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS
+  ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS, ...APPLIED_DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -58,6 +59,8 @@ const TOPIC_SUBJECT = {
   worldaround: 'foundation', readiness: 'foundation',
   careers: 'life', safety: 'life', household: 'life', communication: 'life',
   method: 'science', cultures: 'social', italian: 'languages', mandarin: 'languages',
+  readingmusic: 'arts', mapskills: 'social', econcalcs: 'social',
+  healthcalcs: 'health', engcalcs: 'engineering',
   arithmetic: 'math', fractions: 'math', decimals: 'math', percentages: 'math', algebra: 'math',
   geometry: 'math', trigonometry: 'math', statistics: 'math', calculus: 'math',
   placevalue: 'math', addition: 'math', subtraction: 'math', timestables: 'math',
@@ -642,6 +645,30 @@ const PLAN = {
   esl:         ['Grade 4', 'College', [
     ['Tenses and Verb Forms', [0, 4, 5, 6]], ['Prepositions and Articles', [1, 3, 2]],
     ['Everyday English', [7, 2, 1]], 'Mixed Practice']],
+
+  /* --------------------------- applied drills ---------------------------
+     Five subjects each have a handful of sums a course returns to every week,
+     and none of them had a sheet of its own. */
+  readingmusic: ['Grade 3', 'College', [
+    ['Note Values', [0, 3, 10]], ['Time Signatures', [1, 2, 11]],
+    ['Intervals', [4, 5], 'Grade 6'], ['Key Signatures', [6, 7], 'Grade 6'],
+    ['Tempo and Timing', [8, 9], 'Grade 5'], 'Mixed Practice']],
+  mapskills:    ['Grade 4', 'Grade 12', [
+    ['Map Scale', [0, 1, 2]], ['Contours and Gradient', [3, 8]],
+    ['Bearings and Direction', [4, 5, 6]], ['Time Zones', [7, 11]],
+    ['Density and Area', [9, 10]], 'Mixed Practice']],
+  econcalcs:    ['Grade 8', 'College', [
+    ['Revenue and Price', [0, 7]], ['Elasticity', [1, 6]],
+    ['National Income', [2, 3]], ['Index Numbers and Inflation', [4, 8, 10]],
+    ['Unemployment', [5, 3]], ['Choices and Markets', [9, 11]], 'Mixed Practice']],
+  healthcalcs:  ['Grade 5', 'College', [
+    ['Body Mass Index', [0, 8]], ['Heart Rate', [1, 2, 11]],
+    ['Calories in Food', [3, 4, 5]], ['Energy Balance', [6, 7, 10]],
+    ['Activity', [9, 10]], 'Mixed Practice']],
+  engcalcs:     ['Grade 8', 'College', [
+    ['Stress and Strain', [0, 1, 10]], ['Gears and Speed', [2, 3, 11]],
+    ['Machines and Advantage', [4, 8, 11]], ['Efficiency and Power', [5, 6]],
+    ['Torque and Beams', [7, 9]], 'Mixed Practice']],
 
   /* -------------------------- language drills --------------------------
      A conjugation table with the endings rubbed out, or twenty nouns waiting

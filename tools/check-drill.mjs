@@ -15,6 +15,7 @@ import { DRILL_GENERATORS } from '../assets/js/data/gen-drill.js';
 import { SCIENCE_DRILL_GENERATORS } from '../assets/js/data/gen-drill-science.js';
 import { CS_DRILL_GENERATORS } from '../assets/js/data/gen-drill-cs.js';
 import { BUSINESS_DRILL_GENERATORS } from '../assets/js/data/gen-drill-business.js';
+import { APPLIED_DRILL_GENERATORS } from '../assets/js/data/gen-drill-applied.js';
 import { rng } from '../assets/js/data/gen-core.js';
 
 const SEEDS = 400;
@@ -296,7 +297,8 @@ const unverified = new Map();
 const skeletons = new Set();
 
 const ALL = { ...DRILL_GENERATORS, ...SCIENCE_DRILL_GENERATORS,
-              ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS };
+              ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS,
+              ...APPLIED_DRILL_GENERATORS };
 const SCIENCE = new Set(Object.keys(SCIENCE_DRILL_GENERATORS));
 
 for (const [topic, makers] of Object.entries(ALL)) {

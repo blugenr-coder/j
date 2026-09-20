@@ -145,7 +145,10 @@ export const SUBJECTS = [
       { id: 'geography', name: 'Geography' },
       { id: 'civics',    name: 'Civics' },
       { id: 'economics', name: 'Economics' },
-      { id: 'cultures',  name: 'World Cultures' }
+      { id: 'cultures',  name: 'World Cultures' },
+      /* Drill topics: scale, bearings and the figures behind the graphs. */
+      { id: 'mapskills',  name: 'Map Skills' },
+      { id: 'econcalcs',  name: 'Economics Calculations' }
     ]
   },
   {
@@ -217,7 +220,9 @@ export const SUBJECTS = [
     topics: [
       { id: 'art-history', name: 'Art History' },
       { id: 'music-theory', name: 'Music Theory' },
-      { id: 'drama',        name: 'Drama and Theatre' }
+      { id: 'drama',        name: 'Drama and Theatre' },
+      /* Drill topic: the sums a music course returns to. */
+      { id: 'readingmusic', name: 'Reading Music' }
     ]
   },
 
@@ -228,7 +233,9 @@ export const SUBJECTS = [
     topics: [
       { id: 'nutrition', name: 'Nutrition' },
       { id: 'anatomy',   name: 'Human Anatomy' },
-      { id: 'fitness',   name: 'Fitness and Training' }
+      { id: 'fitness',   name: 'Fitness and Training' },
+      /* Drill topic: the figures a health course keeps working out. */
+      { id: 'healthcalcs', name: 'Health and Fitness Figures' }
     ]
   },
   {
@@ -262,7 +269,9 @@ export const SUBJECTS = [
       { id: 'materials',   name: 'Materials Science' },
       { id: 'biomedical',  name: 'Biomedical Engineering' },
       { id: 'industrial',  name: 'Industrial and Manufacturing' },
-      { id: 'thermo',      name: 'Thermodynamics and Fluids' }
+      { id: 'thermo',      name: 'Thermodynamics and Fluids' },
+      /* Drill topic: stress, gears, torque and efficiency. */
+      { id: 'engcalcs', name: 'Engineering Calculations' }
     ]
   },
   {

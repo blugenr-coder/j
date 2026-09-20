@@ -174,25 +174,25 @@ export const hexadecimal = [
 /* =========================== UNITS OF DATA =========================== */
 export const datasizes = [
   (r) => { const n = int(r, 2, 64);
-    return blankQ(`How many bits are there in ${n} bytes?`, n * 8,
+    return blankQ(ask(r, `How many bits are there in ${n} bytes?`, `Convert ${n} bytes to bits.`, `Write ${n} bytes as a number of bits.`), n * 8,
       { hint: 'A byte is 8 bits.', explanation: `${n} × 8 = ${n * 8} bits.` }); },
 
   (r) => { const n = int(r, 2, 64);
-    return blankQ(`How many bytes are there in ${n * 8} bits?`, n,
+    return blankQ(ask(r, `How many bytes are there in ${n * 8} bits?`, `Convert ${n * 8} bits to bytes.`, `Write ${n * 8} bits as a number of bytes.`), n,
       { hint: 'Divide by 8.', explanation: `${n * 8} ÷ 8 = ${n} bytes.` }); },
 
   (r) => { const n = int(r, 2, 32);
-    return blankQ(`How many bytes are there in ${n} kibibytes, where 1 KiB is 1024 bytes?`,
+    return blankQ(ask(r, `How many bytes are there in ${n} kibibytes, where 1 KiB is 1024 bytes?`, `Convert ${n} KiB to bytes, taking 1 KiB as 1024 bytes.`, `Write ${n} KiB as a number of bytes, where 1 KiB is 1024 bytes.`),
       n * 1024,
       { hint: 'Multiply by 1024.', explanation: `${n} × 1024 = ${n * 1024} bytes.` }); },
 
   (r) => { const n = int(r, 2, 32);
-    return blankQ(`How many kibibytes are there in ${n} mebibytes, where 1 MiB is 1024 KiB?`,
+    return blankQ(ask(r, `How many kibibytes are there in ${n} mebibytes, where 1 MiB is 1024 KiB?`, `Convert ${n} MiB to KiB, taking 1 MiB as 1024 KiB.`, `Write ${n} MiB as a number of KiB, where 1 MiB is 1024 KiB.`),
       n * 1024,
       { hint: 'Multiply by 1024.', explanation: `${n} × 1024 = ${n * 1024} KiB.` }); },
 
   (r) => { const n = int(r, 2, 16);
-    return blankQ(`How many mebibytes are there in ${n} gibibytes?`, n * 1024,
+    return blankQ(ask(r, `How many mebibytes are there in ${n} gibibytes?`, `Convert ${n} GiB to MiB.`, `Write ${n} GiB as a number of MiB.`), n * 1024,
       { hint: 'Each step up is a factor of 1024.',
         explanation: `${n} × 1024 = ${n * 1024} MiB.` }); },
 
@@ -311,28 +311,28 @@ export const logicgates = [
 /* ========================= BOOLEAN EXPRESSIONS ========================= */
 export const booleanalgebra = [
   (r) => { const a = int(r, 0, 1);
-    return blankQ(`What is the value of A AND A when A = ${a}?`, a,
+    return blankQ(ask(r, `What is the value of A AND A when A = ${a}?`, `Evaluate A AND A for A = ${a}.`, `A = ${a}. What is A AND A?`), a,
       { hint: 'A term ANDed with itself does not change.',
         explanation: `${a} AND ${a} = ${a}.` }); },
 
   (r) => { const a = int(r, 0, 1);
-    return blankQ(`What is the value of A OR NOT A when A = ${a}?`, 1,
+    return blankQ(ask(r, `What is the value of A OR NOT A when A = ${a}?`, `Evaluate A OR NOT A for A = ${a}.`, `A = ${a}. What is A OR NOT A?`), 1,
       { hint: 'One side of the OR is always true.',
         explanation: `Whatever A is, A OR NOT A is 1.` }); },
 
   (r) => { const a = int(r, 0, 1);
-    return blankQ(`What is the value of A AND NOT A when A = ${a}?`, 0,
+    return blankQ(ask(r, `What is the value of A AND NOT A when A = ${a}?`, `Evaluate A AND NOT A for A = ${a}.`, `A = ${a}. What is A AND NOT A?`), 0,
       { hint: 'Both sides can never be true at once.',
         explanation: `Whatever A is, A AND NOT A is 0.` }); },
 
   (r) => { const a = int(r, 0, 1), b = int(r, 0, 1);
-    return blankQ(`What is the value of NOT A OR NOT B when A = ${a} and B = ${b}?`,
+    return blankQ(ask(r, `What is the value of NOT A OR NOT B when A = ${a} and B = ${b}?`, `Evaluate NOT A OR NOT B for A = ${a}, B = ${b}.`, `A = ${a} and B = ${b}. What is NOT A OR NOT B?`),
       GATES.NAND(a, b),
       { hint: 'By De Morgan this is the same as NOT (A AND B).',
         explanation: `NOT ${a} = ${a ? 0 : 1}, NOT ${b} = ${b ? 0 : 1}, and their OR is ${GATES.NAND(a, b)}.` }); },
 
   (r) => { const a = int(r, 0, 1), b = int(r, 0, 1);
-    return blankQ(`What is the value of NOT A AND NOT B when A = ${a} and B = ${b}?`,
+    return blankQ(ask(r, `What is the value of NOT A AND NOT B when A = ${a} and B = ${b}?`, `Evaluate NOT A AND NOT B for A = ${a}, B = ${b}.`, `A = ${a} and B = ${b}. What is NOT A AND NOT B?`),
       GATES.NOR(a, b),
       { hint: 'By De Morgan this is the same as NOT (A OR B).',
         explanation: `NOT ${a} = ${a ? 0 : 1}, NOT ${b} = ${b ? 0 : 1}, and their AND is ${GATES.NOR(a, b)}.` }); },
