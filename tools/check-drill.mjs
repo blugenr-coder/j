@@ -13,6 +13,8 @@
 
 import { DRILL_GENERATORS } from '../assets/js/data/gen-drill.js';
 import { SCIENCE_DRILL_GENERATORS } from '../assets/js/data/gen-drill-science.js';
+import { CS_DRILL_GENERATORS } from '../assets/js/data/gen-drill-cs.js';
+import { BUSINESS_DRILL_GENERATORS } from '../assets/js/data/gen-drill-business.js';
 import { rng } from '../assets/js/data/gen-core.js';
 
 const SEEDS = 400;
@@ -98,10 +100,16 @@ function sigfig(v, figs) {
    separately from the answer key, so checking them catches a maker whose
    working and whose key disagree — and the reader sees the working, so a wrong
    one is a visible error even when the key is right. */
-function checkExplanation(q) {
+/* Working written in another base cannot be read as arithmetic: "6A + 1 = 6B"
+   is true and "6A + 1 = 6B" read in base ten is not. These topics are counted
+   as unchecked rather than checked wrongly. */
+const OTHER_BASE = new Set(['binary', 'hexadecimal', 'networking']);
+
+function checkExplanation(q, topic) {
   /* A root is not a number the claim scanner can read, and stripping the sign
      turned "√100 = 10" into "100 = 10" and reported working that was right as
      wrong. Blank them out so those claims are skipped rather than misread. */
+  if (OTHER_BASE.has(topic)) return null;
   const text = stripUnits2(String(q.explanation ?? ''))
     .replace(/[√∛]\s*\d+(\.\d+)?/g, '#root#')
     /* "49 ÷ 8 = 6 remainder 1" is a true sentence that the scanner would read
@@ -127,6 +135,11 @@ function checkExplanation(q) {
   if (!claims) return null;
   const bad = [];
   for (const claim of claims) {
+    /* Real working always has an operator in it. A claim with none is not a
+       sum but an identification — "131 = 10000011" is a base conversion and
+       "1 NAND 0 = 1" is a logic table row — and comparing the two sides as
+       numbers reports both as wrong. */
+    if (!/[-−+×÷*/^]/.test(claim)) continue;
     const values = claim.split('=').map(evaluate).filter(v => v !== null);
     if (values.length < 2) continue;
     const first = values[0];
@@ -282,7 +295,8 @@ let checked = 0, verified = 0, explained = 0, failures = [];
 const unverified = new Map();
 const skeletons = new Set();
 
-const ALL = { ...DRILL_GENERATORS, ...SCIENCE_DRILL_GENERATORS };
+const ALL = { ...DRILL_GENERATORS, ...SCIENCE_DRILL_GENERATORS,
+              ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS };
 const SCIENCE = new Set(Object.keys(SCIENCE_DRILL_GENERATORS));
 
 for (const [topic, makers] of Object.entries(ALL)) {
@@ -303,7 +317,7 @@ for (const [topic, makers] of Object.entries(ALL)) {
 
       skeletons.add((q.prompt + ' ¶ ' + (q.math ?? '')).replace(/-?\d+(\.\d+)?/g, '#'));
 
-      const working = checkExplanation(q);
+      const working = checkExplanation(q, topic);
       if (working === true) explained++;
       else if (Array.isArray(working)) {
         explained++;

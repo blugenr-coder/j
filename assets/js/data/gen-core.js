@@ -242,9 +242,13 @@ const pointsAt = value => {
   const w = str.split(/\s+/);
   /* A first word that is most of the answer is the answer — "xīngqīyī (星期一)"
      is one word with a gloss stuck to it, not two. */
-  const oneWord = w.length === 1 || w[0].length / str.replace(/\s+/g, '').length > 0.6;
+  const oneWord = w.length === 1 || w[0].length / str.replace(/\s+/g, '').length >= 0.5;
   if (oneWord) return str.length > 3 ? `“${str[0]}”` : null;
-  return w[0].length <= 3 && w[1] ? `“${w[0]} ${w[1][0]}…”` : `“${w[0]}…”`;
+  /* Never more than the first three letters. Showing a whole first word gave
+     "the one beginning “lǎobǎn…”", which is the answer with its gloss left
+     off — a pointer, not a hint. */
+  const head = w[0].length <= 3 && w[1] ? `${w[0]} ${w[1][0]}` : w[0].slice(0, 3);
+  return `“${head}…”`;
 };
 
 export function matchHint(pairs) {
@@ -263,6 +267,10 @@ export function matchHint(pairs) {
       const content = rights[j].filter(w => w.length >= 4);
       if (content.length > 0 && content.every(w => inLeft.has(w))) return false;
     }
+    /* And the pair's own left must not contain its own answer: quoting the
+       definition "able to be" points straight at the suffix "-able". */
+    const mine = rights[i].filter(w => w.length >= 4);
+    if (mine.length > 0 && mine.some(w => inLeft.has(w))) return false;
     return true;
   });
   const p = [...safe].sort((a, b) => String(b.right).length - String(a.right).length)[0];

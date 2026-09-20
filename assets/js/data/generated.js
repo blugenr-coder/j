@@ -18,6 +18,8 @@ import { DRILL_GENERATORS } from './gen-drill.js';
 import { SCIENCE_DRILL_GENERATORS } from './gen-drill-science.js';
 import { ENGLISH_DRILL_GENERATORS } from './gen-drill-english.js';
 import { LANG_DRILL_GENERATORS } from './gen-drill-lang.js';
+import { CS_DRILL_GENERATORS } from './gen-drill-cs.js';
+import { BUSINESS_DRILL_GENERATORS } from './gen-drill-business.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
@@ -25,7 +27,8 @@ import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
   ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS,
-  ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS, ...LANG_DRILL_GENERATORS
+  ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS, ...LANG_DRILL_GENERATORS,
+  ...CS_DRILL_GENERATORS, ...BUSINESS_DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -83,6 +86,11 @@ const TOPIC_SUBJECT = {
   italianverbs: 'languages', italianarticles: 'languages',
   italiannumbers: 'languages', italianphrases: 'languages',
   programming: 'cs', algorithms: 'cs', data: 'cs',
+  binary: 'cs', hexadecimal: 'cs', datasizes: 'cs', logicgates: 'cs',
+  booleanalgebra: 'cs', bigo: 'cs', charencoding: 'cs', networking: 'cs',
+  tracingcode: 'cs', sorting: 'cs', sql: 'cs',
+  interest: 'business', breakeven: 'business', profitloss: 'business',
+  ratios: 'business', depreciation: 'business', payroll: 'business',
   notes: 'study', revision: 'study', exams: 'study',
   'art-history': 'arts', 'music-theory': 'arts', drama: 'arts',
   measurement: 'math', discrete: 'math',
@@ -719,6 +727,73 @@ const PLAN = {
   data:        ['Grade 6', 'College', [
     ['Databases', [0, 3, 2]], ['Data Formats and Charts', [1, 4, 5]],
     ['Reading Data Critically', [6, 4, 5]], 'Mixed Practice']],
+
+  /* --------------------------- computing drills ---------------------------
+     "Programming" was one topic with twelve makers. A teacher wanting twenty
+     binary conversions, or twenty truth tables, had to open it and hope. */
+  binary:       ['Grade 6', 'College', [
+    ['Denary to Binary', [0, 2, 14]], ['Binary to Denary', [1, 3]],
+    ['Binary Arithmetic', [4, 13]], ['Place Values', [5, 6, 7, 14]],
+    ['Binary Shifts', [8, 9]], ['Reading a Binary Number', [10, 11, 12]],
+    ['Negative Numbers', [15, 0], 'Grade 9'], 'Mixed Practice']],
+  hexadecimal:  ['Grade 7', 'College', [
+    ['Denary and Hexadecimal', [0, 1, 7]], ['Hexadecimal Digits', [2, 3]],
+    ['Hexadecimal and Binary', [4, 5, 9]], ['Counting in Hexadecimal', [6, 8]],
+    'Mixed Practice']],
+  datasizes:    ['Grade 6', 'College', [
+    ['Bits and Bytes', [0, 1, 8]], ['Kilobytes and Megabytes', [2, 3, 4]],
+    ['Image File Sizes', [5, 6, 9]], ['Sound File Sizes', [7, 0]], 'Mixed Practice']],
+  logicgates:   ['Grade 7', 'College', [
+    ['Single Gates', [0, 1]], ['Truth Tables', [2, 3, 8]],
+    ['Naming the Gate', [4, 2]], ['Combined Gates', [5, 6, 7, 9]], 'Mixed Practice']],
+  booleanalgebra: ['Grade 8', 'College', [
+    ['Simple Rules', [0, 1, 2, 6, 7]], ['De Morgan', [3, 4]],
+    ['Longer Expressions', [5, 9]], ['Counting Combinations', [8, 0]], 'Mixed Practice']],
+  bigo:         ['Grade 8', 'College', [
+    ['Searching', [0, 1, 5]], ['Naming the Complexity', [6, 7]],
+    ['Counting Operations', [2, 3, 8, 9]], ['Growth', [4, 2]], 'Mixed Practice']],
+  charencoding: ['Grade 6', 'College', [
+    ['ASCII Codes', [0, 1, 2, 3]], ['Upper and Lower Case', [4, 9]],
+    ['How Many Characters', [5, 8]], ['File Sizes', [6, 7]], 'Mixed Practice']],
+  networking:   ['Grade 7', 'College', [
+    ['IP Octets', [0, 1, 7, 8, 10]], ['Address Sizes', [2, 3]],
+    ['Host and Network Bits', [4, 5, 6, 11]], ['Subnet Masks', [12, 13]],
+    ['Ports', [9, 4]], 'Mixed Practice']],
+  tracingcode:  ['Grade 6', 'College', [
+    ['Counting Loops', [0, 1, 5, 11]], ['Changing Variables', [2, 4, 13]],
+    ['Conditions', [3, 14]], ['While Loops', [6, 7]],
+    ['Lists and Strings', [8, 9, 10, 12]], 'Mixed Practice']],
+  sorting:      ['Grade 7', 'College', [
+    ['Bubble Sort', [0, 1, 6, 9, 11, 12]], ['Binary Search', [2, 7, 13]],
+    ['Linear Search', [3, 4]], ['Selection and Insertion Sort', [10, 8]],
+    ['Merge Sort', [5, 2]], 'Mixed Practice']],
+  sql:          ['Grade 8', 'College', [
+    ['Keywords', [0, 1, 5, 6]], ['Writing a SELECT', [2, 3]],
+    ['Filtering and Sorting', [4, 8]], ['Counting Rows', [7, 9]], 'Mixed Practice']],
+
+  /* --------------------------- business drills --------------------------- */
+  interest:     ['Grade 7', 'College', [
+    ['Simple Interest', [0, 1, 4, 5]], ['Compound Interest', [2, 3, 7]],
+    ['Comparing the Two', [8, 2]], ['Saving and Losing Value', [6, 9]], 'Mixed Practice']],
+  breakeven:    ['Grade 8', 'College', [
+    ['Contribution', [0, 9]], ['Break-Even Point', [1, 2]],
+    ['Revenue and Costs', [3, 6, 7]], ['Margin of Safety', [4, 5]],
+    ['Target Profit', [8, 1]], 'Mixed Practice']],
+  profitloss:   ['Grade 7', 'College', [
+    ['Gross and Net Profit', [0, 1, 2]], ['Profit Margins', [3, 4, 9]],
+    ['Mark-Up', [5, 6]], ['Revenue and Costs', [7, 8]], 'Mixed Practice']],
+  ratios:       ['Grade 9', 'College', [
+    ['Liquidity Ratios', [0, 1, 8]], ['Profitability Ratios', [2, 7]],
+    ['Efficiency Ratios', [3, 4]], ['Gearing and Capital', [5, 6]],
+    ['Earnings per Share', [9, 2]], 'Mixed Practice']],
+  depreciation: ['Grade 9', 'College', [
+    ['Straight Line', [0, 1, 5, 6]], ['Reducing Balance', [3, 4]],
+    ['Book Value', [2, 9]], ['Selling an Asset', [7, 8]], 'Mixed Practice']],
+  payroll:      ['Grade 6', 'College', [
+    ['Gross Pay', [0, 1, 8]], ['Deductions and Take-Home Pay', [2, 3]],
+    ['Tax on Prices', [4, 5]], ['Cash Flow', [6, 7]],
+    ['Commission', [9, 0]], 'Mixed Practice']],
+
 
   /* ---------------------------- study skills ---------------------------- */
   notes:       ['Grade 6', 'College', [

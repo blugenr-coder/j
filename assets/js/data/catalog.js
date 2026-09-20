@@ -187,7 +187,19 @@ export const SUBJECTS = [
       { id: 'algorithms',  name: 'Algorithms' },
       { id: 'data',        name: 'Data & Databases' },
       { id: 'web',         name: 'Web Development' },
-      { id: 'cyber',       name: 'Cyber Security' }
+      { id: 'cyber',       name: 'Cyber Security' },
+      /* Drill topics: convert it, trace it, or work out how long it takes. */
+      { id: 'binary',         name: 'Binary and Denary' },
+      { id: 'hexadecimal',    name: 'Hexadecimal' },
+      { id: 'datasizes',      name: 'Units of Data' },
+      { id: 'logicgates',     name: 'Logic Gates' },
+      { id: 'booleanalgebra', name: 'Boolean Expressions' },
+      { id: 'bigo',           name: 'Algorithm Complexity' },
+      { id: 'charencoding',   name: 'Character Codes' },
+      { id: 'networking',     name: 'Addresses and Networking' },
+      { id: 'tracingcode',    name: 'Tracing Code' },
+      { id: 'sorting',        name: 'Sorting and Searching' },
+      { id: 'sql',            name: 'SQL Queries' }
     ]
   },
   {
@@ -225,7 +237,14 @@ export const SUBJECTS = [
     topics: [
       { id: 'finance',    name: 'Personal Finance' },
       { id: 'accounting', name: 'Accounting' },
-      { id: 'marketing',  name: 'Marketing' }
+      { id: 'marketing',  name: 'Marketing' },
+      /* Drill topics: the calculations a course keeps coming back to. */
+      { id: 'interest',     name: 'Interest' },
+      { id: 'breakeven',    name: 'Break-Even Analysis' },
+      { id: 'profitloss',   name: 'Profit and Loss' },
+      { id: 'ratios',       name: 'Financial Ratios' },
+      { id: 'depreciation', name: 'Depreciation' },
+      { id: 'payroll',      name: 'Wages, Tax and Cash Flow' }
     ]
   },
   {
