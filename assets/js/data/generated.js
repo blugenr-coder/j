@@ -17,6 +17,7 @@ import { POOL_GENERATORS } from './gen-pools.js';
 import { DRILL_GENERATORS } from './gen-drill.js';
 import { SCIENCE_DRILL_GENERATORS } from './gen-drill-science.js';
 import { ENGLISH_DRILL_GENERATORS } from './gen-drill-english.js';
+import { LANG_DRILL_GENERATORS } from './gen-drill-lang.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
@@ -24,7 +25,7 @@ import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
 const BASE_GENERATORS = {
   ...MATH_GENERATORS, ...SCIENCE_GENERATORS, ...VERBAL_GENERATORS, ...WORLD_GENERATORS,
   ...LIFE_GENERATORS, ...APPLIED_GENERATORS, ...DRILL_GENERATORS,
-  ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS
+  ...SCIENCE_DRILL_GENERATORS, ...ENGLISH_DRILL_GENERATORS, ...LANG_DRILL_GENERATORS
 };
 
 /* Pool generators sample from large lists, so they extend a topic rather than
@@ -73,6 +74,14 @@ const TOPIC_SUBJECT = {
   synonymsantonyms: 'ela', figurative: 'ela', spellingrules: 'ela',
   history: 'social', geography: 'social', civics: 'social', economics: 'social',
   spanish: 'languages', french: 'languages', german: 'languages', esl: 'languages',
+  spanishverbs: 'languages', spanisharticles: 'languages', spanishadjectives: 'languages',
+  spanishnumbers: 'languages', spanishphrases: 'languages',
+  frenchverbs: 'languages', frencharticles: 'languages', frenchadjectives: 'languages',
+  frenchnumbers: 'languages', frenchphrases: 'languages',
+  germanverbs: 'languages', germanarticles: 'languages',
+  germannumbers: 'languages', germanphrases: 'languages',
+  italianverbs: 'languages', italianarticles: 'languages',
+  italiannumbers: 'languages', italianphrases: 'languages',
   programming: 'cs', algorithms: 'cs', data: 'cs',
   notes: 'study', revision: 'study', exams: 'study',
   'art-history': 'arts', 'music-theory': 'arts', drama: 'arts',
@@ -625,6 +634,79 @@ const PLAN = {
   esl:         ['Grade 4', 'College', [
     ['Tenses and Verb Forms', [0, 4, 5, 6]], ['Prepositions and Articles', [1, 3, 2]],
     ['Everyday English', [7, 2, 1]], 'Mixed Practice']],
+
+  /* -------------------------- language drills --------------------------
+     A conjugation table with the endings rubbed out, or twenty nouns waiting
+     for their article. The regular forms are built from stem plus ending, so
+     tools/check-lang.mjs can derive every one of them again and disagree. */
+  spanishverbs:      ['Grade 4', 'College', [
+    ['Regular Verbs', [0, 2, 9, 11]], ['Full Conjugations', [1, 7]],
+    ['Irregular Verbs', [6, 7, 8]], ['Stems and Endings', [3, 10]],
+    ['Verb Meanings', [5, 0]], 'Mixed Practice']],
+  spanisharticles:   ['Grade 4', 'College', [
+    ['Definite Articles', [0, 7, 8]], ['Indefinite Articles', [1, 2]],
+    ['Gender', [2, 9]], ['Plurals', [3, 4, 5]],
+    ['Nouns in English', [6, 7]], 'Mixed Practice']],
+  spanishadjectives: ['Grade 5', 'College', [
+    ['Feminine Forms', [0, 4]], ['Plural Forms', [1, 2, 3]],
+    ['Agreement', [4, 5, 7]], ['All Four Forms', [6, 0]],
+    ['Adjective Meanings', [8, 9]], 'Mixed Practice']],
+  spanishnumbers:    ['Grade 3', 'College', [
+    ['Numbers in Words', [0, 1, 2]], ['Counting and Sums', [3, 9]],
+    ['Days of the Week', [4, 5, 6]], ['Months of the Year', [7, 8, 10]],
+    'Mixed Practice']],
+  spanishphrases:    ['Grade 3', 'College', [
+    ['Understanding Phrases', [0, 2]], ['Saying It Yourself', [1, 3]],
+    'Mixed Practice']],
+  frenchverbs:      ['Grade 4', 'College', [
+    ['Regular Verbs', [0, 2, 9, 11]], ['Full Conjugations', [1, 7]],
+    ['Irregular Verbs', [6, 7, 8]], ['Stems and Endings', [3, 10]],
+    ['Verb Meanings', [5, 0]], 'Mixed Practice']],
+  frencharticles:   ['Grade 4', 'College', [
+    ['Definite Articles', [0, 7, 8]], ['Indefinite Articles', [1, 2]],
+    ['Gender', [2, 9]], ['Plurals', [3, 4, 5]],
+    ['Nouns in English', [6, 7]], 'Mixed Practice']],
+  frenchadjectives: ['Grade 5', 'College', [
+    ['Feminine Forms', [0, 4]], ['Plural Forms', [1, 2, 3]],
+    ['Agreement', [4, 5, 7]], ['All Four Forms', [6, 0]],
+    ['Adjective Meanings', [8, 9]], 'Mixed Practice']],
+  frenchnumbers:    ['Grade 3', 'College', [
+    ['Numbers in Words', [0, 1, 2]], ['Counting and Sums', [3, 9]],
+    ['Days of the Week', [4, 5, 6]], ['Months of the Year', [7, 8, 10]],
+    'Mixed Practice']],
+  frenchphrases:    ['Grade 3', 'College', [
+    ['Understanding Phrases', [0, 2]], ['Saying It Yourself', [1, 3]],
+    'Mixed Practice']],
+  germanverbs:      ['Grade 5', 'College', [
+    ['Regular Verbs', [0, 2, 9, 11]], ['Full Conjugations', [1, 7]],
+    ['Irregular Verbs', [6, 7, 8]], ['Stems and Endings', [3, 10]],
+    ['Verb Meanings', [5, 0]], 'Mixed Practice']],
+  germanarticles:   ['Grade 5', 'College', [
+    ['Definite Articles', [0, 7, 8]], ['Indefinite Articles', [1, 2]],
+    ['Gender', [2, 9]], ['Plurals', [3, 4, 5]],
+    ['Nouns in English', [6, 7]], 'Mixed Practice']],
+  germannumbers:    ['Grade 3', 'College', [
+    ['Numbers in Words', [0, 1, 2]], ['Counting and Sums', [3, 9]],
+    ['Days of the Week', [4, 5, 6]], ['Months of the Year', [7, 8, 10]],
+    'Mixed Practice']],
+  germanphrases:    ['Grade 3', 'College', [
+    ['Understanding Phrases', [0, 2]], ['Saying It Yourself', [1, 3]],
+    'Mixed Practice']],
+  italianverbs:      ['Grade 4', 'College', [
+    ['Regular Verbs', [0, 2, 9, 11]], ['Full Conjugations', [1, 7]],
+    ['Irregular Verbs', [6, 7, 8]], ['Stems and Endings', [3, 10]],
+    ['Verb Meanings', [5, 0]], 'Mixed Practice']],
+  italianarticles:   ['Grade 4', 'College', [
+    ['Definite Articles', [0, 7, 8]], ['Indefinite Articles', [1, 2]],
+    ['Gender', [2, 9]], ['Plurals', [3, 4, 5]],
+    ['Nouns in English', [6, 7]], 'Mixed Practice']],
+  italiannumbers:    ['Grade 3', 'College', [
+    ['Numbers in Words', [0, 1, 2]], ['Counting and Sums', [3, 9]],
+    ['Days of the Week', [4, 5, 6]], ['Months of the Year', [7, 8, 10]],
+    'Mixed Practice']],
+  italianphrases:    ['Grade 3', 'College', [
+    ['Understanding Phrases', [0, 2]], ['Saying It Yourself', [1, 3]],
+    'Mixed Practice']],
 
   /* ------------------------- computer science ------------------------- */
   programming: ['Grade 6', 'College', [

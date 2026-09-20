@@ -157,7 +157,26 @@ export const SUBJECTS = [
       { id: 'german',  name: 'German' },
       { id: 'italian', name: 'Italian' },
       { id: 'mandarin', name: 'Mandarin Chinese' },
-      { id: 'esl',     name: 'English as a Second Language' }
+      { id: 'esl',     name: 'English as a Second Language' },
+      /* Drill topics: one form, one answer, twenty times. */
+      { id: 'spanishverbs',      name: 'Spanish Verbs' },
+      { id: 'spanisharticles',   name: 'Spanish Articles and Gender' },
+      { id: 'spanishadjectives', name: 'Spanish Adjectives' },
+      { id: 'spanishnumbers',    name: 'Spanish Numbers and Dates' },
+      { id: 'spanishphrases',    name: 'Spanish Everyday Phrases' },
+      { id: 'frenchverbs',       name: 'French Verbs' },
+      { id: 'frencharticles',    name: 'French Articles and Gender' },
+      { id: 'frenchadjectives',  name: 'French Adjectives' },
+      { id: 'frenchnumbers',     name: 'French Numbers and Dates' },
+      { id: 'frenchphrases',     name: 'French Everyday Phrases' },
+      { id: 'germanverbs',       name: 'German Verbs' },
+      { id: 'germanarticles',    name: 'German Articles and Gender' },
+      { id: 'germannumbers',     name: 'German Numbers and Dates' },
+      { id: 'germanphrases',     name: 'German Everyday Phrases' },
+      { id: 'italianverbs',      name: 'Italian Verbs' },
+      { id: 'italianarticles',   name: 'Italian Articles and Gender' },
+      { id: 'italiannumbers',    name: 'Italian Numbers and Dates' },
+      { id: 'italianphrases',    name: 'Italian Everyday Phrases' }
     ]
   },
   {

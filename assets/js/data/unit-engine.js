@@ -78,6 +78,17 @@ const ruleOut = (correct, wrongs, because) => {
   return `You can rule out “${clip(wrong)}”${because ? ` — ${because}` : ''}.`;
 };
 
+/* The same move for a select-all question, where there are two right answers
+   to keep clear of rather than one. */
+const ruleOutMulti = (corrects, wrongs, because) => {
+  const safe = (wrongs ?? []).filter(w => corrects.every(c => {
+    const a = bare(w), b = bare(c);
+    return a !== b && !a.includes(b) && !b.includes(a);
+  }));
+  if (!safe.length) return undefined;
+  return `You can rule out “${clip(safe[0])}”${because ? ` — ${because}` : ''}.`;
+};
+
 /* A matching question is unstuck by being given one pair, not four. Naming how
    the partner starts is enough to place it and leaves the other three to work
    out — a single word for a term, the opening words for a definition. */
@@ -341,7 +352,14 @@ export function unitGenerators(unit, foreign = { near: [], far: [] }) {
       return multiQ(r, {
         prompt: `Select every term that belongs to ${lower(name)}.`,
         correct: mine, wrong: theirs,
-        hint: 'Two of the four are from this unit and two are borrowed from elsewhere. Take each in turn and ask whether you could define it from what you have just revised.',
+        /* Derived, not fixed. Two generic wordings were tried first and both
+           handed over an answer, because the hint is written in English and so
+           are the terms: an early-number unit has "four" and a doubles unit
+           has "half". Naming one option that does not belong cannot collide
+           with an answer, and it is the move a teacher actually makes. */
+        /* The reason clause names no unit, because a unit's name is made of
+           its own terms: "Acids, Bases and Electrolysis" hands over "acids". */
+        hint: ruleOutMulti(mine, theirs, 'it was brought in from elsewhere'),
         explanation: `${mine.join(' and ')} belong to this unit; the others do not.`
       });
     });
