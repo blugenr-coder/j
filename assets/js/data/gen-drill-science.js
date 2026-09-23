@@ -1075,7 +1075,9 @@ export const magnification = [
       { hint: 'Real size is image size divided by magnification.',
         explanation: `${actual * mag} ÷ ${mag} = ${actual} µm.` }); },
 
-  (r) => { const mm = int(r, 1, 90);
+  /* From two, not one: at one millimetre the answer is 1000 and the hint that
+     states the conversion factor is the answer. */
+  (r) => { const mm = int(r, 2, 90);
     return blankQ(`Convert ${mm} mm to micrometres.`, mm * 1000,
       { hint: 'There are 1000 micrometres in a millimetre.',
         explanation: `${mm} × 1000 = ${mm * 1000} µm.` }); },

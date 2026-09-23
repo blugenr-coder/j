@@ -20,6 +20,7 @@ import { PK_THEMES } from './gen-pk-themes.js';
 import { contentFor } from './gen-pk-content.js';
 import { questionFor } from './gen-pk-formats.js';
 import { rng, seedFrom, build } from './gen-core.js';
+import { PK_CAPACITY, PK_CEILING } from './gen-pk-capacity.js';
 
 /* --------------------------- the eight topics --------------------------- */
 
@@ -113,33 +114,59 @@ export function shortName(skill) {
 
 /* ------------------------------- the titles ------------------------------- */
 
-/* Four ways to name each kind of page, so a shelf of preschool worksheets
-   does not read like a spreadsheet column. {s} is the skill, {t} the theme. */
+/* How to name each kind of page. `any` works for every theme; `place` is for
+   the twenty-seven themes that are somewhere you can be, so a title can say
+   "at the Bakery" without also producing "Pencils Out at the Bedtime". {s} is
+   the skill, {t} the theme. */
 const TITLES = {
-  choose:  ['{s} at the {t}', 'Which One? {s} — {t}', 'Spot It: {s} in the {t}', '{t} Choices: {s}'],
-  find:    ['Find and Circle: {s} — {t}', '{t} Hunt: {s}', 'Circle Them All: {s} at the {t}', 'Search the {t}: {s}'],
-  dab:     ['Dab It: {s} in the {t}', 'Stamp the {t}: {s}', 'Dot Markers at the {t}: {s}', '{t} Dabbing Page: {s}'],
-  ispy:    ['I Spy at the {t}: {s}', '{t} I-Spy: {s}', 'Look and Count: {s} — {t}', 'Hidden in the {t}: {s}'],
-  count:   ['Count the {t}: {s}', '{s} Counting at the {t}', 'How Many? {s} — {t}', '{t} Counting Page: {s}'],
-  tenf:    ['Ten Frames at the {t}: {s}', '{t} Ten-Frame Page: {s}', 'Fill the Ten Frame: {s} — {t}', 'Five and Some More: {s} — {t}'],
-  match:   ['Match Them Up: {s} — {t}', '{t} Matching: {s}', 'Draw a Line: {s} at the {t}', 'Partners at the {t}: {s}'],
-  shadow:  ['Shadow Match at the {t}: {s}', '{t} Shadows: {s}', 'Find the Shadow: {s} — {t}', 'Light and Shadow at the {t}: {s}'],
-  sort:    ['Sort It Out: {s} — {t}', '{t} Sorting: {s}', 'Two Boxes at the {t}: {s}', 'Tidy the {t}: {s}'],
-  cut:     ['Cut and Paste: {s} — {t}', 'Snip and Stick at the {t}: {s}', 'Scissors and Glue: {s} — {t}', '{t} Cut-and-Paste: {s}'],
-  seq:     ['Put It In Order: {s} — {t}', 'What Comes First? {s} at the {t}', '{t} Sequencing: {s}', 'First, Next, Last: {s} — {t}'],
-  pattern: ['{t} Patterns: {s}', 'What Comes Next? {s} — {t}', 'Finish the Pattern at the {t}: {s}', 'Pattern Strips: {s} — {t}'],
-  graph:   ['{t} Picture Graph: {s}', 'Read the Graph: {s} — {t}', 'Graphing at the {t}: {s}', 'Count and Graph: {s} — {t}'],
-  roll:    ['Roll and Draw at the {t}: {s}', '{t} Dice Page: {s}', 'Roll It: {s} — {t}', 'Shake, Roll, Count: {s} — {t}'],
-  code:    ['Colour-Key {t} Mystery: {s}', 'Secret {t} Picture: {s}', '{t} Colour by Code: {s}', 'Crack the Code at the {t}: {s}'],
-  draw:    ['Draw It: {s} — {t}', '{t} Drawing Page: {s}', 'Pencils Out at the {t}: {s}', 'Show Me: {s} — {t}'],
-  trace:   ['Trace It: {s} — {t}', '{t} Tracing Page: {s}', 'Follow the Dots: {s} — {t}', 'Warm-Up Tracing at the {t}: {s}'],
-  tw:      ['Trace and Write: {s} — {t}', '{t} Handwriting: {s}', 'Trace, Then Write: {s} — {t}', 'Pencil Practice at the {t}: {s}'],
-  maze:    ['{t} Maze: {s}', 'Find the Way at the {t}: {s}', 'Through the {t}: {s}', 'Follow the Path: {s} — {t}'],
-  dot:     ['Dot-to-Dot at the {t}: {s}', '{t} Join the Dots: {s}', 'Connect the Dots: {s} — {t}', 'Hidden Picture at the {t}: {s}'],
-  snip:    ['Scissor Skills at the {t}: {s}', '{t} Cutting Page: {s}', 'Snip Along: {s} — {t}', 'Cutting Practice at the {t}: {s}'],
-  odd:     ['Odd One Out at the {t}: {s}', '{t} Odd One Out: {s}', 'Which Does Not Belong? {s} — {t}', 'Spot the Stranger at the {t}: {s}'],
-  diff:    ['Spot the Difference at the {t}: {s}', '{t} Differences: {s}', 'What Changed at the {t}? {s}', 'Two Pictures at the {t}: {s}'],
-  label:   ['Name the Picture at the {t}: {s}', '{t} Word Match: {s}', 'Which Word? {s} — {t}', 'Picture and Word at the {t}: {s}']
+  choose:  { any: ['{t} Choices: {s}', 'Which One? {s} — {t}', '{t} Picks: {s}', '{s} — {t} Edition'],
+                place: ['{s} at the {t}', 'Spot It: {s} in the {t}'] },
+  find:    { any: ['{t} Hunt: {s}', 'Find and Circle: {s} — {t}', '{t} Search: {s}', 'Circle Them All: {s} — {t}'],
+                place: ['Search the {t}: {s}', 'Circle Every One at the {t}: {s}'] },
+  dab:     { any: ['{t} Dabbing Page: {s}', 'Dab It: {s} — {t}', '{t} Dot Markers: {s}', 'Stamp Every One: {s} — {t}'],
+                place: ['Dab It at the {t}: {s}', 'Dot Markers at the {t}: {s}'] },
+  ispy:    { any: ['{t} I-Spy: {s}', 'I Spy: {s} — {t}', 'Look and Count: {s} — {t}', 'Hidden in the Picture: {s} — {t}'],
+                place: ['I Spy at the {t}: {s}', 'Hidden at the {t}: {s}'] },
+  count:   { any: ['{t} Counting Page: {s}', 'Count Them: {s} — {t}', 'How Many? {s} — {t}', '{t} Count and Write: {s}'],
+                place: ['Counting at the {t}: {s}', 'Count What You See at the {t}: {s}'] },
+  tenf:    { any: ['{t} Ten-Frame Page: {s}', 'Ten Frames: {s} — {t}', 'Fill the Ten Frame: {s} — {t}', 'Five and Some More: {s} — {t}'],
+                place: ['Ten Frames at the {t}: {s}', 'Fill the Frame at the {t}: {s}'] },
+  match:   { any: ['{t} Matching: {s}', 'Match Them Up: {s} — {t}', 'Draw a Line: {s} — {t}', 'Which Goes With Which? {s} — {t}'],
+                place: ['Partners at the {t}: {s}', 'Matching at the {t}: {s}'] },
+  shadow:  { any: ['{t} Shadows: {s}', 'Shadow Match: {s} — {t}', 'Find the Shadow: {s} — {t}', 'Light and Shadow: {s} — {t}'],
+                place: ['Shadow Match at the {t}: {s}', 'Shadows at the {t}: {s}'] },
+  sort:    { any: ['{t} Sorting: {s}', 'Sort It Out: {s} — {t}', 'Two Boxes: {s} — {t}', '{t} Groups: {s}'],
+                place: ['Sorting at the {t}: {s}', 'Tidy the {t}: {s}'] },
+  cut:     { any: ['{t} Cut-and-Paste: {s}', 'Cut and Paste: {s} — {t}', 'Snip and Stick: {s} — {t}', 'Scissors and Glue: {s} — {t}'],
+                place: ['Cut and Paste at the {t}: {s}', 'Snip and Stick at the {t}: {s}'] },
+  seq:     { any: ['{t} Sequencing: {s}', 'Put It In Order: {s} — {t}', 'What Comes First? {s} — {t}', 'First, Next, Last: {s} — {t}'],
+                place: ['In Order at the {t}: {s}', 'What Happens First at the {t}? {s}'] },
+  pattern: { any: ['{t} Patterns: {s}', 'What Comes Next? {s} — {t}', 'Finish the Pattern: {s} — {t}', 'Pattern Strips: {s} — {t}'],
+                place: ['Patterns at the {t}: {s}', 'Finish the Pattern at the {t}: {s}'] },
+  graph:   { any: ['{t} Picture Graph: {s}', 'Read the Graph: {s} — {t}', 'Count and Graph: {s} — {t}', '{t} Graphing Page: {s}'],
+                place: ['Graphing at the {t}: {s}', 'The {t} Graph: {s}'] },
+  roll:    { any: ['{t} Dice Page: {s}', 'Roll and Draw: {s} — {t}', 'Roll It: {s} — {t}', 'Shake, Roll, Count: {s} — {t}'],
+                place: ['Roll and Draw at the {t}: {s}', 'Dice at the {t}: {s}'] },
+  code:    { any: ['Colour-Key {t} Mystery: {s}', 'Secret {t} Picture: {s}', '{t} Colour by Code: {s}', 'Crack the Code: {s} — {t}'],
+                place: ['Colour by Code at the {t}: {s}', 'The Hidden {t} Picture: {s}'] },
+  draw:    { any: ['{t} Drawing Page: {s}', 'Draw It: {s} — {t}', 'Show Me: {s} — {t}', '{t} Pencils Out: {s}'],
+                place: ['Drawing at the {t}: {s}', 'Draw What You See at the {t}: {s}'] },
+  trace:   { any: ['{t} Tracing Page: {s}', 'Trace It: {s} — {t}', 'Follow the Dots: {s} — {t}', 'Warm-Up Tracing: {s} — {t}'],
+                place: ['Tracing at the {t}: {s}', 'Trace It at the {t}: {s}'] },
+  tw:      { any: ['{t} Handwriting: {s}', 'Trace and Write: {s} — {t}', 'Trace, Then Write: {s} — {t}', 'Pencil Practice: {s} — {t}'],
+                place: ['Handwriting at the {t}: {s}', 'Trace and Write at the {t}: {s}'] },
+  maze:    { any: ['{t} Maze: {s}', 'Find the Way: {s} — {t}', 'Follow the Path: {s} — {t}', '{t} Puzzle Path: {s}'],
+                place: ['Through the {t}: {s}', 'Find the Way at the {t}: {s}'] },
+  dot:     { any: ['{t} Join the Dots: {s}', 'Dot-to-Dot: {s} — {t}', 'Connect the Dots: {s} — {t}', 'Hidden Picture: {s} — {t}'],
+                place: ['Dot-to-Dot at the {t}: {s}', 'Join the Dots at the {t}: {s}'] },
+  snip:    { any: ['{t} Cutting Page: {s}', 'Scissor Skills: {s} — {t}', 'Snip Along: {s} — {t}', 'Cutting Practice: {s} — {t}'],
+                place: ['Scissor Skills at the {t}: {s}', 'Cutting at the {t}: {s}'] },
+  odd:     { any: ['{t} Odd One Out: {s}', 'Odd One Out: {s} — {t}', 'Which Does Not Belong? {s} — {t}', 'Spot the Stranger: {s} — {t}'],
+                place: ['Odd One Out at the {t}: {s}', 'Spot the Stranger at the {t}: {s}'] },
+  diff:    { any: ['{t} Differences: {s}', 'Spot the Difference: {s} — {t}', 'What Changed? {s} — {t}', 'Two Pictures: {s} — {t}'],
+                place: ['Spot the Difference at the {t}: {s}', 'What Changed at the {t}? {s}'] },
+  label:   { any: ['{t} Word Match: {s}', 'Name the Picture: {s} — {t}', 'Which Word? {s} — {t}', 'Picture and Word: {s} — {t}'],
+                place: ['Name the Picture at the {t}: {s}', 'Words at the {t}: {s}'] }
 };
 
 /* Some families the theme does not reach: which pictures are on a /b/ sound
@@ -183,8 +210,10 @@ const PLAIN_TITLES = {
  * four hundred worksheets' worth of content.
  */
 export function pkTitle(skill, format, theme, shapeLabel, set = 0) {
-  const bank = theme ? (TITLES[format] ?? TITLES.choose)
-                     : (PLAIN_TITLES[format] ?? PLAIN_TITLES.choose);
+  const themed = TITLES[format] ?? TITLES.choose;
+  const bank = theme
+    ? (theme.place ? [...themed.any, ...themed.place] : themed.any)
+    : (PLAIN_TITLES[format] ?? PLAIN_TITLES.choose);
   const at = theme ? seedFrom(`${skill.id}|${format}|${theme.id}`) % bank.length
                    : set % bank.length;
   const base = bank[at].replace('{s}', shortName(skill))
@@ -215,15 +244,19 @@ export function pkTitle(skill, format, theme, shapeLabel, set = 0) {
    maths skills. */
 const probes = new Map();
 function probe(skill, format) {
+  /* Capacity is read from the generated table rather than measured here.
+     It has to be measured per skill — the -at rhyme family has nine words and
+     the -it family three, so the same "sort into two boxes" page fills ten
+     questions for one and runs dry at six for the other — and measuring two
+     thousand pairs takes two seconds, which is fine in a build step and far
+     too slow on every page load. */
+  const cap = PK_CAPACITY[`${skill.id}|${format}`] ?? PK_CEILING;
+
+  /* Theme sensitivity is cheap and genuinely a property of the kind, so it is
+     still measured live, once per kind and format. */
   const key = `${skill.kind}|${format}`;
   const hit = probes.get(key);
-  if (hit) return hit;
-
-  const theme = PK_THEMES[seedFrom(key) % PK_THEMES.length];
-  const maker = th => r => questionFor(format, contentFor(skill, th, PK_THEMES, r), { r, level: 1 });
-
-  let cap = 0;
-  try { cap = build(seedFrom(key + 'cap'), PROBE_DEPTH, [maker(theme)]).length; } catch { cap = 0; }
+  if (hit) return { cap, themed: hit.themed };
 
   let themed = false;
   try {
@@ -238,9 +271,8 @@ function probe(skill, format) {
           && shot(PK_THEMES[7]) !== shot(PK_THEMES[44]);
   } catch { themed = false; }
 
-  const out = { cap, themed };
-  probes.set(key, out);
-  return out;
+  probes.set(key, { themed });
+  return { cap, themed };
 }
 
 /* Tracing, trace-and-write and scissor practice are one task repeated down
@@ -254,14 +286,16 @@ const ONE_TASK = new Set(['trace', 'tw', 'snip']);
    age three; the library's own floor is four questions on any sheet, and a
    fourth tracing row is no hardship. */
 const ONE_TASK_ROWS = [4, 5, 6];
-const ONE_TASK_SETS = 4;
+/* One, not four. A tracing page for the letter S is a tracing page for the
+   letter S: four of them differing only in the sentence above the rules is
+   four copies of one worksheet, and two of the four came out byte-identical
+   anyway. */
+const ONE_TASK_SETS = 1;
 /* An unthemed family gets one sheet per name it can honestly carry. */
 const PLAIN_SETS = 4;
 
 const THEMED_SETS = PK_THEMES.length;
-/* The capacity probe stops at 28 questions: no shape in the catalogue asks
-   for more, so there is nothing to learn by looking further. */
-const PROBE_DEPTH = 28;
+
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
 /**
@@ -283,10 +317,13 @@ export function pkFamilyPlan() {
 
       PK_LEVELS.forEach((lv, levelPos) => {
         for (const shape of lv.shapes) {
-          /* Never title a sheet longer than the family can fill. */
+          /* Never title a sheet longer than the family can fill — and leave
+             margin, because the probe ran on one theme with one seed and
+             another draw can come up shorter. A card that promises ten
+             questions and delivers seven is a card that lies. */
           const count = oneTask ? ONE_TASK_ROWS[levelPos] : shape.count;
           if (oneTask && shape.label) continue;   // no booklet of one tracing row
-          if (!oneTask && count > cap) continue;
+          if (!oneTask && count * 1.3 > cap) continue;
           out.push({
             skill: skill.id, skillRef: skill, skillName: shortName(skill),
             topic, format, levelPos, ageKey: lv.key,
@@ -315,12 +352,30 @@ export function pkTheme(skillId, format, set) {
 export function pkQuestions({ skill, format, theme, count, levelPos, seed }) {
   const sk = PK_SKILL_MAP[skill];
   if (!sk) return [];
-  /* One maker, called `count` times with different seeds. `build` handles the
-     de-duplication that keeps a sheet from asking the same thing twice. */
   const maker = r => {
     const content = contentFor(sk, theme, PK_THEMES, r);
     return questionFor(format, content, { r, level: levelPos });
   };
+
+  /* A handwriting sheet is six rows of the same letter, and a cutting sheet is
+     the same line five times. `build` refuses to put the same question on a
+     sheet twice — right for every other worksheet in the library, wrong here,
+     where it silently returned a five-row sheet whose card promised six. So
+     these rows are filled directly and repetition is allowed, because on these
+     pages repetition is the exercise. */
+  if (ONE_TASK.has(format)) {
+    const out = [];
+    for (let i = 0; i < count; i++) {
+      const q = maker(rng(seed + i * 7919));
+      if (!q) break;
+      q.id = `q${out.length + 1}`;
+      out.push(q);
+    }
+    return out;
+  }
+
+  /* Everywhere else, one maker called `count` times with different seeds, and
+     `build` keeps the sheet from asking the same thing twice. */
   return build(seed, count, [maker]);
 }
 

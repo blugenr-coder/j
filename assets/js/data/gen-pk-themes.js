@@ -17,13 +17,16 @@
      scene   one picture that stands for the whole theme
      props   [word, picture] pairs — the things a sheet on this theme shows
      tint    a colour for the page furniture, so the sheet looks themed
+     place   true when the name is somewhere you can be, so a worksheet title
+             can say "at the Bakery". "Pencils Out at the Bedtime" is what
+             happens when every theme is assumed to be a place.
 */
 
-const T = (id, name, scene, tint, props) => ({ id, name, scene, tint, props });
+const T = (id, name, scene, tint, props, place = false) => ({ id, name, scene, tint, props, place });
 
 export const PK_THEMES = [
   T('airport', 'Airport', '✈️', '#4a90d9', [
-    ['airplanes', '✈️'], ['suitcases', '🧳'], ['pilots', '🧑‍✈️'], ['tickets', '🎫'], ['helicopters', '🚁']]),
+    ['airplanes', '✈️'], ['suitcases', '🧳'], ['pilots', '🧑‍✈️'], ['tickets', '🎫'], ['helicopters', '🚁']], true),
   T('apples', 'Apples', '🍎', '#d64545', [
     ['apples', '🍎'], ['green apples', '🍏'], ['baskets', '🧺'], ['worms', '🐛'], ['trees', '🌳']]),
   T('arctic', 'Arctic', '🐧', '#4aa3d9', [
@@ -31,11 +34,11 @@ export const PK_THEMES = [
   T('autumn', 'Autumn', '🍂', '#c97a2b', [
     ['leaves', '🍂'], ['acorns', '🌰'], ['pumpkins', '🎃'], ['squirrels', '🐿️'], ['mushrooms', '🍄']]),
   T('bakery', 'Bakery', '🥐', '#c98a3b', [
-    ['croissants', '🥐'], ['cupcakes', '🧁'], ['cookies', '🍪'], ['bread', '🍞'], ['pies', '🥧']]),
+    ['croissants', '🥐'], ['cupcakes', '🧁'], ['cookies', '🍪'], ['bread', '🍞'], ['pies', '🥧']], true),
   T('bathtime', 'Bath Time', '🛁', '#4ab8d9', [
     ['bathtubs', '🛁'], ['rubber ducks', '🦆'], ['soap', '🧼'], ['towels', '🧻'], ['sponges', '🧽']]),
   T('beach', 'Beach Summer', '🏖️', '#e0b040', [
-    ['beach umbrellas', '🏖️'], ['shells', '🐚'], ['sunglasses', '🕶️'], ['ice creams', '🍦'], ['sandcastles', '🏰']]),
+    ['beach umbrellas', '🏖️'], ['shells', '🐚'], ['sunglasses', '🕶️'], ['ice creams', '🍦'], ['sandcastles', '🏰']], true),
   T('bears', 'Bears', '🐻', '#a5713a', [
     ['bears', '🐻'], ['teddy bears', '🧸'], ['honey pots', '🍯'], ['berries', '🫐'], ['caves', '🏔️']]),
   T('bedtime', 'Bedtime', '🌙', '#5b5bd6', [
@@ -47,75 +50,75 @@ export const PK_THEMES = [
   T('birthday', 'Birthday Party', '🎂', '#d94a8c', [
     ['cakes', '🎂'], ['balloons', '🎈'], ['presents', '🎁'], ['party hats', '🎉'], ['candles', '🕯️']]),
   T('boats', 'Boats & Harbor', '⛵', '#3a7fb5', [
-    ['sailboats', '⛵'], ['anchors', '⚓'], ['lighthouses', '🗼'], ['ships', '🚢'], ['fish', '🐟']]),
+    ['sailboats', '⛵'], ['anchors', '⚓'], ['lighthouses', '🗼'], ['ships', '🚢'], ['fish', '🐟']], true),
   T('bugs', 'Bugs', '🐛', '#6aa84f', [
     ['caterpillars', '🐛'], ['ladybugs', '🐞'], ['ants', '🐜'], ['snails', '🐌'], ['beetles', '🪲']]),
   T('butterflies', 'Butterflies', '🦋', '#8c5bd6', [
     ['butterflies', '🦋'], ['flowers', '🌸'], ['leaves', '🍃'], ['caterpillars', '🐛'], ['blossom', '🌼']]),
   T('camping', 'Camping', '⛺', '#5a8a4a', [
-    ['tents', '⛺'], ['campfires', '🔥'], ['backpacks', '🎒'], ['lanterns', '🏮'], ['trees', '🌲']]),
+    ['tents', '⛺'], ['campfires', '🔥'], ['backpacks', '🎒'], ['lanterns', '🏮'], ['trees', '🌲']], true),
   T('cars', 'Cars & Roads', '🚗', '#d64545', [
     ['cars', '🚗'], ['buses', '🚌'], ['trucks', '🚚'], ['traffic lights', '🚦'], ['taxis', '🚕']]),
   T('circus', 'Circus', '🎪', '#d94a8c', [
-    ['big tops', '🎪'], ['clowns', '🤡'], ['balloons', '🎈'], ['drums', '🥁'], ['juggling balls', '🤹']]),
+    ['big tops', '🎪'], ['clowns', '🤡'], ['balloons', '🎈'], ['drums', '🥁'], ['juggling balls', '🤹']], true),
   T('city', 'City', '🏙️', '#6b7a8f', [
-    ['buildings', '🏢'], ['bridges', '🌉'], ['taxis', '🚕'], ['benches', '🪑'], ['street lights', '🚥']]),
+    ['buildings', '🏢'], ['bridges', '🌉'], ['taxis', '🚕'], ['benches', '🪑'], ['street lights', '🚥']], true),
   T('clothes', 'Clothes', '👕', '#4a90d9', [
     ['shirts', '👕'], ['shoes', '👟'], ['socks', '🧦'], ['hats', '🧢'], ['coats', '🧥']]),
   T('construction', 'Construction Site', '🚧', '#e0a040', [
-    ['diggers', '🚜'], ['dump trucks', '🚚'], ['cranes', '🏗️'], ['helmets', '⛑️'], ['bricks', '🧱']]),
+    ['diggers', '🚜'], ['dump trucks', '🚚'], ['cranes', '🏗️'], ['helmets', '⛑️'], ['bricks', '🧱']], true),
   T('desert', 'Desert', '🌵', '#c9a03b', [
-    ['cacti', '🌵'], ['camels', '🐪'], ['lizards', '🦎'], ['scorpions', '🦂'], ['suns', '☀️']]),
+    ['cacti', '🌵'], ['camels', '🐪'], ['lizards', '🦎'], ['scorpions', '🦂'], ['suns', '☀️']], true),
   T('dinosaurs', 'Dinosaurs', '🦕', '#5a8a4a', [
     ['dinosaurs', '🦕'], ['t-rexes', '🦖'], ['eggs', '🥚'], ['volcanoes', '🌋'], ['bones', '🦴']]),
   T('doctor', "Doctor's Office", '🩺', '#4ab8d9', [
-    ['stethoscopes', '🩺'], ['bandages', '🩹'], ['thermometers', '🌡️'], ['medicines', '💊'], ['teddy bears', '🧸']]),
+    ['stethoscopes', '🩺'], ['bandages', '🩹'], ['thermometers', '🌡️'], ['medicines', '💊'], ['teddy bears', '🧸']], true),
   T('castle', 'Fairy-Tale Castle', '🏰', '#8c5bd6', [
-    ['castles', '🏰'], ['crowns', '👑'], ['princesses', '👸'], ['knights', '🤴'], ['wands', '🪄']]),
+    ['castles', '🏰'], ['crowns', '👑'], ['princesses', '👸'], ['knights', '🤴'], ['wands', '🪄']], true),
   T('farm', 'Farm', '🚜', '#6aa84f', [
-    ['cows', '🐄'], ['pigs', '🐖'], ['sheep', '🐑'], ['hens', '🐔'], ['tractors', '🚜']]),
+    ['cows', '🐄'], ['pigs', '🐖'], ['sheep', '🐑'], ['hens', '🐔'], ['tractors', '🚜']], true),
   T('firestation', 'Fire Station', '🚒', '#d64545', [
-    ['fire engines', '🚒'], ['helmets', '⛑️'], ['ladders', '🪜'], ['boots', '🥾'], ['fires', '🔥']]),
+    ['fire engines', '🚒'], ['helmets', '⛑️'], ['ladders', '🪜'], ['boots', '🥾'], ['fires', '🔥']], true),
   T('forest', 'Forest', '🌲', '#4a7a3a', [
-    ['trees', '🌲'], ['owls', '🦉'], ['deer', '🦌'], ['foxes', '🦊'], ['mushrooms', '🍄']]),
+    ['trees', '🌲'], ['owls', '🦉'], ['deer', '🦌'], ['foxes', '🦊'], ['mushrooms', '🍄']], true),
   T('monsters', 'Friendly Monsters', '👾', '#8c5bd6', [
     ['monsters', '👾'], ['ghosts', '👻'], ['aliens', '👽'], ['eyes', '👁️'], ['robots', '🤖']]),
   T('fruit', 'Fruit', '🍓', '#d64545', [
     ['strawberries', '🍓'], ['bananas', '🍌'], ['oranges', '🍊'], ['pears', '🍐'], ['cherries', '🍒']]),
   T('garden', 'Garden', '🌻', '#6aa84f', [
-    ['sunflowers', '🌻'], ['watering cans', '🪣'], ['carrots', '🥕'], ['seeds', '🌱'], ['worms', '🐛']]),
+    ['sunflowers', '🌻'], ['watering cans', '🪣'], ['carrots', '🥕'], ['seeds', '🌱'], ['worms', '🐛']], true),
   T('icecream', 'Ice Cream Parlor', '🍦', '#d94a8c', [
-    ['ice creams', '🍦'], ['cones', '🍨'], ['popsicles', '🍡'], ['cherries', '🍒'], ['cupcakes', '🧁']]),
+    ['ice creams', '🍦'], ['cones', '🍨'], ['popsicles', '🍡'], ['cherries', '🍒'], ['cupcakes', '🧁']], true),
   T('jungle', 'Jungle', '🐒', '#4a7a3a', [
-    ['monkeys', '🐒'], ['tigers', '🐯'], ['parrots', '🦜'], ['snakes', '🐍'], ['leaves', '🌿']]),
+    ['monkeys', '🐒'], ['tigers', '🐯'], ['parrots', '🦜'], ['snakes', '🐍'], ['leaves', '🌿']], true),
   T('kitchen', 'Kitchen', '🍳', '#c98a3b', [
-    ['pans', '🍳'], ['spoons', '🥄'], ['plates', '🍽️'], ['cups', '🥤'], ['pots', '🫕']]),
+    ['pans', '🍳'], ['spoons', '🥄'], ['plates', '🍽️'], ['cups', '🥤'], ['pots', '🫕']], true),
   T('knights', 'Knights & Dragons', '🐉', '#7a5ad6', [
     ['dragons', '🐉'], ['swords', '⚔️'], ['shields', '🛡️'], ['castles', '🏰'], ['horses', '🐴']]),
   T('lantern', 'Lantern Festival', '🏮', '#d64545', [
     ['lanterns', '🏮'], ['dragons', '🐉'], ['kites', '🪁'], ['drums', '🥁'], ['moons', '🌕']]),
   T('mountains', 'Mountains', '⛰️', '#6b7a8f', [
-    ['mountains', '⛰️'], ['eagles', '🦅'], ['goats', '🐐'], ['flags', '🚩'], ['snow peaks', '🏔️']]),
+    ['mountains', '⛰️'], ['eagles', '🦅'], ['goats', '🐐'], ['flags', '🚩'], ['snow peaks', '🏔️']], true),
   T('musicband', 'Music Band', '🎸', '#d94a8c', [
     ['guitars', '🎸'], ['drums', '🥁'], ['trumpets', '🎺'], ['music notes', '🎵'], ['microphones', '🎤']]),
   T('ocean', 'Ocean', '🐠', '#3a7fb5', [
-    ['fish', '🐠'], ['shells', '🐚'], ['starfish', '⭐'], ['crabs', '🦀'], ['whales', '🐳']]),
+    ['fish', '🐠'], ['shells', '🐚'], ['starfish', '⭐'], ['crabs', '🦀'], ['whales', '🐳']], true),
   T('space', 'Outer Space', '🚀', '#5b5bd6', [
-    ['rockets', '🚀'], ['planets', '🪐'], ['stars', '⭐'], ['astronauts', '🧑‍🚀'], ['moons', '🌕']]),
+    ['rockets', '🚀'], ['planets', '🪐'], ['stars', '⭐'], ['astronauts', '🧑‍🚀'], ['moons', '🌕']], true),
   T('owls', 'Owls & Night', '🦉', '#5b5bd6', [
     ['owls', '🦉'], ['moons', '🌙'], ['stars', '⭐'], ['bats', '🦇'], ['trees', '🌳']]),
   T('pets', 'Pets', '🐶', '#c9863b', [
     ['puppies', '🐶'], ['kittens', '🐱'], ['bunnies', '🐰'], ['goldfish', '🐟'], ['hamsters', '🐹']]),
   T('picnic', 'Picnic', '🧺', '#6aa84f', [
-    ['baskets', '🧺'], ['sandwiches', '🥪'], ['apples', '🍎'], ['ants', '🐜'], ['juice', '🧃']]),
+    ['baskets', '🧺'], ['sandwiches', '🥪'], ['apples', '🍎'], ['ants', '🐜'], ['juice', '🧃']], true),
   T('pirates', 'Pirates', '🏴‍☠️', '#6b5a4a', [
     ['pirate flags', '🏴‍☠️'], ['treasure chests', '🧰'], ['coins', '🪙'], ['parrots', '🦜'], ['maps', '🗺️']]),
   T('pizza', 'Pizza Shop', '🍕', '#d64545', [
-    ['pizzas', '🍕'], ['mushrooms', '🍄'], ['tomatoes', '🍅'], ['cheese', '🧀'], ['ovens', '🔥']]),
+    ['pizzas', '🍕'], ['mushrooms', '🍄'], ['tomatoes', '🍅'], ['cheese', '🧀'], ['ovens', '🔥']], true),
   T('pond', 'Pond', '🦆', '#4aa3d9', [
-    ['ducks', '🦆'], ['frogs', '🐸'], ['lily pads', '🍃'], ['dragonflies', '🦗'], ['fish', '🐟']]),
+    ['ducks', '🦆'], ['frogs', '🐸'], ['lily pads', '🍃'], ['dragonflies', '🦗'], ['fish', '🐟']], true),
   T('postoffice', 'Post Office', '📮', '#d64545', [
-    ['postboxes', '📮'], ['letters', '✉️'], ['parcels', '📦'], ['stamps', '🏷️'], ['pens', '🖊️']]),
+    ['postboxes', '📮'], ['letters', '✉️'], ['parcels', '📦'], ['stamps', '🏷️'], ['pens', '🖊️']], true),
   T('pumpkins', 'Pumpkins', '🎃', '#c97a2b', [
     ['pumpkins', '🎃'], ['hay bales', '🌾'], ['crows', '🐦‍⬛'], ['leaves', '🍂'], ['baskets', '🧺']]),
   T('rainbow', 'Rainbow', '🌈', '#8c5bd6', [
@@ -123,7 +126,7 @@ export const PK_THEMES = [
   T('rainyday', 'Rainy Day', '☔', '#4a90d9', [
     ['umbrellas', '☔'], ['rain boots', '🥾'], ['clouds', '🌧️'], ['puddles', '💧'], ['raincoats', '🧥']]),
   T('restaurant', 'Restaurant', '🍽️', '#c98a3b', [
-    ['plates', '🍽️'], ['bowls', '🍜'], ['chefs', '🧑‍🍳'], ['menus', '📋'], ['teapots', '🫖']]),
+    ['plates', '🍽️'], ['bowls', '🍜'], ['chefs', '🧑‍🍳'], ['menus', '📋'], ['teapots', '🫖']], true),
   T('robots', 'Robots', '🤖', '#6b7a8f', [
     ['robots', '🤖'], ['batteries', '🔋'], ['bolts', '🔩'], ['gears', '⚙️'], ['lightbulbs', '💡']]),
   T('schoolsupplies', 'School Supplies', '✏️', '#e0a040', [
@@ -133,7 +136,7 @@ export const PK_THEMES = [
   T('spring', 'Spring', '🌷', '#6aa84f', [
     ['tulips', '🌷'], ['butterflies', '🦋'], ['chicks', '🐤'], ['kites', '🪁'], ['blossom', '🌸']]),
   T('supermarket', 'Supermarket', '🛒', '#4a90d9', [
-    ['trolleys', '🛒'], ['bags', '🛍️'], ['cans', '🥫'], ['bottles', '🍼'], ['boxes', '📦']]),
+    ['trolleys', '🛒'], ['bags', '🛍️'], ['cans', '🥫'], ['bottles', '🍼'], ['boxes', '📦']], true),
   T('toybox', 'Toy Box', '🧸', '#d94a8c', [
     ['teddy bears', '🧸'], ['blocks', '🧱'], ['toy cars', '🚗'], ['balls', '⚽'], ['puzzles', '🧩']]),
   T('trains', 'Trains', '🚂', '#6b5a4a', [

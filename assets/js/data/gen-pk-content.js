@@ -390,6 +390,12 @@ P.compareGroups = ({ skill, theme, r }) => {
     about: `which group has ${want === 'same' ? 'the same number' : want}`,
     say: `has ${want === 'same' ? 'the same number' : want}`,
     target: G(answer, answer),
+    /* A drawing page needs something to draw and a number of them. Without
+       these it asked the child to "draw a the same in the box", which is not
+       English and was the same sentence under every theme. */
+    item: want === 'same' ? q : (b > a ? q : p),
+    count: want === 'same' ? a : Math.max(a, b),
+    n: want === 'same' ? a : Math.max(a, b),
     left, right, want,
     graphRows: [{ label: p.label, glyph: p.glyph, n: a }, { label: q.label, glyph: q.glyph, n: b }],
     yes: [G(answer, answer)],

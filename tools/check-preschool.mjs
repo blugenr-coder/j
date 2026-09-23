@@ -156,3 +156,110 @@ if (bad.length) {
   process.exit(1);
 }
 console.log('\nevery question is well formed and markable.');
+
+/* ------------------------------ pass 4: the sheets ------------------------------
+   The passes above test the generators. This one tests the promise the library
+   actually makes: it takes real worksheet families out of the catalogue,
+   materialises their members exactly as the player would, and asks two
+   questions about them.
+
+   Does each sheet hold what its card says? A family that promises ten
+   questions and delivers seven has a card that lies, and `build` will happily
+   return a short sheet rather than repeat itself.
+
+   Is every member of a family a different worksheet? This is the whole claim.
+   Two members of a family are meant to be the same activity dressed
+   differently — different pictures, different items, different instruction —
+   and if they come out identical then the library has one worksheet listed
+   sixty-two times, which is exactly what this rebuild set out to remove.     */
+
+import { FAMILIES } from '../assets/js/data/exercises.js';
+import { generateQuestions } from '../assets/js/data/generated.js';
+
+const pk = FAMILIES.filter(f => f.pk);
+console.log(`\npreschool families in the catalogue: ${pk.length.toLocaleString()}`);
+console.log(`worksheets they hold: ${pk.reduce((n, f) => n + f.sets, 0).toLocaleString()}`);
+
+/* A spread across the whole catalogue rather than the first few hundred, so
+   one badly-behaved topic cannot hide behind a well-behaved one. */
+const SAMPLE = 500;
+const step = Math.max(1, Math.floor(pk.length / SAMPLE));
+const chosen = [];
+for (let i = 0; i < pk.length && chosen.length < SAMPLE; i += step) chosen.push(pk[i]);
+
+const sheetSig = qs => JSON.stringify(qs.map(q =>
+  [q.type, q.prompt, q.options ?? null, q.answer ?? null,
+   (q.pairs ?? []).map(p => [p.left, p.right]), q.items ?? null, q.art ?? null]));
+
+let sheets = 0, short = 0, dupFamilies = 0, dupPairs = 0;
+const allSigs = new Set();
+const shortExamples = [], dupExamples = [];
+
+for (const fam of chosen) {
+  const seen = new Map();
+  for (let n = 0; n < fam.sets; n++) {
+    const sheet = fam.at(n);
+    const qs = generateQuestions(sheet);
+    sheets++;
+    if (qs.length < sheet.count) {
+      short++;
+      if (shortExamples.length < 6) shortExamples.push(`${sheet.id}: promised ${sheet.count}, built ${qs.length}`);
+    }
+    const sig = sheetSig(qs);
+    allSigs.add(sig);
+    if (seen.has(sig)) {
+      dupPairs++;
+      if (dupExamples.length < 6) dupExamples.push(`${sheet.id} is identical to ${seen.get(sig)}`);
+    } else {
+      seen.set(sig, sheet.id);
+    }
+  }
+  if (seen.size < fam.sets) dupFamilies++;
+}
+
+console.log(`\nsampled ${chosen.length} families, ${sheets.toLocaleString()} worksheets built`);
+console.log(`distinct worksheets: ${allSigs.size.toLocaleString()} (${(allSigs.size / sheets * 100).toFixed(1)}%)`);
+console.log(`families holding a repeat: ${dupFamilies} of ${chosen.length}`);
+console.log(`worksheets short of their promised length: ${short}`);
+
+for (const e of shortExamples) note('short sheet', e);
+for (const e of dupExamples) note('repeated worksheet', e);
+
+/* ---------------------- pass 5: the generated capacity table ----------------------
+   gen-pk-capacity.js is measured once by a build step and read on every page
+   load, which is the only way to afford a per-skill measurement. The price of
+   a generated file is that it can drift from the generators it describes, and
+   a stale capacity means a worksheet card promising ten questions and
+   delivering six. So a sample of it is measured again here, from scratch, and
+   any disagreement fails the run. */
+
+import { PK_CAPACITY, PK_CEILING } from '../assets/js/data/gen-pk-capacity.js';
+import { measure } from './make-pk-capacity.mjs';
+
+const pairs = [];
+for (const skill of PK_SKILLS) for (const format of skill.formats) pairs.push([skill, format]);
+const CAP_SAMPLE = 150;
+const capStep = Math.max(1, Math.floor(pairs.length / CAP_SAMPLE));
+let capChecked = 0, capStale = 0;
+for (let i = 0; i < pairs.length; i += capStep) {
+  const [skill, format] = pairs[i];
+  const key = `${skill.id}|${format}`;
+  const recorded = PK_CAPACITY[key] ?? PK_CEILING;
+  const actual = measure(skill, format);
+  capChecked++;
+  if (recorded !== actual) {
+    capStale++;
+    note('stale capacity', `${key}: the table says ${recorded}, measuring says ${actual} ` +
+      `— run node tools/make-pk-capacity.mjs`);
+  }
+}
+console.log(`\ncapacity table: ${Object.keys(PK_CAPACITY).length.toLocaleString()} recorded, ` +
+            `${capChecked} re-measured, ${capStale} stale`);
+
+if (bad.length) {
+  console.log(`\n${bad.length} problems:`);
+  for (const b of bad.slice(0, 20)) console.log('  ' + b);
+  process.exit(1);
+}
+console.log('\nevery sampled worksheet is full length, no family holds the same sheet twice,');
+console.log('and the capacity table still matches the generators it describes.');
