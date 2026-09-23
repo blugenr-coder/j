@@ -5,7 +5,7 @@ import { mountShell, href, breadcrumb } from '../core/shell.js';
 import { subjectCard, exerciseCard, emptyState } from '../core/cards.js';
 import { icon } from '../core/icons.js';
 import { SUBJECTS, SUBJECT_MAP } from '../data/catalog.js';
-import { countByTopic, takeWhere } from '../data/exercises.js';
+import { countByTopic, takeSpread } from '../data/exercises.js';
 
 mountShell({ page: 'subjects', nav: 'public' });
 
@@ -41,7 +41,10 @@ if (!subject) {
     );
   }));
 
-  const shelf = takeWhere(e => e.subject === subject.id, 12);
+  /* Spread, not the first twelve the catalogue happens to hold. A subject's
+     worksheets are built topic by topic and family by family, so the plain
+     traversal filled this shelf with twelve ways to practise uppercase A. */
+  const shelf = takeSpread(e => e.subject === subject.id, 12);
   fill($('#subject-exercises'),
     shelf.length
       ? shelf.map(ex => exerciseCard(ex, { showProgress: false }))

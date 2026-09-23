@@ -4,7 +4,7 @@
    query first (grade, subject, topic, difficulty), and only what is left over
    is matched as free text. */
 
-import { FAMILIES, AUTHORED, CUSTOM, countWhere } from '../data/exercises.js';
+import { FAMILIES, AUTHORED, CUSTOM, countWhere, spreadOut, SPREAD_KEYS } from '../data/exercises.js';
 import { GRADES, SUBJECTS, TOPIC_MAP, DIFFICULTIES, QUESTION_TYPES } from '../data/catalog.js';
 import { UNIT_META } from '../data/generated.js';
 
@@ -455,27 +455,90 @@ export function searchExercises(f = {}) {
   }[sort] ?? cmp_default;
   function cmp_default(a, b) { return b.score - a.score; }
 
-  const families = scored.sort(cmp).map(s => s.ex);
+  /* Browsing is spread; an explicit sort is not.
+     Someone who asked for "shortest first" or "A to Z" asked for an order and
+     must get it. Someone who is just looking wants a shelf, and a shelf of
+     fifty ways to practise uppercase A is one worksheet shown fifty times —
+     which is what Early Learning looked like, because a single family holds
+     up to sixty-two sheets and a page holds twenty-four. */
+  const shelf = sort === 'recommended';
+  const sorted = scored.sort(cmp).map(s => s.ex);
+  const families = shelf ? spreadOut(sorted, SPREAD_KEYS) : sorted;
 
   /* The result is a lazy list. `total` counts every sheet in every matching
      family; `slice` expands only the ones about to be rendered. A search that
      matches half the library must not build half a million objects to say so. */
   let total = 0;
   for (const fam of families) total += fam.sets ?? 1;
+
+  /* Spreading the families is only half of it. Expanding them one at a time
+     still puts sixty-two sheets of the first family before a single sheet of
+     the second, so on a shelf they are dealt in rounds instead: the first
+     sheet of every family, then the second sheet of every family, and so on.
+     Nothing is hidden — every sheet still has its place in the list, and the
+     total is unchanged — but no family can take a page to itself.
+
+     The round boundaries are worked out from a histogram of family sizes, so
+     finding which round an offset falls in costs a walk over sixty-two
+     numbers rather than over a hundred and seventy thousand families. */
+  let rounds = null;
+  function roundTable() {
+    if (rounds) return rounds;
+    const byCount = [];
+    let widest = 1;
+    for (const fam of families) {
+      const sets = fam.sets ?? 1;
+      byCount[sets] = (byCount[sets] ?? 0) + 1;
+      if (sets > widest) widest = sets;
+    }
+    /* size[r] is how many families still have a sheet to give in round r. */
+    const size = new Array(widest);
+    const cum = new Array(widest + 1);
+    let left = families.length;
+    cum[0] = 0;
+    for (let r = 0; r < widest; r++) {
+      size[r] = left;
+      cum[r + 1] = cum[r] + left;
+      left -= (byCount[r + 1] ?? 0);
+    }
+    rounds = { size, cum, widest };
+    return rounds;
+  }
+
   return {
     total,
     families,
     slice(offset, n) {
-      const out = [];
-      let seen = 0;
-      for (const fam of families) {
-        const sets = fam.sets ?? 1;
-        if (seen + sets <= offset) { seen += sets; continue; }
-        for (let i = Math.max(0, offset - seen); i < sets && out.length < n; i++) {
-          out.push(fam.at ? fam.at(i) : fam);
+      if (!shelf) {
+        const out = [];
+        let seen = 0;
+        for (const fam of families) {
+          const sets = fam.sets ?? 1;
+          if (seen + sets <= offset) { seen += sets; continue; }
+          for (let i = Math.max(0, offset - seen); i < sets && out.length < n; i++) {
+            out.push(fam.at ? fam.at(i) : fam);
+          }
+          seen += sets;
+          if (out.length >= n) break;
         }
-        seen += sets;
-        if (out.length >= n) break;
+        return out;
+      }
+
+      const { cum, widest } = roundTable();
+      let round = 0;
+      while (round < widest && cum[round + 1] <= offset) round++;
+      let skip = offset - cum[round];
+      const out = [];
+      while (out.length < n && round < widest) {
+        let at = 0;
+        for (const fam of families) {
+          if ((fam.sets ?? 1) <= round) continue;
+          if (at++ < skip) continue;
+          out.push(fam.at ? fam.at(round) : fam);
+          if (out.length >= n) break;
+        }
+        round++;
+        skip = 0;
       }
       return out;
     }

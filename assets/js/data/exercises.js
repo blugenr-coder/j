@@ -95,6 +95,80 @@ export function countWhere(pred = null) {
   return n;
 }
 
+/* ------------------------------- spreading -------------------------------
+   Worksheets come out of the catalogue in the order they were built: every
+   sheet of one family, then every sheet of the next. That is the right order
+   for building and the wrong one for looking at. A shelf of twelve filled
+   itself with twelve ways to practise uppercase A, and the first page of
+   Early Learning was fifty variations on one skill, because one family holds
+   up to sixty-two worksheets and a page holds twenty-four.
+
+   So anything a person browses is spread first: neighbours are made to differ
+   in topic, and within a topic in what they actually teach. */
+
+/** How to tell "more of the same" apart. */
+export const spreadKeyOf = ex => ex.spreadKey ?? ex.unit ?? ex.title ?? '';
+
+/**
+ * Reorder a list so that neighbours differ, by the keys given, most important
+ * first. Each level is dealt round-robin: one from every group, then a second
+ * from every group, and so on. Ordering inside a group is preserved, so a
+ * sort applied before this still decides which sheet leads its group.
+ */
+export function spreadOut(items, keyFns) {
+  if (!keyFns.length || items.length < 2) return items;
+  const [head, ...rest] = keyFns;
+  const groups = new Map();
+  for (const it of items) {
+    const k = head(it);
+    const g = groups.get(k);
+    if (g) g.push(it); else groups.set(k, [it]);
+  }
+  if (groups.size < 2) return spreadOut(items, rest);
+  const lists = [...groups.values()].map(g => spreadOut(g, rest));
+  const out = [];
+  for (let round = 0; out.length < items.length; round++) {
+    let dealt = false;
+    for (const g of lists) if (round < g.length) { out.push(g[round]); dealt = true; }
+    if (!dealt) break;
+  }
+  return out;
+}
+
+/** The keys a browsing surface spreads by: topic first, then what it teaches. */
+export const SPREAD_KEYS = [ex => ex.topic ?? '', spreadKeyOf];
+
+/**
+ * The first n matching worksheets, laid out for a shelf rather than for a
+ * build: no two neighbours from the same topic while other topics are still
+ * waiting, and no two from the same skill while other skills are.
+ *
+ * Only the first sheet of each family is offered until every family has been
+ * offered once, which is what stops one family from filling the shelf.
+ */
+export function takeSpread(pred = null, n = 12, offset = 0) {
+  const want = n + offset;
+  /* At most a couple of candidates per skill. Without this cap the shelf is
+     decided by whichever topic the catalogue happens to build first: a scan
+     that stops after the first few hundred families never reaches Feelings
+     and Friends, and the "spread" shelf comes out as twelve letters. */
+  const PER_KEY = 2;
+  const kept = new Map();
+  const heads = [];
+  const consider = ex => {
+    const key = `${ex.topic ?? ''}|${spreadKeyOf(ex)}`;
+    const seen = kept.get(key) ?? 0;
+    if (seen >= PER_KEY) return;
+    kept.set(key, seen + 1);
+    heads.push(ex);
+  };
+  for (const ex of SINGLES) if (!pred || pred(ex)) consider(ex);
+  for (const f of FAMILIES) if (!pred || pred(f)) consider(f);
+
+  const spread = spreadOut(heads, SPREAD_KEYS);
+  return spread.slice(offset, want).map(f => (f.at ? f.at(0) : f));
+}
+
 /** The first n matching worksheets, skipping the first `offset`. */
 export function takeWhere(pred = null, n = 24, offset = 0) {
   const out = [];

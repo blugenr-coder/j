@@ -67,3 +67,68 @@ if (ratio < FLOOR) {
     `${Math.round(ratio * 100)}% of its rows are new, and the floor is ${Math.round(FLOOR * 100)}%.`);
   process.exit(1);
 }
+
+/* ---------------------------- the shelf, not the sheet ----------------------------
+   The measure above asks whether one worksheet repeats itself. This one asks
+   whether the shelf does — which is what someone browsing actually sees, and
+   it was the worse problem of the two.
+
+   Worksheets come out of the catalogue family by family, and one preschool
+   family holds up to sixty-two sheets while a page holds twenty-four. So the
+   first page of Early Learning was fifty ways to practise uppercase A: every
+   sheet genuinely different, and the shelf useless. The library spreads its
+   results now, and this holds it to that. */
+
+const { searchExercises } = await import('../assets/js/core/search.js');
+const { SUBJECTS } = await import('../assets/js/data/catalog.js');
+
+const PAGE = 24;
+const shelfRows = [];
+let shelfFail = null;
+
+for (const subject of SUBJECTS) {
+  const res = searchExercises({ subject: [subject.id] });
+  if (!res.total) continue;
+  const page = res.slice(0, PAGE);
+  const topics = new Set(page.map(e => e.topic)).size;
+  /* The same key in two topics is not a repeat: "Mixed Practice" in Spanish
+     Verbs and "Mixed Practice" in French Verbs are different worksheets, and
+     the spread groups by the pair, so the count has to as well. */
+  const kinds = new Set(page.map(e => `${e.topic}|${e.spreadKey ?? e.title}`)).size;
+  const titles = new Set(page.map(e => e.title)).size;
+  /* A subject with three topics cannot show more than three, and a subject
+     with ten groups of worksheets cannot show more than ten. The bar is
+     whatever it actually has to show. */
+  /* Topic diversity is what the spread guarantees, so it is what is enforced.
+     The other two columns are reported, not enforced, and it matters why.
+
+     A topic that has only one kind of worksheet has to show it twice once the
+     page runs past one card per topic — there is nothing else in that topic to
+     show, and pulling in a second topic instead would break the guarantee that
+     matters more.
+
+     Repeated titles are a separate, older problem: several language topics
+     call their worksheet "Mixed Practice", so a page can show that name three
+     times over three different topics. Three different worksheets with one
+     name is a naming fault, not a shelf fault, and fixing it means renaming
+     worksheets rather than reordering them. */
+  const topicBar = Math.min(subject.topics.length, page.length);
+  shelfRows.push({
+    subject: subject.id, cards: page.length,
+    'topics shown': `${topics} of ${topicBar}`,
+    'different activities': `${kinds} of ${page.length}`,
+    'different titles': `${titles} of ${page.length}`
+  });
+  if (topics < topicBar) {
+    shelfFail ??= `${subject.id} shows ${topics} topics on its first page and has ${topicBar} to show`;
+  }
+}
+
+console.log('\nThe first page of each subject, as someone browsing sees it:');
+console.table(shelfRows);
+
+if (shelfFail) {
+  console.error(`\nThe shelf repeats itself: ${shelfFail}.`);
+  process.exit(1);
+}
+console.log('Every subject opens on as many different topics as it has to show.');

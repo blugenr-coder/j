@@ -1037,6 +1037,12 @@ class Blueprint {
                      : typesFor(this.topic);
   }
   get minutes() { return Math.max(6, Math.round(this.count * 1.4)); }
+  /* What makes two worksheets "more of the same" when a shelf is being laid
+     out. Deliberately a plain field read rather than the title, because the
+     library spreads a hundred and seventy thousand families on every browse
+     and building that many title strings to sort them would cost more than
+     the sort. */
+  get spreadKey() { return this.unit ?? this._focus; }
   get generated() { return true; }
   get printable() { return true; }
   get online()    { return true; }
@@ -1135,6 +1141,11 @@ class PkBlueprint extends Blueprint {
   }
 
   get types() { return pkTypes(this.pk.skill, this.pk.format); }
+
+  /* Two preschool sheets are "the same kind" when they teach the same skill,
+     whatever format or length they come in. Six ways to practise uppercase A
+     on one shelf is still a shelf about uppercase A. */
+  get spreadKey() { return this.pk.skill; }
 
   get summary() {
     const age = PK_LEVELS[this.pk.levelPos].age;

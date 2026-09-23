@@ -5,7 +5,7 @@ import { mountShell, mountSideNav, href, requireUser } from '../core/shell.js';
 import { statTile, exerciseRow, exerciseCard, emptyState, subjectIcon, subjectTone } from '../core/cards.js';
 import { GRADE_MAP, SUBJECT_MAP, ACHIEVEMENTS } from '../data/catalog.js';
 import { icon } from '../core/icons.js';
-import { takeWhere, getExercise } from '../data/exercises.js';
+import { takeSpread, getExercise } from '../data/exercises.js';
 import { currentUser, summary, continueTarget, recentExercises, scoreFor, getState, statusFor,
          assignedToMe, enrollments } from '../core/store.js';
 import { startSync } from '../core/sync.js';
@@ -101,8 +101,10 @@ function render() {
   };
   /* Scoring every worksheet in the library to pick three would be a million
      comparisons; the candidates that could win are the ones in the student's
-     own band, so those are the ones ranked. */
-  const candidates = takeWhere(ex => GRADE_MAP[ex.grade]?.band === GRADE_MAP[band]?.band, 400);
+     own band, so those are the ones ranked. Spread, because four hundred
+     candidates taken in build order came from a handful of families and the
+     three recommendations were three versions of one worksheet. */
+  const candidates = takeSpread(ex => GRADE_MAP[ex.grade]?.band === GRADE_MAP[band]?.band, 400);
   const recommended = candidates.sort((a, b) => scoreRec(b) - scoreRec(a)).slice(0, 3);
   $('#recommended').replaceChildren(...recommended.map(ex => exerciseCard(ex)));
 
