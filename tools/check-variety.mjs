@@ -107,11 +107,13 @@ for (const subject of SUBJECTS) {
      show, and pulling in a second topic instead would break the guarantee that
      matters more.
 
-     Repeated titles are a separate, older problem: several language topics
-     call their worksheet "Mixed Practice", so a page can show that name three
-     times over three different topics. Three different worksheets with one
-     name is a naming fault, not a shelf fault, and fixing it means renaming
-     worksheets rather than reordering them. */
+     Repeated titles are enforced, with one exception. A worksheet name that
+     more than one topic uses now carries its topic in front of it, so two
+     different worksheets cannot share a name. What is left is a subject with
+     fewer kinds of worksheet than a page holds: Media and Film Studies has
+     twenty-three and a page wants twenty-four, so one kind appears twice at
+     two different levels. The card shows the level, and there is nothing else
+     in that subject to show instead. */
   const topicBar = Math.min(subject.topics.length, page.length);
   shelfRows.push({
     subject: subject.id, cards: page.length,
@@ -121,6 +123,12 @@ for (const subject of SUBJECTS) {
   });
   if (topics < topicBar) {
     shelfFail ??= `${subject.id} shows ${topics} topics on its first page and has ${topicBar} to show`;
+  }
+  /* A repeated title is allowed only where the subject has run out of kinds
+     of worksheet to show. Anything else is two worksheets sharing a name. */
+  if (titles < page.length && kinds >= page.length) {
+    shelfFail ??= `${subject.id} shows the same title twice on its first page ` +
+      `while it still has ${kinds} different activities to show`;
   }
 }
 

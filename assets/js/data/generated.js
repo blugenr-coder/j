@@ -1059,11 +1059,11 @@ class Blueprint {
      later sets take another name for the same kind of sheet, because "Set B"
      next to "Set C" is not a distinction anyone can act on. */
   get title() {
-    if (!this._set) return this._focus;
+    if (!this._set) return qualify(this.topic, this._focus);
     const cut = this._focus.lastIndexOf(' — ');
     const base = cut > 0 ? this._focus.slice(0, cut) : this._focus;
     const label = cut > 0 ? this._focus.slice(cut + 3) : 'Quick Quiz';
-    return `${base} — ${setName(label, this._set)}`;
+    return `${qualify(this.topic, base)} — ${setName(label, this._set)}`;
   }
 
   /** The id of the family's first sheet: every id in the family plus a suffix. */
@@ -1388,6 +1388,70 @@ const TOPIC_FORMATS = [
    unit can fill them: `build` refuses to repeat a question on one sheet, so
    asking a small bank for sixty questions yields a short sheet with a
    misleading title. */
+/* ------------------------- names that need qualifying -------------------------
+
+   A focus name is only unique inside its own topic. Four language topics all
+   call a worksheet "Regular Verbs", and almost every topic in the library has
+   a "Mixed Practice" and a "Practice Pack". Inside a topic that is fine and
+   reads well. On a shelf that spans a subject it is four different worksheets
+   wearing one name, which is what a browser sees as repetition even when the
+   sheets underneath are completely different.
+
+   So a name that more than one topic uses gets its topic in front of it, and
+   one that only its own topic uses is left alone: "Equivalent Fractions" needs
+   no help, "Mixed Practice" does.
+
+   Only the title changes. Ids are built from the focus, not the title, so
+   every existing link still resolves. The separator is an em dash because the
+   translator already splits composed titles on it and looks each part up, so
+   a qualified title keeps its translation in all five languages without a
+   single new dictionary entry. */
+const SHARED_TITLES = (() => {
+  const topicsFor = new Map();
+  const note = (name, topic) => {
+    let set = topicsFor.get(name);
+    if (!set) topicsFor.set(name, set = new Set());
+    set.add(topic);
+  };
+  for (const [topic, [, , focuses]] of Object.entries(PLAN)) {
+    for (const entry of focuses) note(Array.isArray(entry) ? entry[0] : entry, topic);
+    for (const [, , label] of PACK_SHAPES) note(label, topic);
+  }
+  /* Micro-units collide too: Italian and Mandarin both teach a unit called
+     "Greetings and Introductions", and on the languages shelf that is one
+     name over two worksheets. */
+  for (const meta of Object.values(UNIT_META)) note(meta.name, meta.topic);
+  const shared = new Set();
+  for (const [name, topics] of topicsFor) if (topics.size > 1) shared.add(name);
+  return shared;
+})();
+
+/* "Spanish Verbs" in front of "Regular Verbs" says verbs twice. Where the
+   topic and the focus end on the same word, the topic gives it up: "Spanish D
+   Regular Verbs". Anything else keeps its full name. */
+function withoutEcho(topicName, focus) {
+  const tw = topicName.split(' '), fw = focus.split(' ');
+  if (tw.length > 1 && fw.length > 1 &&
+      tw[tw.length - 1].toLowerCase() === fw[fw.length - 1].toLowerCase()) {
+    return tw.slice(0, -1).join(' ');
+  }
+  return topicName;
+}
+
+/**
+ * A focus, with its topic in front when the focus alone could be anything.
+ * The decorations a sheet carries — "— Quick Quiz", "— Revision Booklet" —
+ * hang off the end, so what decides is the part before the first dash.
+ */
+function qualify(topic, focus) {
+  const cut = focus.indexOf(' — ');
+  const base = cut > 0 ? focus.slice(0, cut) : focus;
+  if (!SHARED_TITLES.has(base)) return focus;
+  const name = topicLabel(topic);
+  if (!name || focus.startsWith(name)) return focus;
+  return `${withoutEcho(name, base)} — ${focus}`;
+}
+
 const UNIT_PACKS = [
   [2, 25,  'Revision Pack'],
   [3, 30,  'Extended Set'],
