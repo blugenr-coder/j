@@ -21,6 +21,7 @@ import { LANG_DRILL_GENERATORS } from './gen-drill-lang.js';
 import { CS_DRILL_GENERATORS } from './gen-drill-cs.js';
 import { BUSINESS_DRILL_GENERATORS } from './gen-drill-business.js';
 import { APPLIED_DRILL_GENERATORS } from './gen-drill-applied.js';
+import { pkFamilyPlan, pkTheme, pkTitle, pkTypes, pkQuestions, PK_LEVELS } from './gen-pk-sheets.js';
 import { UNITS } from './units.js';
 import { STANDARDS } from './standards.js';
 import { unitGenerators, unitCapacity, capacityOf } from './unit-engine.js';
@@ -55,8 +56,14 @@ const slug = s => {
 };
 
 const TOPIC_SUBJECT = {
-  phonics: 'foundation', earlynumber: 'foundation', shapescolour: 'foundation',
-  worldaround: 'foundation', readiness: 'foundation',
+  /* Preschool: eight areas from the pre-K catalogue. */
+  pkliteracy: 'foundation', pknumber: 'foundation', pkworld: 'foundation',
+  pkfeelings: 'foundation', pkmotor: 'foundation', pkcolour: 'foundation',
+  pkthinking: 'foundation', pkhealth: 'foundation',
+  /* These five were Early Learning until preschool was rebuilt. They run
+     Grade 1 to Grade 3 and now sit under the subjects that teach them. */
+  phonics: 'ela', earlynumber: 'math', shapescolour: 'math',
+  worldaround: 'social', readiness: 'life',
   careers: 'life', safety: 'life', household: 'life', communication: 'life',
   method: 'science', cultures: 'social', italian: 'languages', mandarin: 'languages',
   readingmusic: 'arts', mapskills: 'social', econcalcs: 'social',
@@ -1087,6 +1094,57 @@ class Blueprint {
   }
 }
 
+/**
+ * A preschool worksheet family: one skill, one page format, one age, one
+ * length. Its members are the same activity dressed in different themes.
+ *
+ * It is a Blueprint because everything downstream — the library grid, the
+ * filters, the player, the printer, progress, the sitemap — already knows how
+ * to read one. What it overrides is only what preschool does differently: the
+ * title names the theme rather than calling itself Set B, and the questions
+ * come from a skill and a theme rather than from a generator index.
+ */
+class PkBlueprint extends Blueprint {
+  constructor(topic, levelIdx, pk, pages, difficulty, count, set) {
+    super(topic, levelIdx, pk.skillName, null, pages, difficulty, count, set);
+    this.pk = pk;
+  }
+
+  at(n) {
+    if (n === this._set) return this;
+    const bp = new PkBlueprint(this.topic, this._level, this.pk, this.pages,
+                               this.difficulty, this.count, n);
+    bp.sets = 1;
+    return bp;
+  }
+
+  /* Which theme this member wears. A themed family really does change with
+     it; an unthemed one — the letter B is the letter B at the zoo and at the
+     bakery — does not claim to, and its title says so. */
+  get theme() { return pkTheme(this.pk.skill, this.pk.format, this._set); }
+
+  get title() {
+    return pkTitle(this.pk.skillRef, this.pk.format,
+                   this.pk.themed ? this.theme : null, this.pk.shapeLabel, this._set);
+  }
+
+  /* Pre-K holds two of the catalogue's three ages, so the level alone does
+     not separate them: the age goes in the id or the two families collide. */
+  get baseId() {
+    return `pk-${this.pk.skill}-${this.pk.format}-${this.pk.shapeKey}-${this.pk.ageKey}`;
+  }
+
+  get types() { return pkTypes(this.pk.skill, this.pk.format); }
+
+  get summary() {
+    const age = PK_LEVELS[this.pk.levelPos].age;
+    const where = this.pk.themed ? ` with ${this.theme.name.toLowerCase()} pictures` : '';
+    const pages = this.pages > 1 ? ` Printed over ${this.pages} pages.` : '';
+    return `${this.pk.skillName} for ${age}${where} — ${this.count} picture ` +
+           `question${this.count === 1 ? '' : 's'} to work through online or print.${pages}`;
+  }
+}
+
 /* ------------------------------- set names -------------------------------
    Sets are the same unit at the same level with different questions drawn from
    the bank. Numbering them "Set B", "Set C" … was accurate and useless: a
@@ -1455,6 +1513,21 @@ export function buildFamilies() {
     });
   }
 
+  /* ---------------------------- preschool sheets ---------------------------- */
+  /* Preschool does not go through PLAN or through micro-units: a pre-K sheet
+     is a skill crossed with a page format, an age and a theme, and the plan
+     that says which of those exist is measured in gen-pk-sheets.js. */
+  for (const f of pkFamilyPlan()) {
+    const levelIdx = idx(f.level);
+    if (levelIdx === undefined) continue;
+    const bp = new PkBlueprint(f.topic, levelIdx, {
+      skill: f.skill, skillRef: f.skillRef, skillName: f.skillName,
+      format: f.format, themed: f.themed, shapeLabel: f.shapeLabel,
+      shapeKey: f.shapeKey, levelPos: f.levelPos, ageKey: f.ageKey
+    }, f.pages, f.difficulty, f.count, 0);
+    family(bp, f.sets);
+  }
+
   /* ------------------------------ unit sheets ------------------------------ */
   for (const meta of Object.values(UNIT_META)) {
     const start = idx(meta.from), end = idx(meta.to);
@@ -1536,6 +1609,13 @@ function weightMakers(gens) {
 
 /** Materialise the questions for one blueprint. Same blueprint, same sheet. */
 export function generateQuestions(blueprint) {
+  if (blueprint.pk) {
+    return pkQuestions({
+      skill: blueprint.pk.skill, format: blueprint.pk.format,
+      theme: blueprint.theme, count: blueprint.count,
+      levelPos: blueprint.pk.levelPos, seed: blueprint.seed
+    });
+  }
   if (blueprint.unit) {
     const gens = makersFor(blueprint.unit, blueprint.format ?? 'quiz') ?? [];
     if (!gens.length) return [];

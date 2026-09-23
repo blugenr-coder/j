@@ -1035,8 +1035,41 @@ P.opposites = ({ skill, r }) => {
 
 export const PK_CONTENT = P;
 
+/* A letter is a letter at the zoo and at the bakery, so a letter skill looks
+   untouched by the theme — and a library that multiplies it out by sixty-two
+   themes anyway is padding.
+
+   The catalogue does not do that. It says: "children use a dot marker to dab
+   every guitars that shows the right answer". The letter is printed ON a
+   theme picture, and the theme is what the child sees first. So a skill whose
+   content is a bare symbol picks up a carrier from the theme, and the symbol
+   rides on it. The sheet is then genuinely themed, the instruction names what
+   the child is looking at, and the variety is real rather than claimed. */
+const isSymbol = item =>
+  Boolean(item) && item.glyph === item.label && /^[\p{L}\p{N}'"-]{1,6}$/u.test(String(item.glyph));
+
+/* "lions" is the prop's name; a single one of them is a lion. Only the plural
+   -s is worth undoing — the prop lists are written in the plural and nothing
+   in them is irregular. */
+const oneOf = name => (/[^s]s$/.test(name) ? name.slice(0, -1) : name);
+
 /** The content for one question, or null when a skill kind has no provider. */
 export function contentFor(skill, theme, themes, r) {
   const make = P[skill.kind];
-  return make ? make({ skill, theme, themes, r }) : null;
+  if (!make) return null;
+  const c = make({ skill, theme, themes, r });
+  if (!c) return null;
+  c.theme = theme;
+  if (isSymbol(c.target)) {
+    /* One carrier when the question has one right answer — "which guitar shows
+       the letter B?" is the catalogue's own phrasing and it reads well. A
+       spread of them when the question has several, because three options that
+       are all "🎸B" are one option as far as the page is concerned, and a
+       "circle every one" with a single right answer is not what it says. */
+    const carriers = sample(r, props(theme), 5);
+    c.carrier = carriers[0].glyph;
+    c.carrierName = oneOf(carriers[0].label);
+    c.carriers = carriers.map(x => x.glyph);
+  }
+  return c;
 }

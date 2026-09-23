@@ -14,7 +14,7 @@
 export const EARLY2_UNITS = {
   phonics: [
     {
-      name: 'Digraphs: sh, ch, th and wh', from: 'Kindergarten', to: 'Grade 2',
+      name: 'Digraphs: sh, ch, th and wh', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'sound',
       facts: [
         ['sh', 'the sound at the start of ship'],
@@ -52,7 +52,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Long Vowel Sounds', from: 'Kindergarten', to: 'Grade 2',
+      name: 'Long Vowel Sounds', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'word',
       facts: [
         ['cake', 'a word with the long a sound'],
@@ -89,7 +89,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Rhyming and Word Families', from: 'Pre-K', to: 'Grade 1',
+      name: 'Rhyming and Word Families', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'word',
       facts: [
         ['cat', 'a word that rhymes with hat'],
@@ -128,7 +128,7 @@ export const EARLY2_UNITS = {
 
   earlynumber: [
     {
-      name: 'Counting to 50', from: 'Kindergarten', to: 'Grade 1',
+      name: 'Counting to 50', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'number',
       procedural: ['count-objects', 'what-comes-next', 'what-came-before', 'one-more', 'one-less', 'number-word'],
       facts: [
@@ -165,7 +165,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Sharing and Grouping', from: 'Kindergarten', to: 'Grade 2',
+      name: 'Sharing and Grouping', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'answer',
       facts: [
         ['sharing', 'splitting a group into equal parts'],
@@ -201,7 +201,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Measuring: Longer, Heavier, Fuller', from: 'Pre-K', to: 'Grade 1',
+      name: 'Measuring: Longer, Heavier, Fuller', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'word',
       facts: [
         ['longer', 'the word for something with more length'],
@@ -237,7 +237,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Position, Direction and Turns', from: 'Pre-K', to: 'Grade 1',
+      name: 'Position, Direction and Turns', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'word',
       facts: [
         ['on', 'the word for something resting on top'],
@@ -276,7 +276,7 @@ export const EARLY2_UNITS = {
 
   shapescolour: [
     {
-      name: '3D Shapes Around Us', from: 'Kindergarten', to: 'Grade 2',
+      name: '3D Shapes Around Us', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'shape',
       facts: [
         ['a cube', 'a shape with six square faces, like a dice'],
@@ -312,7 +312,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Symmetry and Repeating Patterns', from: 'Kindergarten', to: 'Grade 2',
+      name: 'Symmetry and Repeating Patterns', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'word',
       facts: [
         ['symmetry', 'when both halves of a shape match'],
@@ -350,7 +350,7 @@ export const EARLY2_UNITS = {
 
   worldaround: [
     {
-      name: 'Animals and Their Homes', from: 'Pre-K', to: 'Grade 2',
+      name: 'Animals and Their Homes', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'animal',
       facts: [
         ['a bird', 'an animal that lives in a nest'],
@@ -386,7 +386,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Seasons and Weather', from: 'Pre-K', to: 'Grade 2',
+      name: 'Seasons and Weather', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'word',
       facts: [
         ['spring', 'the season when plants start to grow'],
@@ -422,7 +422,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'People Who Help Us', from: 'Pre-K', to: 'Grade 1',
+      name: 'People Who Help Us', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'person',
       facts: [
         ['a doctor', 'the person who helps you when you are ill'],
@@ -457,7 +457,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'My Body and Staying Healthy', from: 'Pre-K', to: 'Grade 2',
+      name: 'My Body and Staying Healthy', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'part',
       facts: [
         ['the head', 'the part on top with your face on it'],
@@ -496,7 +496,7 @@ export const EARLY2_UNITS = {
 
   readiness: [
     {
-      name: 'Days, Months and the Calendar', from: 'Kindergarten', to: 'Grade 2',
+      name: 'Days, Months and the Calendar', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'word',
       facts: [
         ['Monday', 'the day after Sunday'],
@@ -532,7 +532,7 @@ export const EARLY2_UNITS = {
       ]
     },
     {
-      name: 'Listening, Sharing and Taking Turns', from: 'Pre-K', to: 'Grade 1',
+      name: 'Listening, Sharing and Taking Turns', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'thing to do',
       facts: [
         ['listening', 'paying attention to what someone is saying'],

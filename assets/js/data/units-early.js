@@ -1,4 +1,11 @@
-/* Early-years micro-units, Pre-K to about Grade 2.
+/* First-school micro-units, Grade 1 to about Grade 3.
+
+   These began at Pre-K. The preschool years are now built from the pre-K
+   catalogue instead — picture-led sheets generated per skill, theme and age
+   — so these start at Grade 1, where a child can read the question. Nothing
+   here was deleted: the Grade 1 to Grade 3 worksheets they produce are
+   unchanged, and they simply no longer compete with the new preschool
+   material for the same shelf.
    These are written to be read aloud: the clue in each pair completes a short
    question ("Which letter makes the sound at the start of ball?"), and the
    true/false statements are the things four- and five-year-olds actually get
@@ -11,7 +18,7 @@ const early = (name, from, to, noun, facts, truths, myths, procedural = []) =>
 export const EARLY_UNITS = {
   /* ============================ LETTERS AND SOUNDS ============================ */
   phonics: [
-    early('Letter Sounds: A to M', 'Pre-K', 'Grade 2', 'letter', [
+    early('Letter Sounds: A to M', 'Grade 1', 'Grade 2', 'letter', [
       ['a', 'makes the sound at the start of “apple”'],
       ['b', 'makes the sound at the start of “ball”'],
       ['c', 'makes the sound at the start of “cat”'],
@@ -44,7 +51,7 @@ export const EARLY_UNITS = {
       'Letters have names but no sounds.',
       'You can read a word without knowing any letter sounds.'
     ], ['count-letters']),
-    early('Letter Sounds: N to Z', 'Pre-K', 'Grade 2', 'letter', [
+    early('Letter Sounds: N to Z', 'Grade 1', 'Grade 2', 'letter', [
       ['n', 'makes the sound at the start of “nest”'],
       ['o', 'makes the sound at the start of “orange”'],
       ['p', 'makes the sound at the start of “pig”'],
@@ -77,7 +84,7 @@ export const EARLY_UNITS = {
       'The letter y is never a vowel sound.',
       'There are 20 letters in the English alphabet.'
     ], ['count-letters']),
-    early('Beginning Sounds', 'Pre-K', 'Grade 2', 'word', [
+    early('Beginning Sounds', 'Grade 1', 'Grade 2', 'word', [
       ['sun', 'starts with the sound “s”'],
       ['moon', 'starts with the sound “m”'],
       ['bag', 'starts with the sound “b”'],
@@ -109,7 +116,7 @@ export const EARLY_UNITS = {
       'You have to know how to spell a word to hear its first sound.',
       'Every word starts with a vowel.'
     ], ['first-letter', 'last-letter', 'count-letters']),
-    early('Rhyming Words', 'Pre-K', 'Grade 2', 'word', [
+    early('Rhyming Words', 'Grade 1', 'Grade 2', 'word', [
       ['cat', 'rhymes with “hat”'],
       ['dog', 'rhymes with “log”'],
       ['tree', 'rhymes with “bee”'],
@@ -141,7 +148,7 @@ export const EARLY_UNITS = {
       'A word can only rhyme with one other word.',
       'Rhyming has nothing to do with reading.'
     ], ['first-letter', 'last-letter', 'count-letters']),
-    early('CVC Words', 'Kindergarten', 'Grade 2', 'word', [
+    early('CVC Words', 'Grade 1', 'Grade 2', 'word', [
       ['cat', 'is c–a–t sounded out'],
       ['pen', 'is p–e–n sounded out'],
       ['pig', 'is p–i–g sounded out'],
@@ -173,7 +180,7 @@ export const EARLY_UNITS = {
       'Changing the middle sound of a word leaves the word the same.',
       'CVC words cannot be sounded out.'
     ], ['first-letter', 'last-letter', 'count-letters']),
-    early('Sight Words', 'Kindergarten', 'Grade 2', 'word', [
+    early('Sight Words', 'Grade 1', 'Grade 2', 'word', [
       ['the', 'is the most common word in English'],
       ['and', 'joins two things together'],
       ['said', 'is what we write when someone speaks'],
@@ -205,7 +212,7 @@ export const EARLY_UNITS = {
       'Sight words all follow the normal spelling rules.',
       'Sight words are only for older readers.'
     ], ['first-letter', 'last-letter', 'count-letters']),
-    early('Blends and Digraphs', 'Kindergarten', 'Grade 3', 'sound', [
+    early('Blends and Digraphs', 'Grade 1', 'Grade 3', 'sound', [
       ['sh', 'is the sound at the start of “ship”'],
       ['ch', 'is the sound at the start of “chip”'],
       ['th', 'is the sound at the start of “thumb”'],
@@ -237,7 +244,7 @@ export const EARLY_UNITS = {
       'Digraphs can only come at the start of a word.',
       'The letters sh make the same sound as s and h said separately.'
     ], ['count-letters']),
-    early('Syllables', 'Kindergarten', 'Grade 3', 'word', [
+    early('Syllables', 'Grade 1', 'Grade 3', 'word', [
       ['cat', 'has one syllable'],
       ['rabbit', 'has two syllables'],
       ['elephant', 'has three syllables'],
@@ -273,7 +280,7 @@ export const EARLY_UNITS = {
 
   /* ================================ EARLY NUMBER ================================ */
   earlynumber: [
-    early('Counting to 10', 'Pre-K', 'Grade 1', 'number', [
+    early('Counting to 10', 'Grade 1', 'Grade 1', 'number', [
       ['1', 'comes first when you count'],
       ['2', 'comes after 1'],
       ['3', 'comes after 2'],
@@ -295,7 +302,7 @@ export const EARLY_UNITS = {
       'Counting the same things in a different order gives a different total.',
       'Zero means one.'
     ], ['count-objects', 'count-choose', 'what-comes-next', 'what-came-before', 'one-more', 'one-less', 'bigger-number', 'add-pictures', 'number-bond']),
-    early('Counting to 20', 'Pre-K', 'Grade 2', 'number', [
+    early('Counting to 20', 'Grade 1', 'Grade 2', 'number', [
       ['11', 'comes after 10'],
       ['12', 'comes after 11'],
       ['13', 'comes after 12'],
@@ -319,7 +326,7 @@ export const EARLY_UNITS = {
       'Numbers stop at 20.',
       'You can only count forwards.'
     ], ['count-objects', 'count-choose', 'what-comes-next', 'what-came-before', 'one-more', 'one-less', 'bigger-number', 'add-numbers', 'number-bond']),
-    early('Counting to 100', 'Kindergarten', 'Grade 2', 'number', [
+    early('Counting to 100', 'Grade 1', 'Grade 2', 'number', [
       ['30', 'is three tens'],
       ['40', 'is four tens'],
       ['50', 'is halfway to 100'],
@@ -343,7 +350,7 @@ export const EARLY_UNITS = {
       'Two-digit numbers have no tens in them.',
       'Counting in tens gives a different answer from counting in ones.'
     ], ['what-comes-next', 'what-came-before', 'one-more', 'one-less', 'bigger-number', 'skip-count']),
-    early('Number Words', 'Pre-K', 'Grade 2', 'word', [
+    early('Number Words', 'Grade 1', 'Grade 2', 'word', [
       ['one', 'is the word for 1'],
       ['two', 'is the word for 2'],
       ['three', 'is the word for 3'],
@@ -367,7 +374,7 @@ export const EARLY_UNITS = {
       'Zero has no word for it.',
       'Number words are spelled the same as they sound.'
     ], ['number-word', 'what-comes-next', 'count-letters']),
-    early('More, Fewer and the Same', 'Pre-K', 'Grade 2', 'word', [
+    early('More, Fewer and the Same', 'Grade 1', 'Grade 2', 'word', [
       ['more', 'means a bigger amount'],
       ['fewer', 'means a smaller amount of things you can count'],
       ['less', 'means a smaller amount of something you cannot count'],
@@ -391,7 +398,7 @@ export const EARLY_UNITS = {
       'Matching one to one does not help you compare.',
       'More and fewer mean the same thing.'
     ], ['bigger-number', 'one-more', 'one-less', 'count-choose']),
-    early('Adding to 10', 'Kindergarten', 'Grade 2', 'answer', [
+    early('Adding to 10', 'Grade 1', 'Grade 2', 'answer', [
       ['2', 'is 1 + 1'],
       ['4', 'is 2 + 2'],
       ['5', 'is 3 + 2'],
@@ -415,7 +422,7 @@ export const EARLY_UNITS = {
       'Adding zero makes a number bigger.',
       'Only one pair of numbers can make 10.'
     ], ['add-pictures', 'add-numbers', 'number-bond', 'doubles', 'one-more']),
-    early('Taking Away', 'Kindergarten', 'Grade 2', 'answer', [
+    early('Taking Away', 'Grade 1', 'Grade 2', 'answer', [
       ['1', 'is 2 − 1'],
       ['2', 'is 4 − 2'],
       ['3', 'is 5 − 2'],
@@ -439,7 +446,7 @@ export const EARLY_UNITS = {
       'Taking a number away from itself leaves that number.',
       'Subtraction always makes a number bigger.'
     ], ['take-away', 'one-less', 'what-came-before', 'count-objects']),
-    early('Doubles and Halves', 'Kindergarten', 'Grade 2', 'answer', [
+    early('Doubles and Halves', 'Grade 1', 'Grade 2', 'answer', [
       ['4', 'is double 2'],
       ['6', 'is double 3'],
       ['8', 'is double 4'],
@@ -471,7 +478,7 @@ export const EARLY_UNITS = {
       'Doubling a number can give an odd number.',
       'Doubles are no help with adding.'
     ], ['doubles', 'add-numbers', 'number-bond']),
-    early('Ordinal Numbers', 'Pre-K', 'Grade 2', 'word', [
+    early('Ordinal Numbers', 'Grade 1', 'Grade 2', 'word', [
       ['first', 'is the one at the front'],
       ['second', 'comes after first'],
       ['third', 'comes after second'],
@@ -495,7 +502,7 @@ export const EARLY_UNITS = {
       'First and last mean the same thing.',
       'Ordinal numbers stop at tenth.'
     ], ['what-comes-next', 'count-objects']),
-    early('Skip Counting', 'Kindergarten', 'Grade 3', 'number', [
+    early('Skip Counting', 'Grade 1', 'Grade 3', 'number', [
       ['2', 'comes after 0 when counting in twos'],
       ['4', 'comes after 2 when counting in twos'],
       ['6', 'comes after 4 when counting in twos'],
@@ -531,7 +538,7 @@ export const EARLY_UNITS = {
 
   /* ======================== SHAPES, COLOURS AND PATTERNS ======================== */
   shapescolour: [
-    early('2D Shapes', 'Pre-K', 'Grade 2', 'shape', [
+    early('2D Shapes', 'Grade 1', 'Grade 2', 'shape', [
       ['circle', 'is round with no corners'],
       ['square', 'has four sides all the same length'],
       ['triangle', 'has three sides'],
@@ -555,7 +562,7 @@ export const EARLY_UNITS = {
       'A shape can have more corners than sides.',
       'A circle has four corners.'
     ], ['shape-sides', 'shape-from-sides', 'count-letters']),
-    early('3D Shapes', 'Kindergarten', 'Grade 3', 'shape', [
+    early('3D Shapes', 'Grade 1', 'Grade 3', 'shape', [
       ['cube', 'has six square faces'],
       ['sphere', 'is perfectly round like a ball'],
       ['cylinder', 'is round like a tin with flat ends'],
@@ -587,7 +594,7 @@ export const EARLY_UNITS = {
       'Every 3D shape can roll.',
       'A cube has four faces.'
     ], ['shape-sides', 'shape-from-sides']),
-    early('Colours', 'Pre-K', 'Grade 2', 'colour', [
+    early('Colours', 'Grade 1', 'Grade 2', 'colour', [
       ['red', 'is the colour of a strawberry'],
       ['blue', 'is the colour of the sky on a clear day'],
       ['yellow', 'is the colour of a banana'],
@@ -619,7 +626,7 @@ export const EARLY_UNITS = {
       'Adding white to a colour makes it darker.',
       'You can only make new colours with paint, not with light.'
     ], ['first-letter', 'count-letters']),
-    early('Patterns', 'Pre-K', 'Grade 2', 'pattern', [
+    early('Patterns', 'Grade 1', 'Grade 2', 'pattern', [
       ['ABAB', 'repeats two things over and over'],
       ['AABB', 'repeats two of each thing'],
       ['ABC', 'repeats three different things'],
@@ -643,7 +650,7 @@ export const EARLY_UNITS = {
       'Patterns can only be made from colours.',
       'A growing pattern changes by a different amount each time.'
     ], ['skip-count', 'what-comes-next']),
-    early('Sorting and Grouping', 'Pre-K', 'Grade 2', 'word', [
+    early('Sorting and Grouping', 'Grade 1', 'Grade 2', 'word', [
       ['sort', 'means to put things into groups'],
       ['group', 'is a set of things that go together'],
       ['same', 'means alike in some way'],
@@ -667,7 +674,7 @@ export const EARLY_UNITS = {
       'A sorting rule can change halfway through.',
       'You cannot compare two groups without counting.'
     ], ['count-objects', 'count-choose', 'bigger-number']),
-    early('Size and Measuring', 'Pre-K', 'Grade 2', 'word', [
+    early('Size and Measuring', 'Grade 1', 'Grade 2', 'word', [
       ['long', 'means it goes a long way from end to end'],
       ['short', 'means it does not go far from end to end'],
       ['tall', 'means it goes a long way up'],
@@ -695,7 +702,7 @@ export const EARLY_UNITS = {
 
   /* ========================== THE WORLD AROUND US ========================== */
   worldaround: [
-    early('Farm and Wild Animals', 'Pre-K', 'Grade 2', 'animal', [
+    early('Farm and Wild Animals', 'Grade 1', 'Grade 2', 'animal', [
       ['cow', 'gives us milk'],
       ['sheep', 'gives us wool'],
       ['hen', 'lays eggs'],
@@ -727,7 +734,7 @@ export const EARLY_UNITS = {
       'Every bird can fly.',
       'All animals eat the same food.'
     ], ['first-letter', 'count-letters']),
-    early('Baby Animals', 'Pre-K', 'Grade 2', 'animal', [
+    early('Baby Animals', 'Grade 1', 'Grade 2', 'animal', [
       ['puppy', 'is a baby dog'],
       ['kitten', 'is a baby cat'],
       ['lamb', 'is a baby sheep'],
@@ -759,7 +766,7 @@ export const EARLY_UNITS = {
       'A tadpole grows into a fish.',
       'Baby animals can look after themselves from the first day.'
     ], ['first-letter', 'count-letters']),
-    early('Weather', 'Pre-K', 'Grade 2', 'word', [
+    early('Weather', 'Grade 1', 'Grade 2', 'word', [
       ['sunny', 'means the sun is shining'],
       ['rainy', 'means water is falling from the clouds'],
       ['cloudy', 'means the sky is covered'],
@@ -791,7 +798,7 @@ export const EARLY_UNITS = {
       'A rainbow appears when it is only sunny.',
       'It is always warm when the sun is out.'
     ], ['first-letter', 'count-letters']),
-    early('The Seasons', 'Pre-K', 'Grade 2', 'season', [
+    early('The Seasons', 'Grade 1', 'Grade 2', 'season', [
       ['spring', 'is when plants start to grow again'],
       ['summer', 'is the warmest season'],
       ['autumn', 'is when leaves fall from the trees'],
@@ -823,7 +830,7 @@ export const EARLY_UNITS = {
       'Days are longest in winter.',
       'Every country has winter at the same time.'
     ], ['first-letter', 'count-letters']),
-    early('Parts of the Body', 'Pre-K', 'Grade 2', 'part', [
+    early('Parts of the Body', 'Grade 1', 'Grade 2', 'part', [
       ['head', 'is at the top of your body'],
       ['arm', 'joins your hand to your shoulder'],
       ['leg', 'you use to walk'],
@@ -855,7 +862,7 @@ export const EARLY_UNITS = {
       'Your heart beats slower when you run.',
       'Everybody’s body is exactly the same.'
     ], ['first-letter', 'count-letters']),
-    early('The Five Senses', 'Pre-K', 'Grade 2', 'sense', [
+    early('The Five Senses', 'Grade 1', 'Grade 2', 'sense', [
       ['sight', 'is what you use your eyes for'],
       ['hearing', 'is what you use your ears for'],
       ['smell', 'is what you use your nose for'],
@@ -887,7 +894,7 @@ export const EARLY_UNITS = {
       'Smell and taste have nothing to do with each other.',
       'Everybody senses things in exactly the same way.'
     ], ['first-letter', 'count-letters']),
-    early('Food Groups', 'Pre-K', 'Grade 2', 'food', [
+    early('Food Groups', 'Grade 1', 'Grade 2', 'food', [
       ['apple', 'is a fruit'],
       ['carrot', 'is a vegetable'],
       ['bread', 'gives you energy'],
@@ -919,7 +926,7 @@ export const EARLY_UNITS = {
       'Sugary drinks are better for you than water.',
       'Every food is an everyday food.'
     ], ['first-letter', 'count-letters']),
-    early('Plants and Growing', 'Kindergarten', 'Grade 3', 'part', [
+    early('Plants and Growing', 'Grade 1', 'Grade 3', 'part', [
       ['seed', 'is what a plant grows from'],
       ['root', 'takes in water from the soil'],
       ['stem', 'holds the plant up'],
@@ -951,7 +958,7 @@ export const EARLY_UNITS = {
       'Plants get all their food from the soil.',
       'Plants grow from stones.'
     ], ['first-letter', 'count-letters']),
-    early('Day and Night', 'Pre-K', 'Grade 2', 'word', [
+    early('Day and Night', 'Grade 1', 'Grade 2', 'word', [
       ['day', 'is when the sun is up'],
       ['night', 'is when it is dark outside'],
       ['sun', 'gives us light and warmth in the day'],
@@ -983,7 +990,7 @@ export const EARLY_UNITS = {
       'The moon makes its own light.',
       'Shadows stay exactly the same all day.'
     ], ['first-letter', 'count-letters']),
-    early('People Who Help Us', 'Pre-K', 'Grade 2', 'person', [
+    early('People Who Help Us', 'Grade 1', 'Grade 2', 'person', [
       ['doctor', 'helps you when you are ill'],
       ['nurse', 'looks after you in hospital'],
       ['teacher', 'helps you learn at school'],
@@ -1015,7 +1022,7 @@ export const EARLY_UNITS = {
       'All jobs need exactly the same training.',
       'Nobody works at night.'
     ], ['count-letters']),
-    early('Getting Around', 'Pre-K', 'Grade 2', 'vehicle', [
+    early('Getting Around', 'Grade 1', 'Grade 2', 'vehicle', [
       ['car', 'has four wheels and carries a few people'],
       ['bus', 'carries lots of people along a route'],
       ['bicycle', 'has two wheels and you pedal it'],
@@ -1051,7 +1058,7 @@ export const EARLY_UNITS = {
 
   /* ============================ SCHOOL READINESS ============================ */
   readiness: [
-    early('Days of the Week', 'Pre-K', 'Grade 2', 'day', [
+    early('Days of the Week', 'Grade 1', 'Grade 2', 'day', [
       ['Monday', 'is the first day of the school week'],
       ['Tuesday', 'comes after Monday'],
       ['Wednesday', 'is in the middle of the week'],
@@ -1075,7 +1082,7 @@ export const EARLY_UNITS = {
       'After Sunday the week stops.',
       'Tomorrow comes before today.'
     ], ['count-letters', 'what-comes-next']),
-    early('Months and the Year', 'Kindergarten', 'Grade 3', 'month', [
+    early('Months and the Year', 'Grade 1', 'Grade 3', 'month', [
       ['January', 'is the first month of the year'],
       ['February', 'is the shortest month'],
       ['March', 'comes after February'],
@@ -1107,7 +1114,7 @@ export const EARLY_UNITS = {
       'The months change order each year.',
       'A birthday happens twice a year.'
     ], ['count-letters']),
-    early('Opposites', 'Pre-K', 'Grade 2', 'word', [
+    early('Opposites', 'Grade 1', 'Grade 2', 'word', [
       ['big', 'is the opposite of small'],
       ['hot', 'is the opposite of cold'],
       ['up', 'is the opposite of down'],
@@ -1139,7 +1146,7 @@ export const EARLY_UNITS = {
       'Something must be one opposite or the other, never in between.',
       'Opposites are only about size.'
     ], ['first-letter', 'count-letters']),
-    early('Where Things Are', 'Pre-K', 'Grade 2', 'word', [
+    early('Where Things Are', 'Grade 1', 'Grade 2', 'word', [
       ['on', 'means resting on top of'],
       ['under', 'means below something'],
       ['in', 'means inside something'],
@@ -1171,7 +1178,7 @@ export const EARLY_UNITS = {
       'Above and below mean the same thing.',
       'You can only ever be next to one thing.'
     ], ['first-letter', 'count-letters']),
-    early('Telling the Time — O’Clock', 'Kindergarten', 'Grade 2', 'time', [
+    early('Telling the Time — O’Clock', 'Grade 1', 'Grade 2', 'time', [
       ['o’clock', 'is when the long hand points to 12'],
       ['half past', 'is when the long hand points to 6'],
       ['quarter past', 'is when the long hand points to 3'],
@@ -1203,7 +1210,7 @@ export const EARLY_UNITS = {
       'Clock hands can go either way round.',
       'Half past means 15 minutes after the hour.'
     ], ['what-comes-next', 'count-objects']),
-    early('Coins and Money', 'Kindergarten', 'Grade 2', 'word', [
+    early('Coins and Money', 'Grade 1', 'Grade 2', 'word', [
       ['coin', 'is money made of metal'],
       ['note', 'is money made of paper'],
       ['price', 'is how much something costs'],
@@ -1227,7 +1234,7 @@ export const EARLY_UNITS = {
       'Saving and spending mean the same thing.',
       'There is only one way to make each amount.'
     ], ['add-numbers', 'take-away', 'count-objects', 'bigger-number']),
-    early('Feelings and Manners', 'Pre-K', 'Grade 2', 'word', [
+    early('Feelings and Manners', 'Grade 1', 'Grade 2', 'word', [
       ['happy', 'is how you feel when something is good'],
       ['sad', 'is how you feel when something is upsetting'],
       ['angry', 'is how you feel when something is unfair'],
@@ -1259,7 +1266,7 @@ export const EARLY_UNITS = {
       'Taking turns means going first every time.',
       'Saying sorry means nothing happened.'
     ], ['first-letter', 'count-letters']),
-    early('Left, Right and Directions', 'Kindergarten', 'Grade 3', 'word', [
+    early('Left, Right and Directions', 'Grade 1', 'Grade 3', 'word', [
       ['left', 'is the side your left hand is on'],
       ['right', 'is the side your right hand is on'],
       ['forwards', 'means moving ahead'],

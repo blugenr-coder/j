@@ -31,20 +31,38 @@ export const GRADES = [
 
 export const SUBJECTS = [
   {
+    /* Preschool, rebuilt from a pre-K curriculum catalogue drawn from twenty
+       countries' early-years frameworks: 518 skills across eight areas, each
+       crossed with the page formats that suit it, the age it belongs at and a
+       theme that supplies every picture on the sheet.
+
+       The five topics that used to live here — Letters and Sounds, Early
+       Number, Shapes, Colours and Patterns, The World Around Us, School
+       Readiness — reached from Pre-K to Grade 3 and did their real work at
+       the top of that range. They have moved to the subjects they belong to
+       for those grades, and their worksheets are unchanged. */
     id: 'foundation', name: 'Early Learning', icon: 'band-early', accent: 'green',
-    blurb: 'Letters, sounds, counting, shapes and the world around us.',
+    blurb: 'Picture-led sheets for ages three to five: letters, counting, shapes, feelings and first scissors.',
     topics: [
-      { id: 'phonics',     name: 'Letters and Sounds' },
-      { id: 'earlynumber', name: 'Early Number' },
-      { id: 'shapescolour', name: 'Shapes, Colours and Patterns' },
-      { id: 'worldaround', name: 'The World Around Us' },
-      { id: 'readiness',   name: 'School Readiness' }
+      { id: 'pkliteracy', name: 'Letters, Sounds and Words' },
+      { id: 'pknumber',   name: 'Numbers, Shapes and Patterns' },
+      { id: 'pkworld',    name: 'Our World and Nature' },
+      { id: 'pkfeelings', name: 'Feelings and Friends' },
+      { id: 'pkmotor',    name: 'Pencil and Scissor Skills' },
+      { id: 'pkcolour',   name: 'Colour, Art and Music' },
+      { id: 'pkthinking', name: 'Thinking and Noticing' },
+      { id: 'pkhealth',   name: 'Health and Safety' }
     ]
   },
   {
     id: 'math', name: 'Mathematics', icon: 'math', accent: 'primary',
     blurb: 'From counting to calculus, one step at a time.',
     topics: [
+      /* Early Number and Shapes, Colours and Patterns moved here from Early
+         Learning when preschool was rebuilt: they run Grade 1 to Grade 3, and
+         that is where a parent looks for them. */
+      { id: 'earlynumber',  name: 'Early Number' },
+      { id: 'shapescolour', name: 'Shapes, Colours and Patterns' },
       { id: 'arithmetic',   name: 'Arithmetic' },
       { id: 'fractions',    name: 'Fractions' },
       { id: 'decimals',     name: 'Decimals' },
@@ -117,6 +135,7 @@ export const SUBJECTS = [
     id: 'ela', name: 'English / Language Arts', icon: 'ela', accent: 'orange',
     blurb: 'Grammar, vocabulary, reading and writing practice.',
     topics: [
+      { id: 'phonics',    name: 'Letters and Sounds' },
       { id: 'grammar',    name: 'Grammar' },
       { id: 'vocabulary', name: 'Vocabulary' },
       { id: 'reading',    name: 'Reading' },
@@ -141,6 +160,7 @@ export const SUBJECTS = [
     id: 'social', name: 'Social Studies', icon: 'social', accent: 'primary',
     blurb: 'History, geography and how societies are organised.',
     topics: [
+      { id: 'worldaround', name: 'The World Around Us' },
       { id: 'history',   name: 'History' },
       { id: 'geography', name: 'Geography' },
       { id: 'civics',    name: 'Civics' },
@@ -289,7 +309,8 @@ export const SUBJECTS = [
       { id: 'careers',       name: 'Careers and Employability' },
       { id: 'safety',        name: 'Safety and First Aid' },
       { id: 'household',     name: 'Home and Practical Skills' },
-      { id: 'communication', name: 'Speaking and Listening' }
+      { id: 'communication', name: 'Speaking and Listening' },
+      { id: 'readiness',     name: 'School Readiness' }
     ]
   },
   {

@@ -35,7 +35,11 @@ const COUNT_WAYS = ['How many {} are there?', 'Count the {}. Write how many.',
 const SPY_WAYS = ['How many can you find?', 'Count them and write how many.',
   'How many are hiding?', 'Find them all and write how many.'];
 const fill = (template, x) => template.replace('{}', x);
-const WHICH_WAYS = ['Which one', 'Point to the one that', 'Find the one that', 'Choose the one that'];
+/* Whole instructions again, not fragments: "Find the one that" with a question
+   mark bolted on gives "Find the one that is the number 7?", which is neither
+   a question nor an instruction. */
+const WHICH_WAYS = ['Which one {s}?', 'Which one of these {s}?', 'Point to the one that {s}.',
+  'Find the one that {s}.', 'Colour the one that {s}.', 'Tick the one that {s}.'];
 const MATCH_WAYS = ['Draw a line to join', 'Match', 'Join', 'Draw a line from'];
 const CUT_WAYS = ['Cut out the pictures and paste', 'Snip out each picture and glue',
   'Cut and paste', 'Cut out and stick'];
@@ -153,6 +157,23 @@ const labelOptions = (correct, wrong) => {
    anything that shares a glyph with the answer is dropped rather than shown. */
 const cleanWrong = (c) => (c.no || []).filter(x => x && x.glyph !== c.target?.glyph);
 
+/* A bare symbol rides on a picture from the theme: the letter printed on the
+   guitar, the number on the balloon. The symbol stays distinct — the carrier
+   is the same on every option — so the answer is still the letter, and the
+   page is the theme's. */
+const isSym = g => /^[\p{L}\p{N}'"-]{1,6}$/u.test(String(g));
+const wear = (c, glyph) => (c.carrier && isSym(glyph)) ? `${c.carrier}${glyph}` : glyph;
+const wearAll = (c, list) => list.map(g => wear(c, g));
+/* A different picture under each symbol, so several right answers stay several
+   answers instead of collapsing into one repeated string. */
+const wearEach = (c, list, offset = 0) => list.map((g, i) => {
+  if (!c.carriers?.length || !isSym(g)) return g;
+  return `${c.carriers[(i + offset) % c.carriers.length]}${g}`;
+});
+/* What the child is looking at, for the instruction line. */
+const thing = c => c.carrierName ?? 'one';
+const everyThing = c => (c.carriers?.length ? `picture at the ${c.theme?.name ?? 'page'}` : 'one');
+
 const art = (kind, extra) => ({ kind, ...extra });
 
 /* ------------------------------ the formats ------------------------------ */
@@ -166,13 +187,13 @@ F.choose = (c, { r, level }) => {
   const byGlyph = wrong.some(w => w.glyph !== w.label);
   const opts = byGlyph ? glyphOptions(r, correct, wrong) : labelOptions(correct, wrong);
   const q = choice(r, {
-    prompt: `${pick(r, WHICH_WAYS)} ${c.say}?`,
-    correct: byGlyph ? correct.glyph : correct.label,
-    distractors: opts,
+    prompt: pick(r, WHICH_WAYS).replace('{s}', c.say),
+    correct: byGlyph ? wear(c, correct.glyph) : wear(c, correct.label),
+    distractors: byGlyph ? wearAll(c, opts) : wearAll(c, opts),
     hint: `Look at each one in turn and say it out loud.`,
     explanation: `${cap(correct.label)} ${c.say}.`
   });
-  if (c.story) q.prompt = `${c.story} ${pick(r, WHICH_WAYS).replace(/^Which one$/, 'Which number')} ${c.say}?`;
+  if (c.story) q.prompt = `${c.story} ${pick(r, WHICH_WAYS).replace('{s}', c.say).replace('Which one', 'Which number')}`;
   q.art = c.shown ? art('row', { items: [...c.shown, { label: '?', glyph: '?' }] })
         : c.graphRows ? art('graph', { rows: c.graphRows })
         : c.clock ? art('clock', { hour: c.clock })
@@ -191,13 +212,19 @@ F.choose = (c, { r, level }) => {
 
 /* find — circle every one that fits, among ones that do not. */
 F.find = (c, { r }) => {
-  const yes = sample(r, c.yes ?? [], Math.min(3, (c.yes ?? []).length)).map(x => x.glyph);
-  const no  = sample(r, cleanWrong(c), 4).map(x => x.glyph).filter(g => !yes.includes(g));
+  const yes = [...new Set(wearEach(c, sample(r, c.yes ?? [], Math.min(3, (c.yes ?? []).length)).map(x => x.glyph)))];
+  const no  = [...new Set(wearEach(c, sample(r, cleanWrong(c), 4).map(x => x.glyph), yes.length))]
+    .filter(g => !yes.includes(g));
   const q = multiQ(r, {
-    prompt: `${pick(r, CIRCLE_WAYS)} one that ${c.say}.`,
-    correct: [...new Set(yes)], wrong: [...new Set(no)],
-    hint: 'Check them one at a time. There is more than one.',
-    explanation: `There ${yes.length === 1 ? 'is' : 'are'} ${yes.length} that ${c.say}.`
+    prompt: `${pick(r, CIRCLE_WAYS)} ${c.carriers?.length ? everyThing(c) : thing(c)} that ${c.say}.`,
+    correct: yes, wrong: no,
+    hint: yes.length > 1 ? 'Check them one at a time. There is more than one.'
+                         : 'Check them one at a time.',
+    /* The answer key already prints which ones are right, so the explanation
+       says how many rather than listing them again. It used to read "There
+       are 3 that is the letter A" — ungrammatical, and wrong too once two of
+       the three turned out to be the same picture. */
+    explanation: `${yes.length} of the pictures ${yes.length === 1 ? 'is' : 'are'} right; the rest are not.`
   });
   q.pictures = true;
   return q;
@@ -206,7 +233,7 @@ F.find = (c, { r }) => {
 /* dab — the same hunt, but with a dot marker and bigger targets. */
 F.dab = (c, opts) => {
   const q = F.find(c, opts);
-  q.prompt = `${pick(opts.r, DAB_WAYS)} one that ${c.say}.`;
+  q.prompt = `${pick(opts.r, DAB_WAYS)} ${c.carriers?.length ? everyThing(c) : thing(c)} that ${c.say}.`;
   return q;
 };
 
@@ -216,11 +243,15 @@ F.ispy = (c, { r }) => {
   const n = int(r, 3, 7);
   const clutter = sample(r, cleanWrong(c).length ? cleanWrong(c) : [G('star', '⭐'), G('dot', '🔵')], 3);
   const cells = [];
-  for (let i = 0; i < n; i++) cells.push({ glyph: target.glyph, label: target.label });
-  for (let i = 0; i < 10; i++) { const x = pick(r, clutter); cells.push({ glyph: x.glyph, label: x.label }); }
+  for (let i = 0; i < n; i++) cells.push({ glyph: wear(c, target.glyph), label: target.label });
+  for (let i = 0; i < 10; i++) {
+    const x = pick(r, clutter);
+    cells.push({ glyph: wear(c, x.glyph), label: x.label });
+  }
   /* A letter or a numeral is named in quotes; anything else gets an article. */
   const named = /^[A-Za-z0-9]{1,2}$/.test(target.label)
-    ? `"${target.label}"` : `${an(target.label)} ${target.label}`;
+    ? `${c.carrierName ? `a ${c.carrierName} showing ` : ''}"${target.label}"`
+    : `${an(target.label)} ${target.label}`;
   return blankQ(
     `I spy ${named}. ${pick(r, SPY_WAYS)}`,
     n,
@@ -272,7 +303,7 @@ F.match = (c, { r }) => {
     if (!p?.a?.glyph || !p?.b?.glyph) return false;
     if (seen.has(p.b.glyph) || seenLeft.has(p.a.glyph)) return false;
     seen.add(p.b.glyph); seenLeft.add(p.a.glyph); return true;
-  }).map(p => ({ left: p.a.glyph, right: p.b.glyph }));
+  }).map(p => ({ left: wear(c, p.a.glyph), right: p.b.glyph }));
   if (pairs.length < 2) return F.choose(c, { r, level: 1 });
   const q = matchQ(r, {
     prompt: pick(r, JOIN_WAYS).replace('{m}', pick(r, MATCH_WAYS)),
@@ -315,8 +346,8 @@ F.sort = (c, { r }) => {
   /* Sorting is select-all rather than matching: four pictures into two boxes
      means two of them want the same box, and the matcher gives each right-hand
      item to one left-hand item only. */
-  const mine  = sample(r, a.items, Math.min(3, a.items.length)).map(x => x.glyph);
-  const theirs = sample(r, b.items, Math.min(3, b.items.length)).map(x => x.glyph)
+  const mine  = [...new Set(wearEach(c, sample(r, a.items, Math.min(3, a.items.length)).map(x => x.glyph)))];
+  const theirs = [...new Set(wearEach(c, sample(r, b.items, Math.min(3, b.items.length)).map(x => x.glyph), mine.length))]
     .filter(g => !mine.includes(g));
   if (!mine.length || !theirs.length || mine.length + theirs.length < 3)
     return F.choose(c, { r, level: 1 });
@@ -519,8 +550,8 @@ F.maze = (c, { r }) => {
   const byGlyph = to.glyph !== from.glyph;
   const q = choice(r, {
     prompt: pick(r, MAZE_WAYS).replace('{s}', c.say),
-    correct: byGlyph ? to.glyph : to.label,
-    distractors: byGlyph ? glyphOptions(r, to, wrong) : labelOptions(to, wrong),
+    correct: byGlyph ? wear(c, to.glyph) : wear(c, to.label),
+    distractors: wearAll(c, byGlyph ? glyphOptions(r, to, wrong) : labelOptions(to, wrong)),
     hint: 'Try one step at a time. If it does not fit, go back.',
     explanation: `The path goes through ${correct.label} and reaches ${to.label}.`
   });

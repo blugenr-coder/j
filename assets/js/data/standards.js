@@ -17,6 +17,11 @@
 const M = (name, codes) => ({ framework: 'CCSS.MATH', name, codes });
 const E = (name, codes) => ({ framework: 'CCSS.ELA', name, codes });
 const N = (name, codes) => ({ framework: 'NGSS', name, codes });
+/* Preschool is not governed by US grade-school standards. The pre-K catalogue
+   carries each skill's place in the UK's EYFS, Singapore's NEL and Korea's
+   Nuri curriculum, which is what a preschool teacher is actually planning
+   against, so that is what a preschool sheet cites. */
+const EY = (name, codes) => ({ framework: 'EYFS / NEL / Nuri', name, codes });
 const C = (name, codes) => ({ framework: 'CEFR', name, codes });
 const K = (name, codes) => ({ framework: 'CSTA', name, codes });
 
@@ -35,7 +40,27 @@ export const STANDARDS = {
   measurement:  M('Measurement and Data', ['2.MD', '3.MD', '4.MD', '5.MD', 'N-Q']),
   discrete:     M('The Number System · Counting', ['7.NS', '8.NS', 'S-CP']),
 
-  /* ---- early years ---- */
+  /* ---- preschool ----
+     The pre-K catalogue was built from twenty countries' early-years
+     frameworks and carries each skill's place in three of them. Those are the
+     frameworks that actually govern a preschool sheet, so they are what is
+     cited here rather than a US grade-school code stretched down to age
+     three. */
+  pkliteracy: EY('Literacy and Communication', ['EYFS.Literacy', 'NEL.Language', 'Nuri.Communication']),
+  pknumber:   EY('Mathematics and Numeracy', ['EYFS.Mathematics', 'NEL.Numeracy', 'Nuri.Nature']),
+  pkworld:    EY('Understanding the World', ['EYFS.UtW', 'NEL.Discovery', 'Nuri.Nature']),
+  pkfeelings: EY('Personal, Social and Emotional Development',
+                 ['EYFS.PSED', 'NEL.SocialEmotional', 'Nuri.SocialRelationships']),
+  pkmotor:    EY('Physical Development — fine motor',
+                 ['EYFS.Physical', 'NEL.MotorSkills', 'Nuri.PhysicalActivity']),
+  pkcolour:   EY('Expressive Arts and Design',
+                 ['EYFS.EAD', 'NEL.Aesthetics', 'Nuri.ArtExperience']),
+  pkthinking: EY('Learning Dispositions and early reasoning',
+                 ['EYFS.Mathematics', 'NEL.LearningDispositions', 'Nuri.Nature']),
+  pkhealth:   EY('Health, Safety and Physical Development',
+                 ['EYFS.Physical', 'NEL.HealthSafety', 'Nuri.PhysicalActivity']),
+
+  /* ---- first school years ---- */
   phonics:      E('Reading: Foundational Skills — phonics and word recognition', ['RF.K.2', 'RF.K.3', 'RF.1.3']),
   earlynumber:  M('Counting and Cardinality · Operations and Algebraic Thinking', ['K.CC', 'K.OA', '1.OA', '1.NBT']),
   shapescolour: M('Geometry · Measurement and Data', ['K.G', 'K.MD', '1.G']),

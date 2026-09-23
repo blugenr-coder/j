@@ -717,10 +717,12 @@ export const BODY_CODE_UNITS = {
       ]
     }
   ],
-  /* =============================== early years =============================== */
+  /* ============================ first school years ============================
+     These start at Grade 1. The preschool years are built from the pre-K
+     catalogue now, so these no longer reach down into Pre-K and Kindergarten. */
   phonics: [
     {
-      name: 'Rhyming Words and Syllables', from: 'Pre-K', to: 'Grade 2',
+      name: 'Rhyming Words and Syllables', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'word',
       facts: [
         ['a rhyme', 'words that end with the same sound'],
@@ -769,7 +771,7 @@ export const BODY_CODE_UNITS = {
   ],
   earlynumber: [
     {
-      name: 'Counting to 20 and Writing Numbers', from: 'Pre-K', to: 'Grade 1',
+      name: 'Counting to 20 and Writing Numbers', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'number',
       facts: [
         ['one', 'the number after zero'],
@@ -818,7 +820,7 @@ export const BODY_CODE_UNITS = {
   ],
   shapescolour: [
     {
-      name: 'Sorting, Matching and Making Patterns', from: 'Pre-K', to: 'Grade 1',
+      name: 'Sorting, Matching and Making Patterns', from: 'Grade 1', to: 'Grade 1',
       kind: 'early', noun: 'answer',
       facts: [
         ['sorting', 'putting things into groups'],
@@ -867,7 +869,7 @@ export const BODY_CODE_UNITS = {
   ],
   worldaround: [
     {
-      name: 'Seasons, Weather and the Days of the Week', from: 'Pre-K', to: 'Grade 2',
+      name: 'Seasons, Weather and the Days of the Week', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'answer',
       facts: [
         ['spring', 'the season when plants start to grow'],
@@ -916,7 +918,7 @@ export const BODY_CODE_UNITS = {
   ],
   readiness: [
     {
-      name: 'Feelings, Sharing and Taking Turns', from: 'Pre-K', to: 'Grade 2',
+      name: 'Feelings, Sharing and Taking Turns', from: 'Grade 1', to: 'Grade 2',
       kind: 'early', noun: 'answer',
       facts: [
         ['happy', 'the feeling when something is good'],

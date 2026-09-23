@@ -514,9 +514,12 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 .match-grid.is-pictures .match-item > span:first-child { font-size: 2.1rem; line-height: 1.2; }
 .order-list.is-pictures .order-item > span:nth-child(2) { font-size: 2.1rem; line-height: 1.2; }
 
-@media print {
-  .q-options.is-pictures { display: flex; flex-wrap: wrap; gap: 6mm; }
-  .q-options.is-pictures .opt-print { display: inline-flex; align-items: center; gap: 2mm; }
-  .q-options.is-pictures .opt-print > span:last-child { font-size: 20pt; line-height: 1.1; }
-  .q-match.is-pictures span, .q-order.is-pictures .oline > span:last-child { font-size: 17pt; }
-}
+/* The printed sheet, and its preview on screen. These were inside @media
+   print, so the paper preview — which is what anyone actually looks at before
+   hitting Print — kept showing the pictures at the size of body text. */
+.q-options.is-pictures { display: flex; flex-wrap: wrap; gap: 7mm; }
+.q-options.is-pictures .opt-print { display: inline-flex; align-items: center; gap: 2mm; }
+.q-options.is-pictures .opt-print > span:last-child { font-size: 20pt; line-height: 1.1; }
+.q-match.is-pictures span, .q-order.is-pictures .oline > span:last-child { font-size: 17pt; }
+/* The answer key repeats the pictures, and they have to be readable there too. */
+.key-sheet .key-ans { font-size: 15pt; line-height: 1.3; }
