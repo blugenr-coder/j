@@ -357,3 +357,166 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 @media (max-width: 380px) {
   .btn { white-space: normal; }
 }
+
+/* ----------------------------- preschool pictures -----------------------------
+   A four-year-old cannot read the question, so the picture is the question.
+   These styles serve both the online player and the printed sheet from one
+   drawing, because a picture that only worked on screen would miss the point:
+   a preschool sheet ends up on a table with a crayon next to it.
+
+   Strokes are currentColor so a figure reads in light mode, in dark mode and
+   in black ink without three sets of rules. */
+
+.q-with-art > .pk-art { margin-bottom: var(--s3); }
+.pk-art { margin-block: var(--s3); }
+
+.pk-pic { font-size: 2rem; line-height: 1.1; }
+.pk-pic.is-big { font-size: 3.2rem; }
+.pk-pic.is-faint { opacity: .25; }
+
+.pk-row { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: flex-end; }
+.pk-row.is-big { gap: var(--s4); }
+.pk-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; }
+.pk-num { font-size: .72rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.pk-writebox {
+  width: 1.8em; height: 1.8em; border: 1.5px solid var(--border-strong);
+  border-radius: 5px; background: var(--surface);
+}
+
+.pk-grid {
+  display: grid; gap: var(--s2); max-width: 26rem;
+  grid-template-columns: repeat(var(--pk-cols, 5), minmax(0, 1fr));
+  justify-items: center;
+}
+
+.pk-svg { display: block; width: 100%; height: auto; color: var(--text); }
+.pk-tenframe { max-width: 17rem; }
+.pk-die { max-width: 3.4rem; }
+.pk-clock { max-width: 6rem; }
+.pk-dots { max-width: 15rem; }
+.pk-stroke { max-width: 11rem; }
+.pk-maze-svg { max-width: 15rem; }
+
+.pk-frame { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.pk-counter { fill: currentColor; }
+.pk-tick { stroke: currentColor; stroke-width: 1.2; }
+.pk-hand { stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; }
+.pk-hand.is-minute { stroke-width: 1.6; }
+.pk-dot { fill: currentColor; }
+.pk-dot-label { fill: currentColor; font-size: 8px; text-anchor: middle; font-weight: 600; }
+
+/* A traced letter sits on the three rules handwriting is taught on
+   everywhere: a top line, a dashed middle, and a baseline. */
+.pk-trace { max-width: 30rem; }
+.pk-rule {
+  display: flex; flex-wrap: wrap; gap: var(--s4); align-items: center;
+  padding: .35em .6em; min-height: 3.2em;
+  border-top: 1.5px solid var(--border-strong);
+  border-bottom: 1.5px solid var(--border-strong);
+  background-image: repeating-linear-gradient(to right,
+    var(--border-strong) 0 6px, transparent 6px 12px);
+  background-size: 100% 1.5px; background-position: center; background-repeat: no-repeat;
+}
+.pk-ghost {
+  font-family: var(--font-head); font-size: 2.2rem; line-height: 1;
+  color: var(--text-3); opacity: .45; letter-spacing: .04em;
+}
+/* "Then write it yourself" needs somewhere to write it. */
+.pk-ghost.is-blank {
+  min-width: 1.7em; min-height: 1.6em; border-radius: 6px;
+  border: 1.5px dashed var(--border-strong); opacity: 1;
+}
+
+.pk-path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.pk-path.is-stroke { stroke: currentColor; stroke-width: 2; stroke-dasharray: 4 3.5; }
+.pk-path.is-cut { stroke: currentColor; stroke-width: 1.6; stroke-dasharray: 2 3; }
+.pk-path.is-wide { stroke: var(--surface-2); stroke-width: 12; }
+.pk-path.is-inner { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 3 3; }
+.pk-start { fill: var(--primary); }
+
+.pk-maze { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; }
+.pk-maze-legend { display: flex; gap: var(--s3); align-items: center; margin-top: var(--s2); }
+.pk-maze-step { font-size: 1.6rem; }
+
+.pk-key { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.pk-key-row {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  border: 1px solid var(--border); border-radius: var(--r2); padding: 4px 8px;
+}
+.pk-swatch { width: 1.1em; height: 1.1em; border-radius: 4px; border: 1px solid var(--border-strong); }
+.pk-key-code { font-weight: 600; }
+.pk-key-colour { color: var(--text-2); font-size: .85em; }
+
+.pk-graph { display: flex; flex-direction: column; gap: var(--s2); }
+.pk-graph-row { display: flex; align-items: center; gap: var(--s3); }
+.pk-graph-label { min-width: 6.5em; font-size: .85em; color: var(--text-2); }
+.pk-graph-bar { display: flex; gap: 2px; }
+.pk-graph-bar .pk-pic { font-size: 1.4rem; }
+
+.pk-scenes { display: flex; gap: var(--s3); flex-wrap: wrap; }
+.pk-panel {
+  flex: 1 1 13rem; border: 1.5px solid var(--border-strong);
+  border-radius: var(--r2); padding: var(--s3); position: relative;
+}
+.pk-panel-label {
+  position: absolute; top: -.7em; left: .6em; background: var(--surface);
+  padding: 0 .4em; font-size: .78rem; font-weight: 700; color: var(--text-2);
+}
+
+/* A shadow is the same picture with the light turned off. Blacking out the
+   emoji keeps one set of pictures rather than two that could drift apart. */
+.pk-shadow { display: flex; flex-direction: column; gap: var(--s3); }
+.pk-row.is-shadow .pk-pic, .match-item .is-shadow, .opt-print .is-shadow { filter: brightness(0); }
+
+.pk-boxes { display: flex; gap: var(--s3); flex-wrap: wrap; }
+.pk-box {
+  flex: 1 1 9rem; min-height: 4.5rem; border: 2px dashed var(--border-strong);
+  border-radius: var(--r2); position: relative;
+}
+.pk-box-label {
+  position: absolute; top: -.7em; left: .6em; background: var(--surface);
+  padding: 0 .4em; font-size: .8rem; font-weight: 600;
+}
+
+.pk-drawbox {
+  min-height: 6rem; border: 2px dashed var(--border-strong); border-radius: var(--r2);
+  display: flex; align-items: center; justify-content: center;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* A black silhouette disappears on a dark page, so the shadow becomes a
+     pale one — still a shape with no detail, which is what is being asked. */
+  .pk-row.is-shadow .pk-pic, .match-item .is-shadow { filter: brightness(0) invert(.72); }
+}
+
+@media print {
+  .pk-svg, .pk-path.is-inner { color: #0F172A; }
+  .pk-path.is-wide { stroke: #F1F5F9; }
+  .pk-writebox, .pk-box, .pk-drawbox, .pk-panel, .pk-ghost.is-blank { border-color: #94A3B8; }
+  .pk-ghost { color: #94A3B8; opacity: .6; }
+  .pk-rule { border-color: #94A3B8; }
+  .pk-art { break-inside: avoid; }
+}
+
+/* Picture answers. When the options are pictures rather than words they sit
+   side by side at a size a four-year-old can see and point at, instead of
+   stacked in a list at the size of body text. */
+.opt-list.is-pictures {
+  display: flex; flex-wrap: wrap; gap: var(--s3);
+}
+.opt-list.is-pictures .opt {
+  flex: 0 0 auto; width: auto; min-width: 5.5rem;
+  flex-direction: column; align-items: center;
+  gap: var(--s2); padding: var(--s3) var(--s4); text-align: center;
+}
+.opt-list.is-pictures .opt > span:last-child { font-size: 2.6rem; line-height: 1.1; }
+
+.match-grid.is-pictures .match-item > span:first-child { font-size: 2.1rem; line-height: 1.2; }
+.order-list.is-pictures .order-item > span:nth-child(2) { font-size: 2.1rem; line-height: 1.2; }
+
+@media print {
+  .q-options.is-pictures { display: flex; flex-wrap: wrap; gap: 6mm; }
+  .q-options.is-pictures .opt-print { display: inline-flex; align-items: center; gap: 2mm; }
+  .q-options.is-pictures .opt-print > span:last-child { font-size: 20pt; line-height: 1.1; }
+  .q-match.is-pictures span, .q-order.is-pictures .oline > span:last-child { font-size: 17pt; }
+}

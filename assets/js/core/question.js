@@ -6,6 +6,7 @@
 import { el, esc, shuffle, hashCode, clamp } from './util.js';
 import { iconHtml } from './icons.js';
 import { figure } from '../data/figures.js';
+import { artNode } from './pk-art.js';
 
 const LETTERS = 'ABCDEFGH';
 
@@ -23,6 +24,16 @@ export function mathNode(text) {
  * @returns {{node:HTMLElement, getValue:Function, focus:Function, showResult:Function}}
  */
 export function renderQuestion(q, { value = undefined, disabled = false, onInput = () => {} } = {}) {
+  const rendered = renderByType(q, { value, disabled, onInput });
+  /* A preschool question is mostly picture: the ten frame, the maze, the row
+     of things to count. It goes above the answer controls, because the child
+     looks at it first and an adult reads the words to them. */
+  const art = artNode(q.art);
+  if (art) rendered.node = el('div', { class: 'q-with-art' }, art, rendered.node);
+  return rendered;
+}
+
+function renderByType(q, { value, disabled, onInput }) {
   switch (q.type) {
     case 'choice':  return renderChoice(q, value, disabled, onInput, false);
     case 'multi':   return renderChoice(q, value, disabled, onInput, true);
@@ -40,7 +51,12 @@ export function renderQuestion(q, { value = undefined, disabled = false, onInput
 /* ------------------------------ choice / multi ------------------------------ */
 function renderChoice(q, value, disabled, onInput, multi) {
   let selected = multi ? [...(value ?? [])] : (value ?? null);
-  const list = el('div', { class: 'opt-list', role: multi ? 'group' : 'radiogroup' });
+  /* When the options are pictures rather than words they lay out as pictures:
+     large and side by side. A preschool answer is chosen by looking. */
+  const list = el('div', {
+    class: `opt-list${q.pictures ? ' is-pictures' : ''}`,
+    role: multi ? 'group' : 'radiogroup'
+  });
   const buttons = [];
 
   q.options.forEach((opt, i) => {
@@ -149,7 +165,7 @@ function renderMatch(q, value, disabled, onInput) {
   const pairs = { ...(value ?? {}) };     // leftIndex -> rightIndex
   let picked = null;                       // currently selected left index
 
-  const wrap = el('div', { class: 'match-grid' });
+  const wrap = el('div', { class: `match-grid${q.pictures ? ' is-pictures' : ''}` });
   const leftCol = el('div', { class: 'match-col' });
   const rightCol = el('div', { class: 'match-col' });
   const leftBtns = [], rightBtns = [];
@@ -176,7 +192,8 @@ function renderMatch(q, value, disabled, onInput) {
         sync();
         onInput({ ...pairs });
       }
-    }, el('span', { text: q.pairs[origIdx].right }), el('span', { class: 'pair-tag' }));
+    }, el('span', { class: q.shadowRight ? 'is-shadow' : null, text: q.pairs[origIdx].right }),
+     el('span', { class: 'pair-tag' }));
     rightBtns.push({ btn: b, origIdx, slot });
     rightCol.append(b);
   });
@@ -225,7 +242,7 @@ function renderOrder(q, value, disabled, onInput) {
   let order = value ?? shuffle(q.items.map((_, i) => i), hashCode((q.id ?? q.prompt) + 'o'));
   if (order.length !== q.items.length) order = q.items.map((_, i) => i);
 
-  const list = el('div', { class: 'order-list' });
+  const list = el('div', { class: `order-list${q.pictures ? ' is-pictures' : ''}` });
 
   function move(from, to) {
     if (to < 0 || to >= order.length) return;

@@ -7,3 +7,7 @@ node_modules/
 # reported success, git status was clean, and the live site's module graph
 # broke on a 404 nobody could see locally.
 /data/
+
+# A scratch page for eyeballing preschool artwork in a real browser. It is a
+# development harness, not a page of the site, so it never ships.
+/pk-preview.html

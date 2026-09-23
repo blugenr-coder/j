@@ -180,6 +180,12 @@ F.choose = (c, { r, level }) => {
         : c.item ? art('row', { items: [c.item] }) : null;
   if (level === 0) q.options = q.options.slice(0, Math.max(2, Math.min(3, q.options.length)));
   if (level === 0 && q.answer >= q.options.length) { q.options = q.options.concat([byGlyph ? correct.glyph : correct.label]); q.answer = q.options.length - 1; }
+  /* Options that are pictures are shown as pictures: big, side by side, the
+     way they are on a paper worksheet. A picture the size of body text is no
+     use to a child who cannot read the text either. */
+  /* Letters and numerals are pictures too at this age: a child who is learning
+     what a B looks like is looking, not reading. */
+  q.pictures = byGlyph || q.options.every(o => /^[\p{L}\p{N}]{1,3}$/u.test(String(o)));
   return q;
 };
 
@@ -193,6 +199,7 @@ F.find = (c, { r }) => {
     hint: 'Check them one at a time. There is more than one.',
     explanation: `There ${yes.length === 1 ? 'is' : 'are'} ${yes.length} that ${c.say}.`
   });
+  q.pictures = true;
   return q;
 };
 
@@ -200,7 +207,6 @@ F.find = (c, { r }) => {
 F.dab = (c, opts) => {
   const q = F.find(c, opts);
   q.prompt = `${pick(opts.r, DAB_WAYS)} one that ${c.say}.`;
-  q.art = art('targets', { n: q.options.length });
   return q;
 };
 
@@ -275,6 +281,7 @@ F.match = (c, { r }) => {
     explanation: (c.pairs ?? []).filter(p => p?.a?.glyph && seenLeft.has(p.a.glyph))
       .slice(0, 4).map(p => `${p.a.label} → ${p.b.label}`).join('; ')
   });
+  q.pictures = true;
   return q;
 };
 
@@ -296,7 +303,7 @@ F.shadow = (c, { r }) => {
      shadow is. The renderer blacks it out rather than shipping a second set of
      pictures that would have to be kept in step with the first. */
   q.shadowRight = true;
-  q.art = art('shadow', { items: four });
+  q.pictures = true;
   return q;
 };
 
@@ -320,6 +327,7 @@ F.sort = (c, { r }) => {
     explanation: `${cap(a.name)}: ${a.items.slice(0, 3).map(x => x.label).join(', ')}. The rest go in "${b.name}".`
   });
   q.art = art('boxes', { names: [a.name, b.name] });
+  q.pictures = true;
   return q;
 };
 
@@ -350,7 +358,7 @@ F.seq = (c, { r }) => {
     steps.map((s, i) => `${i + 1}. ${s.label}`).join(' '),
     'Which one happens first? Start there.'
   );
-  q.art = art('row', { items: steps, numbered: true });
+  q.pictures = true;
   return q;
 };
 
@@ -367,6 +375,7 @@ F.pattern = (c, { r }) => {
     explanation: `The pattern is ${c.code ?? 'repeating'}, so ${next.label} comes next.`
   });
   q.art = art('row', { items: [...shown, { label: '?', glyph: '?' }] });
+  q.pictures = true;
   return q;
 };
 
@@ -391,7 +400,10 @@ F.graph = (c, { r }) => {
 
 /* roll — roll a die, then do what the number says. */
 F.roll = (c, { r }) => {
-  const n = int(r, 1, 6);
+  /* The die is the picture of the number this skill is about, when the number
+     fits on a die. Rolling a six on a sheet about four teaches four nothing. */
+  const own = c.n ?? c.count;
+  const n = (own >= 1 && own <= 6) ? own : int(r, 1, 6);
   const item = c.item ?? c.target;
   return blankQ(
     pick(r, ROLL_WAYS).replace('{n}', n).replace('{x}', item.label),
@@ -408,15 +420,28 @@ F.roll = (c, { r }) => {
 F.code = (c, { r }) => {
   const correct = c.yes?.[0] ?? c.target;
   const wrong = cleanWrong(c);
-  const names = sample(r, Object.keys(COLOUR_PICS), 4);
-  const entries = [correct, ...wrong.slice(0, 3)].filter(Boolean)
-    .map((x, i) => ({ code: x.label, colour: names[i], hex: COLOUR_HEX[names[i]] }));
+  /* On a skill that is itself about colour, mapping "red" to "yellow" in a key
+     is nonsense to read aloud. There the key is numbered, which is the real
+     skill anyway: read the key, name the colour. */
+  const aboutColour = Boolean(c.colour);
+  const names = aboutColour
+    ? [c.colour, ...sample(r, Object.keys(COLOUR_PICS).filter(x => x !== c.colour), 3)]
+    : sample(r, Object.keys(COLOUR_PICS), 4);
+  const codes = aboutColour
+    ? ['1', '2', '3', '4']
+    : [correct, ...wrong.slice(0, 3)].filter(Boolean).map(x => x.label);
+  const entries = names.slice(0, codes.length)
+    .map((n, i) => ({ code: codes[i], colour: n, hex: COLOUR_HEX[n] }));
   const q = choice(r, {
-    prompt: pick(r, CODE_WAYS).replace('{s}', c.say),
+    prompt: aboutColour
+      ? `Look at the colour key. What colour is number ${entries[0].code}?`
+      : pick(r, CODE_WAYS).replace('{s}', c.say),
     correct: entries[0].colour,
     distractors: entries.slice(1).map(e => e.colour),
-    hint: 'Find the answer in the key first, then read across.',
-    explanation: `${cap(correct.label)} is ${entries[0].colour} in the key.`
+    hint: 'Find it in the key first, then read across.',
+    explanation: aboutColour
+      ? `Number ${entries[0].code} in the key is ${entries[0].colour}.`
+      : `${cap(correct.label)} is ${entries[0].colour} in the key.`
   });
   q.art = art('key', { entries });
   return q;
@@ -491,14 +516,19 @@ F.maze = (c, { r }) => {
   }
   const from = c.from ?? c.item ?? G('start', '🏁');
   const to = c.to ?? c.target ?? G('end', '🎯');
+  const byGlyph = to.glyph !== from.glyph;
   const q = choice(r, {
     prompt: pick(r, MAZE_WAYS).replace('{s}', c.say),
-    correct: to.glyph === from.glyph ? to.label : to.glyph,
-    distractors: to.glyph === from.glyph ? labelOptions(to, wrong) : glyphOptions(r, to, wrong),
+    correct: byGlyph ? to.glyph : to.label,
+    distractors: byGlyph ? glyphOptions(r, to, wrong) : labelOptions(to, wrong),
     hint: 'Try one step at a time. If it does not fit, go back.',
     explanation: `The path goes through ${correct.label} and reaches ${to.label}.`
   });
-  q.art = art('maze', { from, to, step: correct.glyph, blockers: wrong.slice(0, 4).map(x => x.glyph) });
+  /* What is at the end of the path is the answer, so the end of the path is
+     drawn as a question mark. Printing the answer beside the question is the
+     oldest bug in worksheets. */
+  q.art = art('maze', { from, to: { label: 'the end', glyph: '?' } });
+  q.pictures = byGlyph;
   return q;
 };
 
@@ -506,7 +536,7 @@ F.maze = (c, { r }) => {
 F.dot = (c, { r }) => {
   const labels = (c.dots ?? []).map(String);
   if (labels.length < 4) return F.seq(c, { r });
-  const shown = labels.slice(0, Math.min(10, labels.length));
+  const shown = labels.slice(0, Math.min(6, labels.length));
   const q = orderQ(
     'Join the dots in order. Write the order here.',
     sample(r, shown, shown.length),
@@ -514,7 +544,7 @@ F.dot = (c, { r }) => {
     `Start at ${shown[0]} and look for the next one.`
   );
   q.answer = shown;
-  q.art = art('dots', { labels: shown });
+  q.art = art('dots', { labels });
   return q;
 };
 
@@ -543,6 +573,7 @@ F.odd = (c, { r }) => {
     explanation: `${set.map(x => x.label).join(', ')} go together. ${cap(odd.label)} does not.`
   });
   q.art = art('row', { items: [...set, odd] });
+  q.pictures = true;
   return q;
 };
 
@@ -560,6 +591,7 @@ F.diff = (c, { r }) => {
     explanation: `${c.n ?? changed.length} things changed.`
   });
   q.art = art('scene', { a, b });
+  q.pictures = true;
   return q;
 };
 

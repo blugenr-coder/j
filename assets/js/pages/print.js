@@ -12,6 +12,7 @@ import { SUBJECT_MAP, TOPIC_MAP, DIFF_MAP, GRADE_MAP } from '../data/catalog.js'
 import { answerText } from '../core/marking.js';
 import { STANDARDS, codesFor } from '../data/standards.js';
 import { figure } from '../data/figures.js';
+import { artNode } from '../core/pk-art.js';
 
 mountShell({ page: 'library', nav: 'app', footer: false });
 
@@ -133,10 +134,17 @@ function printQuestion(q, i, { withWork, withHints }) {
 
   if (q.math) wrap.append(el('div', { class: 'q-math', text: q.math }));
 
+  /* The picture is the question on a preschool sheet, so it prints above the
+     answer space exactly as it appears on screen — same drawing, same file. */
+  const art = artNode(q.art);
+  if (art) wrap.append(art);
+
   switch (q.type) {
     case 'choice':
     case 'multi': {
-      const opts = el('div', { class: `q-options ${q.type === 'multi' ? 'multi' : ''}` });
+      const opts = el('div', {
+        class: `q-options ${q.type === 'multi' ? 'multi' : ''}${q.pictures ? ' is-pictures' : ''}`
+      });
       /* The letter and the option are separate nodes on purpose. Translation
          matches on the text of a node, so "C.  Augustus" in one node is a
          string no dictionary will ever hold, and every option on a printed
@@ -150,7 +158,7 @@ function printQuestion(q, i, { withWork, withHints }) {
       break;
     }
     case 'match': {
-      const grid = el('div', { class: 'q-match' });
+      const grid = el('div', { class: `q-match${q.pictures ? ' is-pictures' : ''}` });
       const rights = q.pairs.map(p => p.right).slice().sort();
       q.pairs.forEach((p, pi) => grid.append(
         el('span', {},
@@ -159,13 +167,13 @@ function printQuestion(q, i, { withWork, withHints }) {
           el('span', { translate: 'no', text: '  ______' })),
         el('span', {},
           el('span', { class: 'opt-letter', translate: 'no', text: `${'ABCDEFGH'[pi]}.` }),
-          el('span', { text: String(rights[pi]) }))
+          el('span', { class: q.shadowRight ? 'is-shadow' : null, text: String(rights[pi]) }))
       ));
       wrap.append(grid);
       break;
     }
     case 'order': {
-      const list = el('div', { class: 'q-order' });
+      const list = el('div', { class: `q-order${q.pictures ? ' is-pictures' : ''}` });
       /* Scramble with the same seed the online version uses, so a class
          working half on paper and half online sees the same arrangement. */
       const scrambled = shuffle(q.items, hashCode((q.id ?? q.prompt) + 'o'));
