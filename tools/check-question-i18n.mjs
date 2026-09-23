@@ -105,11 +105,50 @@ await setLanguage('en', { reload: false });
 const unchanged = PROMPTS.every(p => t(p) === p);
 ok('English is passed through untouched', unchanged);
 
+/* Words that are genuinely the same in that language. Listing them is the
+   only way to tell "translated to itself" from "never translated". */
+const SAME_IN = new Set([
+  'es|Hexadecimal', 'es|Marketing',
+  'fr|Addition', 'fr|Multiplication', 'fr|Division', 'fr|Apostrophes', 'fr|Fractions',
+  'fr|Nutrition', 'fr|Marketing',
+  'de|Addition', 'de|Division', 'de|Algebra', 'de|Marketing', 'de|Kindergarten',
+  'pt|Hexadecimal', 'pt|Marketing',
+  'it|Algebra', 'it|Marketing'
+]);
+
 /* A prompt with no template must survive rather than being mangled by a
    pattern that half-matches. */
 await setLanguage('es', { reload: false });
 const odd = 'A box holds 4 apples. How many apples are in 3 boxes?';
 ok('a prompt with no template is returned unchanged, not mangled', t(odd) === odd, t(odd));
+
+/* Every label the catalogue puts on screen, in every language.
+
+   These are the words a visitor meets before any worksheet: the subject
+   names, the topic names in the filter sidebar and on every card, the grade
+   bands, the question types. A missing one shows as an English word in an
+   otherwise translated page, and there is no way to notice that by looking at
+   English.
+
+   It matters more than it used to: a worksheet name that several topics share
+   now carries its topic in front of it, so an untranslated topic name leaks
+   into the worksheet title as well. */
+/* `SUBJECTS` above is this file's own table of test prompts, so the catalogue
+   keeps its own name here. */
+const catalogue = await import('../assets/js/data/catalog.js');
+const catalogueLabels = [
+  ...catalogue.SUBJECTS.flatMap(s => [s.name, s.blurb, ...s.topics.map(x => x.name)]),
+  ...catalogue.GRADES.flatMap(g => [g.name, g.range, g.tone, ...g.levels]),
+  ...catalogue.QUESTION_TYPES.map(q => q.name),
+  ...catalogue.DIFFICULTIES.map(d => d.name)
+].filter(Boolean);
+
+for (const lang of ['es', 'fr', 'de', 'pt', 'it']) {
+  await setLanguage(lang, { reload: false });
+  const missing = catalogueLabels.filter(label => t(label) === label && !SAME_IN.has(`${lang}|${label}`));
+  ok(`${lang}: every catalogue label is translated`, missing.length === 0,
+     missing.slice(0, 6).join(' | '));
+}
 
 console.log(`\n${pass} passed, ${fail} failed.`);
 process.exit(fail ? 1 : 0);
