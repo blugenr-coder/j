@@ -184,8 +184,10 @@ export function drawPortrait(ctx, skinId, cx, cy, s, t = 0, opts = {}) {
   ell(ctx, 14, 46, 11, 7, c.body, OUTLINE, lw);
   // arms (a little wave on 'wave' pose)
   const wave = opts.pose === 'wave' ? Math.sin(t * 9) * 0.35 - 0.9 : 0.25 + Math.sin(t * 2.4) * 0.05;
-  ctx.save(); ctx.translate(-32, 8); ctx.rotate(0.25); ell(ctx, 0, 8, 7, 12, c.body, OUTLINE, lw); ctx.restore();
-  ctx.save(); ctx.translate(32, 8); ctx.rotate(-wave); ell(ctx, 0, 8, 7, 12, c.body, OUTLINE, lw); ctx.restore();
+  if (!opts.weapon) {
+    ctx.save(); ctx.translate(-32, 8); ctx.rotate(0.25); ell(ctx, 0, 8, 7, 12, c.body, OUTLINE, lw); ctx.restore();
+    ctx.save(); ctx.translate(32, 8); ctx.rotate(-wave); ell(ctx, 0, 8, 7, 12, c.body, OUTLINE, lw); ctx.restore();
+  }
 
   // body (bean)
   ctx.save();
@@ -220,6 +222,49 @@ export function drawPortrait(ctx, skinId, cx, cy, s, t = 0, opts = {}) {
   rrect(ctx, -21, -21, 14, 4, 2); ctx.fill();
 
   drawAccessoryFront(ctx, c, t, lw);
+  if (opts.weapon) drawHeldWeapon(ctx, opts.weapon, c, t, lw);
+  ctx.restore();
+}
+
+/* Chunky hero weapons for splash art, held in front of the body. */
+function drawHeldWeapon(ctx, kind, c, t, lw) {
+  const hand = (x, y) => ell(ctx, x, y, 8, 8, c.body, OUTLINE, lw);
+  const box = (x, y, w, h, r, fill) => { rrect(ctx, x, y, w, h, r); ctx.fillStyle = fill; ctx.fill(); ctx.lineWidth = lw; ctx.strokeStyle = OUTLINE; ctx.stroke(); };
+  ctx.save();
+  if (kind === 'minigun') {
+    ctx.translate(0, 22); ctx.rotate(-0.08);
+    box(-30, -14, 74, 28, 10, '#3F4A63');
+    box(-6, -16, 16, 32, 4, '#FFB703');
+    box(18, -16, 10, 32, 3, '#FFB703');
+    box(-72, -11, 44, 22, 6, '#2B3350');
+    // barrel cluster with a hot glow
+    const glow = 0.6 + Math.sin(t * 14) * 0.2;
+    ctx.fillStyle = `rgba(255,159,67,${0.35 * glow})`;
+    ctx.beginPath(); ctx.arc(-80, 0, 30, 0, Math.PI * 2); ctx.fill();
+    for (const [dx, dy] of [[0, -8], [0, 8], [-3, 0], [3, 0]]) {
+      ell(ctx, -78 + dx, dy, 7, 7, '#FF9F43', OUTLINE, 2.4);
+      ell(ctx, -78 + dx, dy, 3, 3, '#FFE066', null);
+    }
+    hand(-8, 16); hand(30, -4);
+  } else if (kind === 'blaster') {
+    ctx.translate(30, -6); ctx.rotate(-1.05);
+    box(-10, -12, 66, 24, 6, '#6B7280');
+    box(8, -9, 30, 18, 3, '#E2762B');
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 2;
+    for (const x of [16, 24, 32]) { ctx.beginPath(); ctx.moveTo(x, -8); ctx.lineTo(x, 8); ctx.stroke(); }
+    box(52, -8, 16, 16, 3, '#4B5563');
+    box(-2, 10, 14, 22, 4, '#4B5563');
+    hand(4, 22);
+  } else {
+    // long rifle
+    ctx.translate(-6, 26); ctx.rotate(-0.12);
+    box(-36, -10, 74, 20, 6, '#6BAF3A');
+    box(-48, -6, 18, 16, 4, '#2B3350');
+    box(-6, -20, 30, 10, 4, '#2B3350');
+    box(36, -5, 52, 10, 4, '#2B3350');
+    box(84, -7, 10, 14, 3, '#1F2937');
+    hand(-20, 10); hand(26, 6);
+  }
   ctx.restore();
 }
 

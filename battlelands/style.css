@@ -213,6 +213,26 @@ input, select { font-family: inherit; }
 .loading .status { font-weight: 900; letter-spacing: 1px; margin-bottom: auto; min-height: 24px; }
 .loading .status .num { color: var(--yellow); }
 
+/* ---------- splash (launch + joining a match) ---------- */
+.splash {
+  --sp-deep: #241046; --sp-mid: #5B2DA8; --sp-glow: #8A5CE0;
+  background: radial-gradient(ellipse at 50% 58%, var(--sp-glow) 0%, var(--sp-mid) 38%, var(--sp-deep) 100%);
+  align-items: center; justify-content: space-between; overflow: hidden; padding-bottom: calc(var(--safe-b) + 22px);
+}
+.splash-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.splash-title { position: relative; margin: clamp(12px, 5vh, 56px) 0 0; display: flex; flex-direction: column; align-items: center; line-height: .86; text-transform: uppercase; color: var(--white); font-family: 'Anton', var(--font); font-weight: 900; font-synthesis: none; letter-spacing: .5px; text-shadow: 0 4px 0 rgba(36,16,70,.55), 0 10px 30px rgba(20,8,40,.5); animation: popIn 420ms var(--spring) both; }
+.splash-title .t1 { font-size: clamp(44px, 12.5vw, 118px); }
+@media (max-height: 520px) and (orientation: landscape) { .splash-title .t1 { font-size: 15vh; } .splash-title .t2 { font-size: 7vh; } .splash-title { margin-top: 8px; } .splash-tip { display: none; } }
+.splash-title .t2 { font-size: clamp(26px, 7vw, 54px); letter-spacing: 3px; }
+.splash-foot { position: relative; width: min(560px, 100%); display: flex; flex-direction: column; gap: 10px; }
+.splash-tip { margin: 0 0 4px; text-align: center; font-weight: 800; font-size: 14px; color: #E9DDFF; }
+.splash-tip b { color: var(--deep-navy); background: var(--yellow); padding: 2px 8px; border-radius: 8px; margin-right: 6px; font-size: 12px; letter-spacing: .6px; }
+.splash-status { display: flex; justify-content: space-between; align-items: baseline; font-weight: 900; letter-spacing: 1px; font-size: 14px; text-transform: uppercase; }
+.splash-status .num { color: var(--yellow); }
+.splash-line { height: 12px; border-radius: 999px; background: rgba(20, 8, 40, .55); border: 2px solid rgba(255,255,255,.18); overflow: hidden; }
+.splash-line i { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--g-play); box-shadow: 0 0 14px rgba(255,212,59,.7); }
+.splash.out { animation: fadeOut 260ms ease-in forwards; }
+
 /* ==========================================================================
    MAIN MENU
    ========================================================================== */

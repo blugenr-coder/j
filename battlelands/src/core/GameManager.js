@@ -68,8 +68,7 @@ export class GameManager {
       steps[i]();
     }
     boot.progress(1);
-    await nextFrame();
-    boot.close();
+    await boot.close();
 
     // Audio needs a gesture; the first tap anywhere unlocks it.
     const unlock = () => { this.audio.unlock(); this.audio.setMusic(this.state === AppState.PLAYING ? 'match' : 'menu'); };
@@ -150,9 +149,7 @@ export class GameManager {
     if (this.state === AppState.MATCHMAKING) return;
     this.menu.unmount();
     this.state = gameState.app = AppState.MATCHMAKING;
-    const go = () => this.beginDeployment();
-    if (quick) go();
-    else matchmakingScreen(this.ui, this.save.equipped.character, go);
+    matchmakingScreen(this.ui, this.save.equipped.character, () => this.beginDeployment(), { quick });
   }
 
   beginDeployment() {
