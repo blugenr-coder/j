@@ -83,6 +83,7 @@ export class MainMenu {
     $$('#nav button', this.node).forEach(b => { b.classList.toggle('active', b.dataset.tab === tab); b.setAttribute('aria-current', b.dataset.tab === tab ? 'page' : 'false'); });
     const panel = $('#panel', this.node);
     panel.innerHTML = '';
+    panel.classList.toggle('home', tab === 'home');
     panel.style.animation = 'none'; void panel.offsetWidth; panel.style.animation = '';
     const ctx = { app: this.app, menu: this, panel };
     if (tab === 'home') this.renderHome(panel);

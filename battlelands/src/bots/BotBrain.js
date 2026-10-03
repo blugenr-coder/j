@@ -46,6 +46,7 @@ export function createBrain(rng, personality, skill) {
     exploreGoal: null,
     heard: null, heardT: 0,
     decisions: new Map(),
+    lootItem: null, lootSince: 0, ignore: new Set(),
   };
 }
 
@@ -183,6 +184,9 @@ export function think(match, bot) {
     }
     case BotState.LOOTING: {
       const it = b.destItem;
+      // Give up on an item that can't be reached (wedged between props).
+      if (b.lootItem !== it) { b.lootItem = it; b.lootSince = match.time; }
+      else if (match.time - b.lootSince > 6) { b.ignore.add(it.id); b.lootItem = null; b.dest = null; break; }
       setDest(match, bot, it.x, it.y, 'loot');
       break;
     }
@@ -242,7 +246,7 @@ function findLoot(match, bot) {
   const range = b.p.lootRange * (0.6 + b.p.lootDesire * 0.6);
   let best = null, bestS = Infinity;
   match.loot.query(bot.x, bot.y, range, it => {
-    if (!match.loot.isBetter(bot, it)) return;
+    if (b.ignore.has(it.id) || !match.loot.isBetter(bot, it)) return;
     if (match.zone.isOutside(it.x, it.y, 20) && match.zone.stage !== 'wait') return;
     const d = dist(bot.x, bot.y, it.x, it.y);
     let s = d;

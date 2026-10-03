@@ -158,7 +158,7 @@ export class GameManager {
   beginDeployment() {
     const s = this.save;
     const seed = (Math.random() * 2 ** 32) >>> 0;
-    const m = new MatchManager({ seed, playerName: s.name, skin: s.equipped.character, trail: s.equipped.trail });
+    const m = new MatchManager({ seed, playerName: s.name, skin: s.equipped.character, trail: s.equipped.trail, gentle: !s.tutorialDone });
     this.match = gameState.match = m;
     this.endScheduled = false;
     this.paused = false;

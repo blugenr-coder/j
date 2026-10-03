@@ -158,7 +158,9 @@ export class LootManager {
     if (it.type === 'weapon') {
       let slot = ent.weapons[0] ? (ent.weapons[1] ? -1 : 1) : 0;
       if (slot === -1) {
-        slot = ent.activeSlot;
+        // The human swaps what's in hand (they chose to). Bots drop their
+        // weakest gun — swapping the held one could ping-pong forever.
+        slot = ent.isBot ? (weaponScore(ent.weapons[0]) <= weaponScore(ent.weapons[1]) ? 0 : 1) : ent.activeSlot;
         dropped = ent.weapons[slot];
       }
       ent.weapons[slot] = it.weapon;

@@ -26,7 +26,7 @@ import { CHARACTERS } from '../progression/Cosmetics.js';
 export const MatchPhase = Object.freeze({ DEPLOY: 'deploy', DESCENT: 'descent', LIVE: 'live', OVER: 'over' });
 
 export class MatchManager {
-  constructor({ seed = Date.now() >>> 0, playerName = 'YOU', skin = 'scout', trail = null, combatants = CONFIG.match.combatants, autopilot = false } = {}) {
+  constructor({ seed = Date.now() >>> 0, playerName = 'YOU', skin = 'scout', trail = null, combatants = CONFIG.match.combatants, autopilot = false, gentle = false } = {}) {
     this.seed = seed >>> 0;
     this.bus = new EventBus();
     this.rng = makeRng(this.seed);
@@ -42,6 +42,8 @@ export class MatchManager {
     this.winner = null;
     this.aliveCache = combatants;
     this.autopilot = autopilot;
+    // First (tutorial) match: bots hit the human softer while they learn.
+    this.humanDamageMult = gentle ? 0.7 : 1;
 
     this.damage = new DamageSystem(this);
     this.projectiles = new ProjectileSystem(this);

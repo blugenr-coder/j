@@ -29,6 +29,8 @@ export function settingsHTML(st, compact = false) {
       ${slider('sensitivity', 'Sensitivity', st.sensitivity, 0.6, 1.6, 0.05)}
       ${slider('joystickSize', 'Joystick size', st.joystickSize, 0.8, 1.3, 0.05)}
       ${seg('joystickMode', 'Joystick', st.joystickMode, [['floating', 'FLOATING'], ['fixed', 'FIXED']])}
+      ${slider('joystickX', 'Joystick position X', st.joystickX, 0.6, 1.8, 0.05)}
+      ${slider('joystickY', 'Joystick position Y', st.joystickY, 0.6, 1.8, 0.05)}
       ${slider('buttonSize', 'Button size', st.buttonSize, 0.8, 1.3, 0.05)}
     </div>
     <div class="set-card card"><h3>${icon('eye', { size: 18 })}${t('GRAPHICS')}</h3>

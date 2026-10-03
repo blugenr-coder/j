@@ -43,7 +43,7 @@ const ES = {
   'TOP 3 FIVE TIMES': 'TOP 3 CINCO VECES', 'OWN 6 CHARACTERS': 'TEN 6 PERSONAJES',
   'GAMEPLAY': 'JUEGO', 'AUDIO': 'AUDIO', 'CONTROLS': 'CONTROLES', 'GRAPHICS': 'GRÁFICOS', 'ACCESSIBILITY': 'ACCESIBILIDAD', 'ACCOUNT': 'CUENTA',
   'Aim assist': 'Ayuda al apuntar', 'Sound': 'Sonido', 'Music': 'Música', 'Vibration': 'Vibración', 'Sensitivity': 'Sensibilidad',
-  'Joystick size': 'Tamaño del joystick', 'Joystick': 'Joystick', 'FLOATING': 'FLOTANTE', 'FIXED': 'FIJO', 'Button size': 'Tamaño de botones',
+  'Joystick size': 'Tamaño del joystick', 'Joystick position X': 'Posición del joystick (horizontal)', 'Joystick position Y': 'Posición del joystick (vertical)', 'Joystick': 'Joystick', 'FLOATING': 'FLOTANTE', 'FIXED': 'FIJO', 'Button size': 'Tamaño de botones',
   'Quality': 'Calidad', 'HIGH': 'ALTA', 'LOW': 'BAJA', 'Show FPS': 'Mostrar FPS', 'High contrast': 'Alto contraste', 'Large UI': 'Interfaz grande',
   'Reduced motion': 'Menos movimiento', 'Language': 'Idioma', 'Player name': 'Nombre', 'Replay tutorial': 'Repetir tutorial',
   'RESET SETTINGS': 'RESTABLECER AJUSTES', 'RESET PROGRESS': 'BORRAR PROGRESO', 'ON': 'SÍ', 'OFF': 'NO',

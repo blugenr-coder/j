@@ -19,6 +19,8 @@ export function defaultSettings() {
     aimAssist: 0.6,        // 0 .. 1
     joystickSize: 1,       // 0.8 .. 1.3
     joystickMode: 'floating', // floating | fixed
+    joystickX: 1,          // fixed joystick: 0.6 (towards the edge) .. 1.8 (towards the centre)
+    joystickY: 1,          // fixed joystick: 0.6 (lower) .. 1.8 (higher)
     buttonSize: 1,         // 0.8 .. 1.3
     language: lang,
     highContrast: false,

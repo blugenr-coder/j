@@ -127,8 +127,8 @@ export class PlayerInput {
     if (!joyZone) return;
     const r = joyZone.getBoundingClientRect();
     const s = this.settings.joystickSize;
-    this.fixedX = Math.max(100 * s, 30 + 75 * s);
-    this.fixedY = r.height - 110 * s;
+    this.fixedX = Math.min(r.width - 80 * s, Math.max(30 + 75 * s, 100 * s * (this.settings.joystickX ?? 1)));
+    this.fixedY = Math.max(80 * s, r.height - 110 * s * (this.settings.joystickY ?? 1));
     joyEl.style.left = this.fixedX + 'px'; joyEl.style.top = this.fixedY + 'px';
   }
 

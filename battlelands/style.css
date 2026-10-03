@@ -591,6 +591,10 @@ body.reduced-motion .btn-play::after, body.reduced-motion .menu-bg .float { disp
   .panel, .menu-play { width: min(860px, 100%); margin-left: auto; margin-right: auto; }
 }
 @media (max-height: 520px) and (orientation: landscape) {
+  .panel.home { flex-direction: row; align-items: stretch; gap: 12px; }
+  .panel.home .menu-stage { flex: 1.1; }
+  .panel.home .menu-play { flex: 1; justify-content: center; }
+  .panel.home .menu-stage canvas { height: 52vh; width: 44vh; }
   .menu-stage canvas { height: 46vh; width: 40vh; }
   .menu-play .btn-play { min-height: 64px; font-size: 26px; }
   .nav button { min-height: 46px; }

@@ -15,7 +15,7 @@ export class DamageSystem {
     let dmg = amount;
     // Bots hit softer than the human: keeps early fights from snowballing and
     // gives a new player time to react. Tuned with tests/simulate.mjs.
-    if (source && source.isBot && opts.kind !== 'zone') dmg *= target.isBot ? CONFIG.bots.botVsBotMult : CONFIG.bots.damageMult;
+    if (source && source.isBot && opts.kind !== 'zone') dmg *= target.isBot ? CONFIG.bots.botVsBotMult : CONFIG.bots.damageMult * m.humanDamageMult;
     if (opts.crit) dmg *= 1.5;
     dmg = Math.round(dmg);
     let toArmor = 0;
