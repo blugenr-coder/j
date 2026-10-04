@@ -41,21 +41,41 @@ Also: the voxel grid is fitted to the subject (not the photo), outlines and
 height fields are Gaussian-smoothed, mirror-symmetric subjects get symmetric
 depth, and models get a flat base so they stand (and print).
 
-### AI depth (`public/js/depth.js`)
+### AI tools (`public/js/ai.js`)
 
-Depth Anything V2 Small (Apache-2.0, int8 ONNX, 27 MB) running in ONNX Runtime
-Web on the CPU, single-threaded: about 1–3 s per photo at 392 px. It does two
-jobs:
+Two networks, int8 ONNX, run with ONNX Runtime Web on the CPU (one thread):
 
-- **Cutout for real photos.** The backdrop's depth is estimated row by row
-  from the image's left and right edges, so a floor that is "near" is not
-  mistaken for the subject; the subject is what rises above it (Otsu threshold,
-  plus a short hysteresis reach for feet and wheels).
-- **Relief.** Nearer parts come forward on the front surface, scaled to the
-  body's own thickness and tapered at the outline. The back stays smooth.
+- **Depth Anything V2 Small** (Apache-2.0, 27 MB): relative depth, about
+  1–3 s a picture at 392 px. It shapes the front relief, guides the cutout,
+  and its large forms are carried round to the predicted back.
+- **SlimSAM-77** (Segment Anything, Apache-2.0, 14 MB): separates the
+  character from the background. Depth gives a rough guess of the subject;
+  positive points go inside it, negative ones on the far background and the
+  corners; three prompt sets × three proposals are scored on the model's own
+  confidence, agreement with the guess, not running off the frame, and not
+  holding far-away regions. Clicks in the "Fix the background" editor are
+  extra points and must hold in the chosen mask. Encoding is several seconds
+  once per picture; each click after that is a fraction of a second.
 
-The artifact serves the runtime and model next to the page
+The artifact serves the runtime and models next to the page
 (`node artoo/artifact/fetch-ai.mjs` downloads them into `artifact/dist/ai/`).
+
+### Predicting what the picture does not show
+
+No side or back photo is needed. As in a modeller's blockout, the back takes
+the front's big forms (Gaussian low-pass of the AI relief) but not its small
+ones; its colours come from the character's main palette (k-means, clusters
+under 12 % of the subject such as eyes or mouths are dropped) instead of a
+mirrored copy of the front, and faces the camera only grazes use the same
+colours rather than stretched streaks.
+
+### Modelling chat (artifact only)
+
+Claude, through the claude.ai `sample` capability on the viewer's own
+account, receives the cut-out picture and two renders of the model, and edits
+it with page tools: `set_shape`, `fix_background`, `add_part`,
+`update_part`, `remove_part`. Added parts are simple shapes in model space,
+kept with the model, saved with it and exported with it.
 
 ### Copy check and auto-copy (`public/js/match.js`)
 

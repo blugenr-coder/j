@@ -461,13 +461,24 @@ function buildShape(front, side, settings, depth) {
     }
   }
 
+  // The back is never seen, so it is predicted the way a modeller blocks it
+  // out: the big forms of the front (a head, a belly) carry round to the
+  // back, the small ones (a nose, buttons) do not.
+  const back3d = Float32Array.from(base);
+  if (wDepth > 0) {
+    const rel = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) if (mask[i]) rel[i] = front3d[i] - base[i];
+    const low = gaussian(rel, w, h, Math.max(2, 0.05 * Math.max(w, h)));
+    for (let i = 0; i < w * h; i++) if (mask[i]) back3d[i] = Math.max(base[i] * 0.6, base[i] + 0.55 * low[i]);
+  }
+
   // One field per side: thickness inside, signed distance outside. A light
   // blur rounds the pixel staircase off the outline and the Poisson grid.
   const sigma = 0.8 + 0.12 * settings.smooth;
   const Df = new Float32Array(w * h), Db = new Float32Array(w * h);
   for (let i = 0; i < w * h; i++) {
     Df[i] = mask[i] ? front3d[i] : sdf[i];
-    Db[i] = mask[i] ? base[i] : sdf[i];
+    Db[i] = mask[i] ? back3d[i] : sdf[i];
   }
   const shape = {
     w, h, bbox: fb, Df: gaussian(Df, w, h, sigma), Db: gaussian(Db, w, h, sigma), zc, side: sideInfo, depth: 0, symmetric,
@@ -700,10 +711,67 @@ function buildAtlas(inputs, cuts) {
     const backImg = imageAt(inputs.back, cuts.back);
     ctx.drawImage(subjectTexture(backImg, cuts.back, TILE, TILE, place), TILE, 0);
   } else {
-    ctx.drawImage(frontTex, TILE, 0);
+    ctx.drawImage(unseenSide(frontTex, front), TILE, 0);
   }
   if (cuts.side) ctx.drawImage(subjectTexture(inputs.side, cuts.side, TILE, TILE, (c, im) => c.drawImage(im, 0, 0, TILE, TILE)), TILE * 2, 0);
-  return { canvas: atlas, tiles };
+  return { canvas: atlas, tiles, predictedBack: !(cuts.back && !cuts.back.whole) };
+}
+
+// Colour for surfaces no photo shows, guessed the way a painter would: the
+// character's big colour areas (a hood, fur, a coat) continue round the
+// back; small ones (eyes, cheeks, a mouth, a logo) belong to the front.
+// The front's palette is found with k-means; colours covering little of the
+// subject are replaced by the nearest big one, then everything is blurred.
+function unseenSide(tex, cut) {
+  const S = 48;
+  const small = canvas(S, S);
+  const sctx = small.getContext('2d', { willReadFrequently: true });
+  sctx.imageSmoothingQuality = 'high';
+  sctx.drawImage(tex, 0, 0, S, S);
+  const px = sctx.getImageData(0, 0, S, S);
+  const d = px.data;
+
+  // Which samples are the subject (the bled texture is opaque everywhere).
+  const m = canvas(S, S), mctx = m.getContext('2d', { willReadFrequently: true });
+  mctx.drawImage(maskCanvas(cut), 0, 0, S, S);
+  const md = mctx.getImageData(0, 0, S, S).data;
+  const samples = [];
+  for (let i = 0; i < S * S; i++) if (md[i * 4 + 3] > 128) samples.push([d[i * 4], d[i * 4 + 1], d[i * 4 + 2]]);
+  if (samples.length < 8) return small;
+
+  const K = Math.min(5, samples.length);
+  let centres = Array.from({ length: K }, (_, k) => samples[Math.floor(((k + 0.5) * samples.length) / K)].slice());
+  const nearest = (c, list) => {
+    let best = 0, bd = Infinity;
+    list.forEach((q, k) => { const dd = (c[0] - q[0]) ** 2 + (c[1] - q[1]) ** 2 + (c[2] - q[2]) ** 2; if (dd < bd) { bd = dd; best = k; } });
+    return best;
+  };
+  let counts;
+  for (let it = 0; it < 10; it++) {
+    const sum = centres.map(() => [0, 0, 0]);
+    counts = centres.map(() => 0);
+    for (const c of samples) { const k = nearest(c, centres); counts[k]++; sum[k][0] += c[0]; sum[k][1] += c[1]; sum[k][2] += c[2]; }
+    centres = centres.map((q, k) => (counts[k] ? sum[k].map(v => v / counts[k]) : q));
+  }
+  const major = centres.filter((_, k) => counts[k] / samples.length >= 0.12);
+  const palette = major.length ? major : [centres[counts.indexOf(Math.max(...counts))]];
+
+  for (let i = 0; i < S * S; i++) {
+    const c = [d[i * 4], d[i * 4 + 1], d[i * 4 + 2]], q = palette[nearest(c, palette)];
+    d[i * 4] = q[0] * 0.92 + c[0] * 0.08; d[i * 4 + 1] = q[1] * 0.92 + c[1] * 0.08; d[i * 4 + 2] = q[2] * 0.92 + c[2] * 0.08;
+  }
+  sctx.putImageData(px, 0, 0);
+  const tiny = canvas(S / 3, S / 3);
+  const tctx = tiny.getContext('2d');
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(small, 0, 0, tiny.width, tiny.height);
+  const out = canvas(TILE, TILE);
+  const octx = out.getContext('2d');
+  octx.imageSmoothingQuality = 'high';
+  octx.drawImage(small, 0, 0, TILE, TILE);
+  octx.globalAlpha = 0.6;
+  octx.drawImage(tiny, 0, 0, TILE, TILE);
+  return out;
 }
 
 // A canvas of the image at the cut's resolution (so place() can scale by k).
@@ -715,7 +783,7 @@ function imageAt(img, cut) {
 
 // Pick a projection per face and write UVs. Expects non-indexed geometry in
 // front-pixel space.
-function projectUVs(geo, shape, tiles) {
+function projectUVs(geo, shape, tiles, predictedBack = false) {
   const p = geo.attributes.position.array;
   const uv = new Float32Array((p.length / 3) * 2);
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
@@ -727,6 +795,9 @@ function projectUVs(geo, shape, tiles) {
     const nx = Math.abs(n.x), nz = n.z * out;
     let tile = nz >= 0 ? 0 : 1;
     if (shape.side && nx > Math.abs(nz) * 1.15) tile = 2;
+    // Faces the camera only grazes would stretch the photo into streaks;
+    // without a side photo they take the predicted colours instead.
+    else if (!shape.side && predictedBack && Math.abs(nz) < 0.3 * n.length()) tile = 1;
     tileOf[f] = tile;
     for (let k = 0; k < 3; k++) {
       const i = f * 3 + k, x = p[i * 3], y = p[i * 3 + 1], z = p[i * 3 + 2];
@@ -875,7 +946,7 @@ export async function buildModel(inputs, settings = {}, onStage = () => {}) {
     mesh = voxelMesh(shape, atlas, S);
   } else {
     geo = geo.toNonIndexed();
-    projectUVs(geo, shape, atlas.tiles);
+    projectUVs(geo, shape, atlas.tiles, atlas.predictedBack);
     toModelSpace(geo, shape);
     ensureOutward(geo);
     if (S.style === 'lowpoly') {

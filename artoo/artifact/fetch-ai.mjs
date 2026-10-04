@@ -1,7 +1,7 @@
-// Downloads the AI depth files the artifact publishes next to its page:
-// ONNX Runtime's WebAssembly binary and Depth Anything V2 Small (int8,
-// Apache-2.0), the model split into three Base64 .txt parts because artifacts
-// serve text and web media types only, each under 16 MB.
+// Downloads the AI files the artifact publishes next to its page: ONNX
+// Runtime's WebAssembly binary, Depth Anything V2 Small and SlimSAM-77 (both
+// int8, Apache-2.0). Models are stored as Base64 .txt because artifacts serve
+// text and web media types only, each file under 16 MB (depth: 3 parts).
 //
 //   node artoo/artifact/fetch-ai.mjs   → artoo/artifact/dist/ai/
 
@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 const OUT = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist', 'ai');
 const WASM = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/ort-wasm-simd-threaded.wasm';
 const MODEL = 'https://huggingface.co/onnx-community/depth-anything-v2-small/resolve/main/onnx/model_quantized.onnx';
+const SAM = 'https://huggingface.co/Xenova/slimsam-77-uniform/resolve/main/onnx/';
 
 mkdirSync(OUT, { recursive: true });
 const get = (url, file) => execFileSync('curl', ['-sSfL', '-o', file, url], { stdio: 'inherit' });
@@ -24,6 +25,10 @@ const model = readFileSync(tmp);
 const part = Math.ceil(model.length / 3);
 for (let k = 0; k < 3; k++) {
   writeFileSync(path.join(OUT, `depth-anything-v2-small-q8.${k + 1}.b64.txt`), model.subarray(k * part, (k + 1) * part).toString('base64'));
+}
+for (const [file, out] of [['vision_encoder_quantized.onnx', 'slimsam-encoder-q8'], ['prompt_encoder_mask_decoder_quantized.onnx', 'slimsam-decoder-q8']]) {
+  get(SAM + file, tmp);
+  writeFileSync(path.join(OUT, `${out}.b64.txt`), readFileSync(tmp).toString('base64'));
 }
 execFileSync('rm', [tmp]);
 console.log(`AI files in ${OUT}`);

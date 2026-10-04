@@ -162,6 +162,37 @@ details[open] summary { margin-bottom: 12px; }
 .big { font-size: 20px; color: var(--ink); }
 .arm.off { opacity: .55; }
 @media (max-width: 760px) { .copy-foot { grid-template-columns: 1fr; } }
+.drop { position: relative; display: grid; place-items: center; aspect-ratio: 4 / 3; border: 1.5px dashed rgba(232,238,241,.28); border-radius: 10px; cursor: pointer; overflow: hidden; text-align: center; background: rgba(0,0,0,.12); }
+.drop:hover, .drop.over { border-color: var(--chalk); }
+.drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop-body { pointer-events: none; width: 100%; height: 100%; display: grid; place-items: center; }
+.drop-body canvas { max-width: 100%; max-height: 100%; display: block; }
+.drop .hint { font-size: 13px; color: var(--muted); padding: 12px; }
+.drop .small { font-size: 11.5px; color: var(--faint); }
+.note.warn { color: var(--warn); }
+details.extra summary { font-size: 13px; color: var(--ink); }
+details.extra summary .num { margin-left: 6px; }
+details.extra[open] summary { margin-bottom: 8px; }
+.views { grid-template-columns: 1fr 1fr; }
+.chat-log { display: grid; gap: 8px; max-height: 340px; overflow-y: auto; padding-right: 2px; }
+.msg { font-size: 13px; line-height: 1.45; padding: 8px 10px; border-radius: 9px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.user { background: var(--raised); justify-self: end; max-width: 90%; }
+.msg.assistant { background: rgba(0,0,0,.16); }
+.msg.tool { font-size: 12px; color: var(--muted); padding: 2px 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button, .chip { font-size: 12px; padding: 5px 9px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; text-align: left; }
+.chips button:hover { color: var(--ink); border-color: var(--chalk); }
+.chip { display: inline-flex; align-items: center; gap: 6px; cursor: default; color: var(--ink); }
+.chip i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.chip button { all: unset; cursor: pointer; color: var(--faint); padding: 0 2px; }
+.chip button:hover, .chip button:focus-visible { color: var(--bad); }
+.chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+.chat-form textarea { width: 100%; resize: vertical; min-height: 44px; border-radius: 8px; border: 1px solid var(--line); background: rgba(0,0,0,.18); color: var(--ink); padding: 8px 10px; font: inherit; font-size: 13px; }
+.chat-form #chat-stop { grid-column: 2; }
+dialog#bg-dlg { border: 1px solid var(--line); border-radius: 14px; background: var(--panel); color: var(--ink); padding: 0; width: min(700px, calc(100vw - 32px)); }
+dialog#bg-dlg::backdrop { background: rgba(14,18,21,.72); }
+.dlg { display: grid; gap: 12px; padding: 16px; }
+#bg-canvas { width: 100%; height: auto; border-radius: 8px; cursor: crosshair; background: #2f393f; display: block; }
 .pill { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: rgba(147,211,170,.16); color: var(--ok); margin-left: 6px; }
 
 /* collection */
@@ -213,32 +244,40 @@ details[open] summary { margin-bottom: 12px; }
     <section class="col" aria-label="Inputs">
       <div class="card intro">
         <h1 style="font-size:24px">Image to 3D</h1>
-        <p>Drop a photo of one object. For real photos, turn on AI depth. Add a side view for true thickness. Rate what comes out, and Artoo learns which settings suit your images.</p>
+        <p>Drop in one picture of a character or object. Artoo removes the background, builds the model and predicts the sides you can't see. Then refine it by chatting with Claude.</p>
       </div>
 
       <div class="card">
-        <div class="row"><span class="label">Views</span><span class="num" id="view-count"></span></div>
-        <div class="views" id="views"></div>
-        <p class="tip" id="tip">Front is required. Side: the same object turned to face right. Back is used for colour only.</p>
+        <div class="row"><span class="label">Your image</span><span class="num" id="front-size"></span></div>
+        <label class="drop" id="front-drop">
+          <span class="drop-body" id="front-body"></span>
+          <input type="file" id="front-file" accept="image/png,image/jpeg,image/webp" aria-label="Choose your image">
+        </label>
+        <p class="note" id="front-status" aria-live="polite"></p>
+        <button class="btn" id="bg-fix" type="button">Fix the background</button>
         <div class="ai">
           <div class="row">
-            <span class="label" id="ai-l">AI depth</span>
+            <span class="label" id="ai-l">AI tools</span>
             <button class="switch" id="ai-toggle" type="button" role="switch" aria-checked="false" aria-labelledby="ai-l">Off</button>
           </div>
           <div class="ai-body">
-            <canvas id="ai-preview" width="56" height="56" hidden aria-label="Depth map of the front view"></canvas>
+            <canvas id="ai-preview" width="56" height="56" hidden aria-label="Depth map of your image"></canvas>
             <p class="note" id="ai-note" aria-live="polite"></p>
           </div>
           <div class="meter" id="ai-meter" hidden><span></span></div>
         </div>
-        <div class="field">
-          <span class="label" id="cut-l">Background</span>
-          <div class="seg" id="cutmode" role="group" aria-labelledby="cut-l"></div>
-        </div>
-        <div class="field">
+        <div class="field" id="tol-field">
           <div class="row"><label class="label" for="tolerance">Colour tolerance</label><span class="num" id="tolerance-v"></span></div>
           <input type="range" id="tolerance" min="10" max="90" step="1">
         </div>
+        <details class="extra">
+          <summary>Extra views <span class="num" id="extra-count"></span></summary>
+          <p class="tip">Optional. Without them Artoo predicts the hidden sides. A side photo (the same object turned to face right) gives exact thickness; a back photo gives the real colours of the back.</p>
+          <div class="views" id="extras">
+            <label class="slot" data-view="side"><span class="body"></span><span class="tag">Side</span><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Side view image"><button class="x" type="button" aria-label="Remove side view" hidden>×</button></label>
+            <label class="slot" data-view="back"><span class="body"></span><span class="tag">Back</span><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Back view image"><button class="x" type="button" aria-label="Remove back view" hidden>×</button></label>
+          </div>
+        </details>
       </div>
 
       <div class="card">
@@ -319,6 +358,27 @@ details[open] summary { margin-bottom: 12px; }
           <p class="note" id="rate-note">Ratings teach Artoo which shape settings to use for you.</p>
         </div>
       </div>
+      <section class="card chat" id="chat" hidden aria-labelledby="chat-h">
+        <div class="row"><h2 id="chat-h" style="font-size:16px">Model with Claude</h2></div>
+        <p class="note" id="chat-note"></p>
+        <div class="chat-log" id="chat-log" aria-live="polite">
+          <div class="msg assistant">Tell me what to change: "the background is still in it", "make the head rounder", "add a sword on his back", "make it look like clay".</div>
+        </div>
+        <div class="chips" id="chat-suggest">
+          <button type="button">Compare the model to my picture and fix the biggest problem</button>
+          <button type="button">Make it smoother</button>
+          <button type="button">Add the details that are missing</button>
+        </div>
+        <div class="field" id="parts-row" hidden>
+          <span class="label">Added parts</span>
+          <div class="chips" id="parts"></div>
+        </div>
+        <form id="chat-form" class="chat-form">
+          <textarea id="chat-input" rows="2" placeholder="Describe a change…" aria-label="Message to Claude"></textarea>
+          <button class="btn primary" id="chat-send" type="submit">Send</button>
+          <button class="btn" id="chat-stop" type="button" hidden>Stop</button>
+        </form>
+      </section>
       <div class="card">
         <span class="label">Export</span>
         <button class="btn" id="dl-zip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>GLB + OBJ + STL (.zip)</button>
@@ -332,6 +392,24 @@ details[open] summary { margin-bottom: 12px; }
     </aside>
   </main>
 
+  <dialog id="bg-dlg" aria-labelledby="bg-h">
+    <div class="dlg">
+      <div class="row"><h2 id="bg-h" style="font-size:16px">Fix the background</h2><button class="icon" id="bg-close" type="button" aria-label="Close">×</button></div>
+      <p class="note">Choose a tool, then click the picture. One click is usually enough: Segment Anything finds the whole region you point at.</p>
+      <div class="seg" id="bg-tool" role="group" aria-label="Click to">
+        <button type="button" data-v="keep" aria-pressed="true">This is the character</button>
+        <button type="button" data-v="remove" aria-pressed="false">This is background</button>
+      </div>
+      <canvas id="bg-canvas" width="640" height="460"></canvas>
+      <p class="note" id="bg-note" aria-live="polite"></p>
+      <div class="row" style="justify-content:flex-start;flex-wrap:wrap">
+        <button class="btn quiet" id="bg-undo" type="button">Undo last click</button>
+        <button class="btn quiet" id="bg-reset" type="button">Start over</button>
+        <button class="btn primary" id="bg-done" type="button" style="margin-left:auto">Done, rebuild the model</button>
+      </div>
+    </div>
+  </dialog>
+
   <section class="sheet" id="collection" aria-label="Your collection">
     <div class="row"><h2 style="font-size:18px">Your collection</h2><span class="note" id="store-note"></span></div>
     <div class="shelf" id="shelf"></div>
@@ -341,24 +419,25 @@ details[open] summary { margin-bottom: 12px; }
     <div>
       <h2 style="font-size:18px;margin-bottom:10px">How it builds a model</h2>
       <ul>
-        <li><strong>Cutout.</strong> A plain background is flooded away from the edges; transparent PNGs use their alpha. With AI depth, the subject is whatever stands out from the floor and backdrop in depth, so busy real photos work too.</li>
-        <li><strong>Shape.</strong> A Poisson solve inside the outline gives every part a round cross-section sized to its own width. AI depth (Depth Anything V2, running on your device) pushes forward what is nearer, and a side photo replaces the thickness guess with the real profile.</li>
+        <li><strong>Background.</strong> With AI tools on, Segment Anything (SlimSAM, on your device) separates the character from the background. AI depth tells it where to look and drops walls and panels that sit far behind. One click in "Fix the background" corrects it. Without AI, a plain background is flooded away from the edges.</li>
+        <li><strong>Shape.</strong> A Poisson solve inside the outline gives every part a round cross-section sized to its own width. AI depth (Depth Anything V2, on your device) pushes forward what is nearer. The back is predicted the way a modeller blocks it out: big forms (a head, a belly) carry round, small details stay on the front. A side photo, if you add one, replaces the guess with the real profile.</li>
         <li><strong>Surface.</strong> Marching cubes extracts the volume; Taubin smoothing removes the stair-steps without shrinking it.</li>
-        <li><strong>Texture.</strong> Each face takes colour from the photo that faces it, with colours bled past the outline so edges stay clean.</li>
+        <li><strong>Texture.</strong> The front takes the picture's colours. The back and the sides take the character's main colours: eyes, mouths and logos stay on the front instead of being mirrored onto the back.</li>
+        <li><strong>Chat.</strong> Claude sees your picture and the model, and uses the studio's own controls: it rebuilds with new settings, corrects the cutout, and adds simple parts (a weapon, horns, a brim) the picture cannot give.</li>
         <li><strong>Copy check.</strong> The model is rendered from the photo's viewpoint and scored on outline, side profile, relief and smoothness; Auto-copy searches the settings for the best score.</li>
       </ul>
     </div>
     <div>
       <h2 style="font-size:18px;margin-bottom:10px">What "learning" means here</h2>
       <p>Each candidate uses a different shape recipe. Your stars update a running estimate for each recipe (Thompson sampling), so good recipes get picked more often and untried ones still get a turn. Artoo does not retrain a neural network.</p>
-      <p>Tips: one object, filling most of the frame, lit evenly. Plain backgrounds need no AI; for real photos turn AI depth on. Thin parts touching the floor (legs, cables) can be lost. For a side view, keep the same distance and turn the object to face right.</p>
+      <p>Tips: one character or object, filling most of the frame, at least 512 pixels across. Turn AI tools on for anything but a plain background. Thin parts (staffs, cables, fingers) are often lost; ask the chat to add them back. For a side view, keep the same distance and turn the object to face right.</p>
     </div>
     <div class="scroll-x">
       <h2 style="font-size:18px;margin-bottom:10px">Artoo next to cloud image-to-3D</h2>
       <table class="cmp">
         <thead><tr><th></th><th>Artoo (this page)</th><th>Cloud services such as Meshy, Tripo or Rodin</th></tr></thead>
         <tbody>
-          <tr><th>Hidden sides</th><td>Inferred from outline, AI depth and side view</td><td>Imagined by a trained network</td></tr>
+          <tr><th>Hidden sides</th><td>Predicted from outline, depth and colours; refine by chat</td><td>Imagined by a trained network</td></tr>
           <tr><th>Speed</th><td>About a second, in your browser</td><td>Usually minutes, on their servers</td></tr>
           <tr><th>Cost and privacy</th><td>Free; images stay on your device</td><td>Paid credits; images are uploaded</td></tr>
           <tr><th>Best for</th><td>Toys, mascots, logos, rounded objects</td><td>Complex shapes, people, realistic assets</td></tr>

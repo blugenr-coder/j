@@ -16,3 +16,4 @@ node_modules/
 /artoo/data/
 /artoo/test/out/
 /artoo/artifact/dist/
+/artoo/public/dev/
