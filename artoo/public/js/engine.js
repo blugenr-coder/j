@@ -33,7 +33,10 @@ export const STYLES = {
   voxel: 'Voxel',
 };
 
-export const DEFAULTS = { style: 'textured', resolution: 112, inflate: 0.9, smooth: 5, detail: 0.06, tolerance: 38 };
+export const DEFAULTS = {
+  style: 'textured', resolution: 120, inflate: 0.85, smooth: 6, detail: 0.04, tolerance: 38,
+  depthWeight: 0.65, symmetry: 'auto', flatBase: true, cutoutMode: 'auto',
+};
 
 const frame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
 
@@ -65,49 +68,146 @@ function raster(img, maxSide) {
 // ---------------------------------------------------------------------------
 // 1. Cutout
 
-export function cutout(img, { tolerance = DEFAULTS.tolerance, maxSide = 256 } = {}) {
+/**
+ * mode: 'auto' (plain colour if the backdrop is plain, else AI depth),
+ *       'color' or 'depth'. depth: { data, w, h } from depth.js, optional.
+ */
+export function cutout(img, { tolerance = DEFAULTS.tolerance, maxSide = 256, depth = null, mode = 'auto' } = {}) {
   const px = raster(img, maxSide);
   const { w, h, data } = px;
   const n = w * h;
   let mask = new Uint8Array(n);
+  let method = 'color';
 
   let clear = 0;
   for (let i = 0; i < n; i++) if (data[i * 4 + 3] < 128) clear++;
   if (clear > n * 0.02) {
     for (let i = 0; i < n; i++) mask[i] = data[i * 4 + 3] >= 128 ? 1 : 0;
+    method = 'alpha';
   } else {
-    // Background = what floods in from the border through pixels close to
-    // the border's median colour. Enclosed areas of that colour stay inside.
-    const border = [];
-    for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
-    for (let y = 1; y < h - 1; y++) border.push(y * w, y * w + w - 1);
-    const med = k => border.map(i => data[i * 4 + k]).sort((a, b) => a - b)[border.length >> 1];
-    const bg = [med(0), med(1), med(2)];
-    const t2 = tolerance * tolerance;
-    const near = i => {
-      const r = data[i * 4] - bg[0], g = data[i * 4 + 1] - bg[1], b = data[i * 4 + 2] - bg[2];
-      return 0.3 * r * r + 0.59 * g * g + 0.11 * b * b < t2 * 0.45;
-    };
-    const seen = new Uint8Array(n);
-    const stack = border.filter(near);
-    for (const i of stack) seen[i] = 1;
-    while (stack.length) {
-      const i = stack.pop(), x = i % w;
-      if (x > 0 && !seen[i - 1] && near(i - 1)) { seen[i - 1] = 1; stack.push(i - 1); }
-      if (x < w - 1 && !seen[i + 1] && near(i + 1)) { seen[i + 1] = 1; stack.push(i + 1); }
-      if (i >= w && !seen[i - w] && near(i - w)) { seen[i - w] = 1; stack.push(i - w); }
-      if (i < n - w && !seen[i + w] && near(i + w)) { seen[i + w] = 1; stack.push(i + w); }
+    const plain = colorMask(px, tolerance, mask);
+    if (depth && (mode === 'depth' || (mode === 'auto' && plain < 0.6))) {
+      depthMask(px, depth, mask);
+      method = 'depth';
     }
-    for (let i = 0; i < n; i++) mask[i] = seen[i] ? 0 : 1;
   }
 
   mask = open(mask, w, h);
   mask = largestComponent(mask, w, h);
+  fillHoles(mask, w, h);
   let area = 0;
   for (let i = 0; i < n; i++) area += mask[i];
   const whole = area < n * 0.01 || area > n * 0.985;
   if (whole) mask.fill(1);
-  return { w, h, data, mask, bbox: bbox(mask, w, h), whole };
+  return { w, h, data, mask, bbox: bbox(mask, w, h), whole, method };
+}
+
+// Background = what floods in from the border through pixels close to the
+// border's median colour. Returns how plain the border is (0–1).
+function colorMask({ w, h, data }, tolerance, mask) {
+  const n = w * h;
+  const border = [];
+  for (let x = 0; x < w; x++) border.push(x, (h - 1) * w + x);
+  for (let y = 1; y < h - 1; y++) border.push(y * w, y * w + w - 1);
+  const med = k => border.map(i => data[i * 4 + k]).sort((a, b) => a - b)[border.length >> 1];
+  const bg = [med(0), med(1), med(2)];
+  const t2 = tolerance * tolerance;
+  const near = i => {
+    const r = data[i * 4] - bg[0], g = data[i * 4 + 1] - bg[1], b = data[i * 4 + 2] - bg[2];
+    return 0.3 * r * r + 0.59 * g * g + 0.11 * b * b < t2 * 0.45;
+  };
+  const seen = new Uint8Array(n);
+  const stack = border.filter(near);
+  const plain = stack.length / border.length;
+  for (const i of stack) seen[i] = 1;
+  while (stack.length) {
+    const i = stack.pop(), x = i % w;
+    if (x > 0 && !seen[i - 1] && near(i - 1)) { seen[i - 1] = 1; stack.push(i - 1); }
+    if (x < w - 1 && !seen[i + 1] && near(i + 1)) { seen[i + 1] = 1; stack.push(i + 1); }
+    if (i >= w && !seen[i - w] && near(i - w)) { seen[i - w] = 1; stack.push(i - w); }
+    if (i < n - w && !seen[i + w] && near(i + w)) { seen[i + w] = 1; stack.push(i + w); }
+  }
+  for (let i = 0; i < n; i++) mask[i] = seen[i] ? 0 : 1;
+  return plain;
+}
+
+// Sample a depth map onto a w×h grid.
+function depthOnGrid(depth, w, h) {
+  const out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    out[y * w + x] = bilinear(depth.data, depth.w, depth.h, ((x + 0.5) * depth.w) / w, ((y + 0.5) * depth.h) / h);
+  }
+  return out;
+}
+
+// Subject = what stands out from the backdrop in depth. A floor or wall is
+// also "near" at the bottom of a photo, so the backdrop is modelled row by
+// row from the image's left and right edges (usually background), and the
+// subject is what rises above that baseline (Otsu's threshold on the rise).
+function depthMask({ w, h }, depth, mask) {
+  const d = depthOnGrid(depth, w, h);
+  let mn = Infinity, mx = -Infinity;
+  for (const v of d) { if (v < mn) mn = v; if (v > mx) mx = v; }
+  const range = mx - mn || 1;
+  const edge = Math.max(2, Math.round(w * 0.06));
+  const baseline = new Float32Array(h);
+  for (let y = 0; y < h; y++) {
+    const row = [];
+    for (let x = 0; x < edge; x++) row.push(d[y * w + x], d[y * w + w - 1 - x]);
+    row.sort((a, b) => a - b);
+    baseline[y] = row[row.length >> 1];
+  }
+  smooth1d(baseline, 6);
+  const rise = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) rise[y * w + x] = (d[y * w + x] - baseline[y]) / range;
+  const bins = 128, lo = -0.2, hi = 1, hist = new Float64Array(bins);
+  const bin = v => Math.min(bins - 1, Math.max(0, Math.floor(((v - lo) / (hi - lo)) * bins)));
+  for (const v of rise) hist[bin(v)]++;
+  let total = 0, sumAll = 0;
+  for (let i = 0; i < bins; i++) { total += hist[i]; sumAll += i * hist[i]; }
+  let wB = 0, sumB = 0, best = 0, thr = bin(0.08);
+  for (let i = 0; i < bins; i++) {
+    wB += hist[i]; if (!wB) continue;
+    const wF = total - wB; if (!wF) break;
+    sumB += i * hist[i];
+    const between = wB * wF * (sumB / wB - (sumAll - sumB) / wF) ** 2;
+    if (between > best) { best = between; thr = i; }
+  }
+  thr = Math.max(thr, bin(0.05));
+  // Hysteresis: weaker rises (feet, wheels, anything touching the floor)
+  // count when they touch the clear subject, within a short reach.
+  const thrValue = lo + ((thr + 0.5) / bins) * (hi - lo);
+  const weak = thrValue * 0.6, reach = Math.max(3, Math.round(Math.max(w, h) * 0.05));
+  const steps = new Int32Array(w * h).fill(-1);
+  let queue = [];
+  for (let i = 0; i < w * h; i++) if (rise[i] > thrValue) { mask[i] = 1; steps[i] = 0; queue.push(i); } else mask[i] = 0;
+  for (let k = 1; k <= reach && queue.length; k++) {
+    const next = [];
+    for (const i of queue) {
+      const x = i % w;
+      for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) {
+        if (j >= 0 && j < w * h && steps[j] < 0 && rise[j] > weak) { steps[j] = k; mask[j] = 1; next.push(j); }
+      }
+    }
+    queue = next;
+  }
+}
+
+// Background pockets the border can't reach belong to the subject.
+function fillHoles(mask, w, h) {
+  const out = new Uint8Array(w * h);
+  const stack = [];
+  const push = i => { if (!mask[i] && !out[i]) { out[i] = 1; stack.push(i); } };
+  for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+  while (stack.length) {
+    const i = stack.pop(), x = i % w;
+    if (x > 0) push(i - 1);
+    if (x < w - 1) push(i + 1);
+    if (i >= w) push(i - w);
+    if (i < w * (h - 1)) push(i + w);
+  }
+  for (let i = 0; i < w * h; i++) if (!out[i]) mask[i] = 1;
 }
 
 // Remove one-pixel specks and hairlines: erode, then dilate.
@@ -237,24 +337,53 @@ function bilinear(arr, w, h, x, y) {
   return (arr[i] * (1 - fx) + arr[i + 1] * fx) * (1 - fy) + (arr[i + w] * (1 - fx) + arr[i + w + 1] * fx) * fy;
 }
 
-// Everything the volume needs, in front-image pixel units: a depth field D
-// (half-thickness inside, signed distance outside), a per-row centre zc, and
-// optionally the side silhouette's signed distance.
-function buildShape(front, side, settings) {
+// Separable Gaussian blur of a float field.
+function gaussian(arr, w, h, sigma) {
+  if (sigma < 0.3) return arr;
+  const r = Math.ceil(sigma * 2.5), k = [];
+  let sum = 0;
+  for (let i = -r; i <= r; i++) { const v = Math.exp(-(i * i) / (2 * sigma * sigma)); k.push(v); sum += v; }
+  for (let i = 0; i < k.length; i++) k[i] /= sum;
+  const tmp = new Float32Array(w * h), out = new Float32Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let a = 0;
+    for (let t = -r; t <= r; t++) a += arr[y * w + Math.min(w - 1, Math.max(0, x + t))] * k[t + r];
+    tmp[y * w + x] = a;
+  }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let a = 0;
+    for (let t = -r; t <= r; t++) a += tmp[Math.min(h - 1, Math.max(0, y + t)) * w + x] * k[t + r];
+    out[y * w + x] = a;
+  }
+  return out;
+}
+
+function percentile(values, p) {
+  const a = Float32Array.from(values).sort();
+  return a[Math.min(a.length - 1, Math.max(0, Math.floor(p * a.length)))];
+}
+
+// Everything the volume needs, in front-image pixel units: the front and back
+// half-thicknesses Df / Db (signed distance outside the outline), a per-row
+// centre zc, and optionally the side silhouette's signed distance.
+function buildShape(front, side, settings, depth) {
   const { w, h, mask } = front;
   const sdf = signedDistance(mask, w, h);
   const hgt = inflate(mask, sdf, w, h);
 
   // Surface detail: brighter areas swell a little, darker ones sink.
   if (settings.detail) {
+    const lumRaw = new Float32Array(w * h);
     let sum = 0, cnt = 0;
-    const lum = i => (0.299 * front.data[i * 4] + 0.587 * front.data[i * 4 + 1] + 0.114 * front.data[i * 4 + 2]) / 255;
-    for (let i = 0; i < w * h; i++) if (mask[i]) { sum += lum(i); cnt++; }
-    const mean = sum / cnt;
-    for (let i = 0; i < w * h; i++) if (mask[i]) hgt[i] *= 1 + settings.detail * 2 * (lum(i) - mean);
+    for (let i = 0; i < w * h; i++) {
+      lumRaw[i] = (0.299 * front.data[i * 4] + 0.587 * front.data[i * 4 + 1] + 0.114 * front.data[i * 4 + 2]) / 255;
+      if (mask[i]) { sum += lumRaw[i]; cnt++; }
+    }
+    const lum = gaussian(lumRaw, w, h, 1.5), mean = sum / cnt;
+    for (let i = 0; i < w * h; i++) if (mask[i]) hgt[i] *= 1 + settings.detail * 2 * (lum[i] - mean);
   }
 
-  const D = new Float32Array(w * h);
+  const base = new Float32Array(w * h); // smooth body thickness, both sides
   const zc = new Float32Array(h);
   let sideInfo = null;
 
@@ -263,7 +392,7 @@ function buildShape(front, side, settings) {
     const fb = front.bbox, sb = side.bbox;
     const ks = (fb.y1 - fb.y0) / Math.max(1, sb.y1 - sb.y0);
     const sxc = (sb.x0 + sb.x1) / 2;
-    const sideSdf = signedDistance(side.mask, side.w, side.h);
+    const sideSdf = gaussian(signedDistance(side.mask, side.w, side.h), side.w, side.h, 1);
     const rz = new Float32Array(h);
     for (let y = 0; y < h; y++) {
       const b = Math.round((y + 0.5 - fb.y0) / ks + sb.y0 - 0.5);
@@ -278,23 +407,77 @@ function buildShape(front, side, settings) {
     const rowMax = new Float32Array(h);
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) rowMax[y] = Math.max(rowMax[y], hgt[y * w + x]);
     for (const arr of [rz, zc, rowMax]) smooth1d(arr, 4);
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const i = y * w + x;
-        D[i] = mask[i] ? (rowMax[y] > 0 ? Math.min(1.15, hgt[i] / rowMax[y]) * rz[y] : 0) : sdf[i];
-      }
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x;
+      if (mask[i]) base[i] = rowMax[y] > 0 ? Math.min(1.15, hgt[i] / rowMax[y]) * rz[y] : 0;
     }
     sideInfo = { cut: side, sdf: sideSdf, ks, sxc, fy0: fb.y0, sy0: sb.y0 };
   } else {
-    for (let i = 0; i < w * h; i++) D[i] = mask[i] ? hgt[i] * settings.inflate : sdf[i];
+    for (let i = 0; i < w * h; i++) if (mask[i]) base[i] = hgt[i] * settings.inflate;
   }
 
-  let depth = 0;
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    const d = D[y * w + x];
-    if (d > 0) depth = Math.max(depth, Math.abs(zc[y]) + d);
+  // AI depth reshapes the front: what the network sees as nearer comes
+  // forward. Its scale is relative, so it is mapped onto the body's own
+  // thickness, and tapered to zero at the outline so edges stay round.
+  const front3d = Float32Array.from(base);
+  const wDepth = depth ? settings.depthWeight : 0;
+  if (wDepth > 0) {
+    const d = gaussian(depthOnGrid(depth, w, h), w, h, 0.8);
+    const inside = [], baseIn = [];
+    for (let i = 0; i < w * h; i++) if (mask[i]) { inside.push(d[i]); baseIn.push(base[i]); }
+    const lo = percentile(inside, 0.03), hi = percentile(inside, 0.97);
+    const scale = percentile(baseIn, 0.97);
+    let maxSdf = 0;
+    for (let i = 0; i < w * h; i++) if (sdf[i] > maxSdf) maxSdf = sdf[i];
+    const rim = Math.max(2, maxSdf * 0.18);
+    for (let i = 0; i < w * h; i++) {
+      if (!mask[i]) continue;
+      const dn = Math.min(1, Math.max(0, (d[i] - lo) / (hi - lo || 1)));
+      const taper = Math.sqrt(Math.min(1, sdf[i] / rim));
+      const hd = taper * (0.3 + 0.7 * dn) * scale;
+      front3d[i] = (1 - wDepth) * base[i] + wDepth * hd;
+    }
   }
-  return { w, h, D, zc, side: sideInfo, depth };
+
+  // Mirror-symmetric subjects get mirror-symmetric depth.
+  const fb = front.bbox;
+  let symmetric = settings.symmetry === 'on';
+  if (settings.symmetry === 'auto') {
+    let both = 0, any = 0;
+    for (let y = fb.y0; y < fb.y1; y++) for (let x = fb.x0; x < fb.x1; x++) {
+      const m = mask[y * w + x], mm = mask[y * w + (fb.x0 + fb.x1 - 1 - x)];
+      if (m && mm) both++;
+      if (m || mm) any++;
+    }
+    symmetric = any > 0 && both / any > 0.9;
+  }
+  if (symmetric) {
+    for (const arr of [front3d, base]) {
+      const copy = Float32Array.from(arr);
+      for (let y = fb.y0; y < fb.y1; y++) for (let x = fb.x0; x < fb.x1; x++) {
+        const i = y * w + x, j = y * w + (fb.x0 + fb.x1 - 1 - x);
+        if (mask[i] && mask[j]) arr[i] = (copy[i] + copy[j]) / 2;
+      }
+    }
+  }
+
+  // One field per side: thickness inside, signed distance outside. A light
+  // blur rounds the pixel staircase off the outline and the Poisson grid.
+  const sigma = 0.8 + 0.12 * settings.smooth;
+  const Df = new Float32Array(w * h), Db = new Float32Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    Df[i] = mask[i] ? front3d[i] : sdf[i];
+    Db[i] = mask[i] ? base[i] : sdf[i];
+  }
+  const shape = {
+    w, h, bbox: fb, Df: gaussian(Df, w, h, sigma), Db: gaussian(Db, w, h, sigma), zc, side: sideInfo, depth: 0, symmetric,
+    base: settings.flatBase && !front.whole ? fb.y1 - 0.02 * (fb.y1 - fb.y0) : Infinity,
+  };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    shape.depth = Math.max(shape.depth, Math.abs(zc[y]) + Math.max(shape.Df[i], shape.Db[i], 0));
+  }
+  return shape;
 }
 
 // [1 2 1] blur along a 1D profile, leaving empty (zero) rows empty.
@@ -312,13 +495,19 @@ function smin(a, b, k = 4) {
   return Math.min(a, b) - h * h * k * 0.25;
 }
 
-// The field at a point (u, v in front pixels, z in the same units, 0 = middle).
+function rowCentre(shape, v) {
+  const { h, zc } = shape;
+  const vy = Math.min(Math.max(v - 0.5, 0), h - 1), y0 = vy | 0;
+  return zc[y0] + (zc[Math.min(h - 1, y0 + 1)] - zc[y0]) * (vy - y0);
+}
+
+// The field at a point (u, v in front pixels, z in the same units, 0 = middle;
+// +z faces the front camera). Positive inside.
 function fieldAt(shape, u, v, z) {
-  const { w, h, D, zc } = shape;
-  const vy = Math.min(Math.max(v - 0.5, 0), h - 1);
-  const zrow = zc[vy | 0] + (zc[Math.min(h - 1, (vy | 0) + 1)] - zc[vy | 0]) * (vy - (vy | 0));
-  let f = bilinear(D, w, h, u, v) - Math.abs(z - zrow);
+  const dz = z - rowCentre(shape, v);
+  let f = Math.min(bilinear(shape.Df, shape.w, shape.h, u, v) - dz, bilinear(shape.Db, shape.w, shape.h, u, v) + dz);
   if (shape.side) f = smin(f, sideField(shape.side, v, z));
+  if (shape.base !== Infinity) f = Math.min(f, shape.base - v);
   return f;
 }
 
@@ -330,15 +519,18 @@ function sideField(s, v, z) {
 // ---------------------------------------------------------------------------
 // 3. Surface
 
+// The voxel grid covers the subject, not the whole photo, so a small subject
+// in a big frame still gets the full resolution.
 function volumeTransform(shape, N) {
-  const pad = 4;
-  const span = Math.max(shape.w, shape.h, shape.depth * 2 + 2);
+  const pad = 4, b = shape.bbox;
+  const span = Math.max(b.x1 - b.x0 + 4, b.y1 - b.y0 + 4, shape.depth * 2 + 2);
   const s = (N - 2 * pad) / span;
+  const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
   return {
     s, N,
     // voxel index → front pixel coordinates
-    u: ix => (ix - N / 2) / s + shape.w / 2,
-    v: iy => (N / 2 - iy) / s + shape.h / 2,
+    u: ix => (ix - N / 2) / s + cx,
+    v: iy => (N / 2 - iy) / s + cy,
     z: iz => (iz - N / 2) / s,
   };
 }
@@ -355,14 +547,17 @@ function marchingCubes(shape, N) {
 
   for (let iy = 0; iy < N; iy++) {
     const v = T.v(iy);
-    const vy = Math.min(Math.max(v - 0.5, 0), shape.h - 1);
-    const zrow = shape.zc[vy | 0] + (shape.zc[Math.min(shape.h - 1, (vy | 0) + 1)] - shape.zc[vy | 0]) * (vy - (vy | 0));
+    const zrow = rowCentre(shape, v);
+    const floor = shape.base - v;
     for (let ix = 0; ix < N; ix++) {
-      const d = bilinear(shape.D, shape.w, shape.h, T.u(ix), v);
+      const u = T.u(ix);
+      const df = bilinear(shape.Df, shape.w, shape.h, u, v), db = bilinear(shape.Db, shape.w, shape.h, u, v);
       const base = ix + iy * N;
       for (let iz = 0; iz < N; iz++) {
-        let f = d - Math.abs(zs[iz] - zrow);
+        const dz = zs[iz] - zrow;
+        let f = Math.min(df - dz, db + dz);
         if (sidePlane) f = smin(f, sidePlane[iy * N + iz]);
+        if (floor < f) f = floor;
         // Keep the outermost shell empty so every surface closes.
         if (ix < 1 || iy < 1 || iz < 1 || ix > N - 2 || iy > N - 2 || iz > N - 2) f = -1;
         field[base + iz * N2] = f * T.s;
@@ -611,7 +806,7 @@ const STAGES = ['Cutout', 'Shape', 'Surface', 'Texture', 'Style'];
 export { STAGES };
 
 /**
- * inputs: { front: Image, side?: Image, back?: Image }
+ * inputs: { front: Image, side?: Image, back?: Image, depth?: depth map of front (depth.js) }
  * settings: see DEFAULTS
  * onStage(index, name): called as each stage starts
  */
@@ -622,21 +817,46 @@ export async function buildModel(inputs, settings = {}, onStage = () => {}) {
 
   await step(0);
   const work = Math.min(256, Math.max(96, Math.round(S.resolution * 2)));
-  const cuts = {
-    front: cutout(inputs.front, { tolerance: S.tolerance, maxSide: work }),
-    side: inputs.side ? cutout(inputs.side, { tolerance: S.tolerance, maxSide: work }) : null,
-    back: inputs.back ? cutout(inputs.back, { tolerance: S.tolerance, maxSide: work }) : null,
-  };
+  // inputs.cache (an object) lets repeated builds reuse the cutouts.
+  const key = [S.tolerance, work, S.cutoutMode].join('|');
+  let cuts = inputs.cache?.key === key ? inputs.cache.cuts : null;
+  if (!cuts) {
+    cuts = {
+      front: cutout(inputs.front, { tolerance: S.tolerance, maxSide: work, depth: inputs.depth, mode: S.cutoutMode }),
+      side: inputs.side ? cutout(inputs.side, { tolerance: S.tolerance, maxSide: work }) : null,
+      back: inputs.back ? cutout(inputs.back, { tolerance: S.tolerance, maxSide: work }) : null,
+    };
+    if (inputs.cache) Object.assign(inputs.cache, { key, cuts });
+  }
 
   await step(1);
-  const shape = buildShape(cuts.front, cuts.side, S);
+  const shape = buildShape(cuts.front, cuts.side, S, inputs.depth);
 
   await step(2);
-  const N = S.style === 'lowpoly' ? Math.round(Math.min(S.resolution, 44)) : S.style === 'voxel' ? 0 : Math.round(S.resolution);
+  const N = S.preview ? Math.round(S.resolution)
+    : S.style === 'lowpoly' ? Math.round(Math.min(S.resolution, 44)) : S.style === 'voxel' ? 0 : Math.round(S.resolution);
   let geo = null;
   if (N) {
     geo = marchingCubes(shape, N);
-    taubin(geo, S.style === 'lowpoly' ? Math.min(2, S.smooth) : S.smooth);
+    // Smoothing is given per 120 voxels so it looks the same at every detail level.
+    taubin(geo, S.style === 'lowpoly' ? Math.min(2, S.smooth) : Math.round(S.smooth * Math.max(1, N / 120)));
+  }
+
+  // Preview builds (auto-copy's search) skip texturing: shape only, in clay.
+  if (S.preview && geo) {
+    toModelSpace(geo, shape);
+    if (signedVolume(geo) < 0) {
+      const idx = geo.index.array;
+      for (let t = 0; t < idx.length; t += 3) { const k = idx[t + 1]; idx[t + 1] = idx[t + 2]; idx[t + 2] = k; }
+    }
+    geo.computeVertexNormals();
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0xb9b2a7, roughness: 0.9 })));
+    return {
+      object: group, cutouts: cuts,
+      depthGrid: inputs.depth ? depthOnGrid(inputs.depth, cuts.front.w, cuts.front.h) : null,
+      stats: { triangles: geo.index.count / 3, vertices: geo.attributes.position.count, ms: Math.round(performance.now() - t0), views: 1 + !!cuts.side + !!cuts.back },
+    };
   }
 
   await step(3);
@@ -692,6 +912,7 @@ export async function buildModel(inputs, settings = {}, onStage = () => {}) {
     object: group,
     atlas: atlas.canvas,
     cutouts: cuts,
+    depthGrid: inputs.depth ? depthOnGrid(inputs.depth, cuts.front.w, cuts.front.h) : null,
     stats: { triangles, vertices: g.attributes.position.count, ms: Math.round(performance.now() - t0), views: 1 + !!cuts.side + !!cuts.back },
   };
 }

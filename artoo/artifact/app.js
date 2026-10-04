@@ -9,25 +9,42 @@ import * as THREE from 'three';
 import { buildModel, cutout, cutoutPreview, STAGES, STYLES, DEFAULTS, toGLB, toOBJ, toSTL, zip, loadImage } from '../public/js/engine.js';
 import { cactusFront, cactusSide } from '../public/js/sample.js';
 import { createViewer, VIEW_MODES, LIGHTS } from '../public/js/viewer.js';
+import { loadDepthModel, estimateDepth, depthPreview } from '../public/js/depth.js';
+import { scoreCopy, autoCopy, frontRender, referenceCrop } from '../public/js/match.js';
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
-// Shape recipes the studio learns between.
+// Shape recipes the studio learns between. depthWeight only matters when AI
+// depth is on.
 const RECIPES = [
-  { id: 'round', label: 'Round', settings: { inflate: 1.0, smooth: 6, detail: 0.04 } },
-  { id: 'balanced', label: 'Balanced', settings: { inflate: 0.85, smooth: 4, detail: 0.08 } },
-  { id: 'puffy', label: 'Puffy', settings: { inflate: 1.25, smooth: 8, detail: 0.02 } },
-  { id: 'relief', label: 'Relief', settings: { inflate: 0.5, smooth: 3, detail: 0.16 } },
-  { id: 'crisp', label: 'Crisp', settings: { inflate: 0.9, smooth: 2, detail: 0.12 } },
+  { id: 'round', label: 'Round', settings: { inflate: 1.0, smooth: 8, detail: 0.03, depthWeight: 0.5 } },
+  { id: 'balanced', label: 'Balanced', settings: { inflate: 0.85, smooth: 6, detail: 0.05, depthWeight: 0.65 } },
+  { id: 'puffy', label: 'Puffy', settings: { inflate: 1.2, smooth: 10, detail: 0.02, depthWeight: 0.45 } },
+  { id: 'relief', label: 'Relief', settings: { inflate: 0.55, smooth: 5, detail: 0.1, depthWeight: 0.85 } },
+  { id: 'crisp', label: 'Crisp', settings: { inflate: 0.9, smooth: 3, detail: 0.08, depthWeight: 0.75 } },
 ];
-const QUALITY = { 72: 'Draft', 112: 'Standard', 144: 'High' };
+const QUALITY = { 80: 'Draft', 120: 'Standard', 144: 'High' };
+const CUT_MODES = { auto: 'Auto', color: 'Plain colour', depth: 'AI depth' };
+const SHAPE_KEYS = ['inflate', 'smooth', 'detail', 'depthWeight', 'symmetry'];
+
+// The depth network and its runtime, published next to the page. The model
+// is Base64 text in three parts: artifacts serve text, not raw binaries, and
+// cap each file below 16 MB.
+const AI_SOURCES = window.ARTOO_AI_SOURCES || {
+  wasm: ['ai/ort-wasm-simd-threaded.wasm'],
+  model: [1, 2, 3].map(k => `ai/depth-anything-v2-small-q8.${k}.b64.txt`),
+  totalBytes: 14239897 + 3 * 12115024,
+};
+const pick = (o, keys) => Object.fromEntries(keys.filter(k => o[k] !== undefined).map(k => [k, o[k]]));
 
 const ui = {
   inputs: { front: null, side: null, back: null },   // { img, dataUrl, preview }
-  style: 'textured', resolution: 112, tolerance: DEFAULTS.tolerance,
+  style: 'textured', resolution: 120, tolerance: DEFAULTS.tolerance, cutoutMode: 'auto',
   shapeMode: 'auto', variants: 3,
-  manual: { inflate: 0.9, smooth: 5, detail: 0.06 },
+  manual: { inflate: 0.85, smooth: 6, detail: 0.04, depthWeight: 0.65 },
+  ai: { on: false, ready: false, loading: null }, depth: null, // depth: { key, map }
+  autoAbort: null,
   results: [], selected: -1, busy: false,
   arms: Object.fromEntries(RECIPES.map(r => [r.id, { n: 0, sum: 0 }])),
   gallery: [],
@@ -84,41 +101,112 @@ async function normalizeImage(source, maxSide) {
   return { img: await loadImage(dataUrl), dataUrl };
 }
 
+function previewFor(view, img) {
+  const depth = view === 'front' ? frontDepth() : null;
+  return cutoutPreview(cutout(img, { tolerance: ui.tolerance, maxSide: 200, depth, mode: view === 'front' ? ui.cutoutMode : 'color' }), 200);
+}
+
 async function setView(view, source) {
   const { img, dataUrl } = await normalizeImage(source, view === 'front' ? 640 : 448);
-  ui.inputs[view] = { img, dataUrl, preview: cutoutPreview(cutout(img, { tolerance: ui.tolerance, maxSide: 200 }), 200) };
+  ui.inputs[view] = { img, dataUrl, preview: null };
+  ui.inputs[view].preview = previewFor(view, img);
   renderViews();
+  if (view === 'front') ensureDepth().catch(err => aiStatus(err.message, 'bad'));
 }
 
 function refreshPreviews() {
   for (const v of Object.keys(ui.inputs)) {
     const input = ui.inputs[v];
-    if (input) input.preview = cutoutPreview(cutout(input.img, { tolerance: ui.tolerance, maxSide: 200 }), 200);
+    if (input) input.preview = previewFor(v, input.img);
   }
   renderViews();
 }
 
+// ---------------------------------------------------------------------------
+// AI depth
+
+const frontDepth = () => (ui.depth && ui.inputs.front && ui.depth.key === ui.inputs.front.dataUrl ? ui.depth.map : null);
+
+function aiStatus(text, tone = '') {
+  $('ai-note').textContent = text;
+  $('ai-note').className = `note ${tone}`;
+}
+
+function aiMeter(fraction) {
+  $('ai-meter').hidden = fraction == null;
+  if (fraction != null) $('ai-meter').firstElementChild.style.width = `${Math.round(fraction * 100)}%`;
+}
+
+async function setAI(on) {
+  ui.ai.on = on;
+  $('ai-toggle').setAttribute('aria-checked', on);
+  $('ai-toggle').textContent = on ? 'On' : 'Off';
+  try { localStorage.setItem('artoo.aiDepth', on ? '1' : '0'); } catch { /* preference only */ }
+  if (!on) {
+    $('ai-preview').hidden = true;
+    aiStatus('Off. Turn on for real photos: finds the subject and its relief. One-time 50 MB download, runs on your device.');
+    refreshPreviews();
+    return;
+  }
+  try { await ensureDepth(); } catch (err) { aiStatus(`Could not start AI depth: ${err.message}`, 'bad'); aiMeter(null); }
+}
+
+async function ensureDepth() {
+  if (!ui.ai.on || !ui.inputs.front) return;
+  if (!ui.ai.ready) {
+    ui.ai.loading ??= loadDepthModel(AI_SOURCES, p => {
+      if (p.phase === 'download') { aiStatus(`Downloading the depth model… ${(p.loaded / 1e6).toFixed(0)} of ${(p.total / 1e6).toFixed(0)} MB`); aiMeter(p.loaded / p.total); }
+      else aiStatus('Starting the depth model…');
+    });
+    try { await ui.ai.loading; } catch (err) { ui.ai.loading = null; throw err; }
+    ui.ai.ready = true;
+  }
+  const front = ui.inputs.front;
+  if (frontDepth()) return;
+  aiStatus('Reading depth from the front view…');
+  aiMeter(null);
+  const t = performance.now();
+  const map = await estimateDepth(front.img, 392);
+  if (ui.inputs.front !== front) return; // replaced meanwhile
+  ui.depth = { key: front.dataUrl, map };
+  const prev = depthPreview(map, 56);
+  const c = $('ai-preview');
+  c.width = prev.width; c.height = prev.height;
+  c.getContext('2d').drawImage(prev, 0, 0);
+  c.hidden = false;
+  aiStatus(`Depth read in ${((performance.now() - t) / 1000).toFixed(1)} s. Lighter is nearer.`, 'ok');
+  refreshPreviews();
+}
+
+// Slots are built once and updated in place: replacing them would drop a
+// file the viewer is choosing while a preview refreshes.
 function renderViews() {
   const box = $('views');
-  box.replaceChildren(...Object.keys(VIEW_LABELS).map(v => {
-    const input = ui.inputs[v];
-    const slot = document.createElement('label');
-    slot.className = `slot${input ? ' filled' : ''}`;
-    slot.dataset.view = v;
-    slot.innerHTML = `<span class="tag">${VIEW_LABELS[v]}</span>
-      ${input ? '' : `<span class="hint">${v === 'front' ? 'Required' : 'Optional'}<br>drop or tap</span>`}
-      <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="${VIEW_LABELS[v]} view image">`;
-    if (input) {
-      slot.prepend(input.preview);
+  if (!box.children.length) {
+    for (const v of Object.keys(VIEW_LABELS)) {
+      const slot = document.createElement('label');
+      slot.className = 'slot';
+      slot.dataset.view = v;
+      slot.innerHTML = `<span class="body"></span><span class="tag">${VIEW_LABELS[v]}</span>
+        <input type="file" accept="image/png,image/jpeg,image/webp" aria-label="${VIEW_LABELS[v]} view image">`;
       if (v !== 'front') {
-        const x = Object.assign(document.createElement('button'), { className: 'x', type: 'button', textContent: '×' });
+        const x = Object.assign(document.createElement('button'), { className: 'x', type: 'button', textContent: '×', hidden: true });
         x.setAttribute('aria-label', `Remove ${VIEW_LABELS[v].toLowerCase()} view`);
         x.addEventListener('click', e => { e.preventDefault(); ui.inputs[v] = null; renderViews(); });
         slot.append(x);
       }
+      box.append(slot);
     }
-    return slot;
-  }));
+  }
+  for (const slot of box.children) {
+    const v = slot.dataset.view, input = ui.inputs[v];
+    slot.classList.toggle('filled', Boolean(input));
+    const body = slot.querySelector('.body');
+    if (input) body.replaceChildren(input.preview);
+    else body.innerHTML = `<span class="hint">${v === 'front' ? 'Required' : 'Optional'}<br>drop or tap</span>`;
+    const x = slot.querySelector('.x');
+    if (x) x.hidden = !input;
+  }
   const n = Object.values(ui.inputs).filter(Boolean).length;
   $('view-count').textContent = `${n} of 3`;
 }
@@ -133,6 +221,7 @@ $('views').addEventListener('change', async e => {
   const slot = e.target.closest('.slot');
   try { await setView(slot.dataset.view, await fileToImage(e.target.files[0])); }
   catch (err) { toast(err.message); }
+  e.target.value = ''; // so choosing the same file again still counts
 });
 $('views').addEventListener('dragover', e => { const s = e.target.closest('.slot'); if (s) { e.preventDefault(); s.classList.add('over'); } });
 $('views').addEventListener('dragleave', e => e.target.closest('.slot')?.classList.remove('over'));
@@ -168,6 +257,11 @@ function segmented(el, options, current, onPick) {
 
 segmented($('style'), STYLES, ui.style, v => { ui.style = v; });
 segmented($('quality'), QUALITY, ui.resolution, v => { ui.resolution = Number(v); });
+segmented($('cutmode'), CUT_MODES, ui.cutoutMode, v => {
+  ui.cutoutMode = v;
+  if (v === 'depth' && !ui.ai.on) setAI(true); else refreshPreviews();
+});
+$('ai-toggle').addEventListener('click', () => setAI(!ui.ai.on));
 segmented($('viewmode'), VIEW_MODES, 'textured', v => viewer.setMode(v));
 segmented($('light'), LIGHTS, 'studio', v => viewer.setLighting(v));
 
@@ -194,6 +288,7 @@ function bindRange(id, get, set, fmt) {
 bindRange('inflate', () => ui.manual.inflate, v => { ui.manual.inflate = v; }, v => v.toFixed(2));
 bindRange('smooth', () => ui.manual.smooth, v => { ui.manual.smooth = v; }, v => `${v}×`);
 bindRange('detail', () => ui.manual.detail, v => { ui.manual.detail = v; }, v => v.toFixed(2));
+bindRange('depthWeight', () => ui.manual.depthWeight, v => { ui.manual.depthWeight = v; }, v => v.toFixed(2));
 let previewTimer;
 bindRange('tolerance', () => ui.tolerance, v => {
   ui.tolerance = v;
@@ -260,18 +355,20 @@ function hidePipeline() {
 }
 
 function currentInputs() {
-  return { front: ui.inputs.front.img, side: ui.inputs.side?.img, back: ui.inputs.back?.img };
+  return { front: ui.inputs.front.img, side: ui.inputs.side?.img, back: ui.inputs.back?.img, depth: frontDepth() };
 }
 
-async function generate({ recipes, quiet = false } = {}) {
+async function generate({ recipes, quiet = false, append = false } = {}) {
   if (ui.busy) return;
   if (!ui.inputs.front) { toast('Add a front view first.'); return; }
   ui.busy = true;
   $('go').disabled = true;
+  $('auto-copy').disabled = true;
+  try { await ensureDepth(); } catch (err) { aiStatus(`AI depth unavailable: ${err.message}`, 'bad'); }
   const list = recipes || (ui.shapeMode === 'manual'
     ? [{ id: 'manual', label: 'Manual', settings: { ...ui.manual } }]
     : chooseRecipes(ui.variants));
-  const base = { style: ui.style, resolution: ui.resolution, tolerance: ui.tolerance };
+  const base = { style: ui.style, resolution: ui.resolution, tolerance: ui.tolerance, cutoutMode: ui.cutoutMode, usedDepth: Boolean(frontDepth()) };
   const saved = { front: ui.inputs.front.dataUrl, side: ui.inputs.side?.dataUrl || null, back: ui.inputs.back?.dataUrl || null };
   const results = [];
   try {
@@ -282,9 +379,10 @@ async function generate({ recipes, quiet = false } = {}) {
       const out = await buildModel(currentInputs(), settings, k => pipelineStage(k));
       results.push({
         key: `g-${Date.now().toString(36)}-${i}`, recipe: r.id, recipeLabel: r.label, settings, images: saved,
-        object: out.object, stats: out.stats, thumb: thumbnail(out.object), rating: 0, storedRating: 0,
+        object: out.object, build: out, stats: out.stats, thumb: thumbnail(out.object), rating: 0, storedRating: 0,
       });
-      if (i === 0) { ui.results = results; select(0); }
+      if (append) { ui.results.push(results.at(-1)); select(ui.results.length - 1); }
+      else if (i === 0) { ui.results = results; select(0); }
       renderVariants();
     }
     if (!quiet && results.length > 1) toast('Compare the candidates, then rate the ones you like.');
@@ -294,6 +392,7 @@ async function generate({ recipes, quiet = false } = {}) {
     hidePipeline();
     ui.busy = false;
     $('go').disabled = false;
+    $('auto-copy').disabled = false;
   }
 }
 $('go').addEventListener('click', () => generate());
@@ -305,7 +404,63 @@ function select(i) {
   viewer.setObject(r.object);
   renderVariants();
   renderResult();
+  renderCopy(r);
 }
+
+// ---------------------------------------------------------------------------
+// Copy: the model against the picture it came from
+
+const PART_LABELS = { outline: 'Outline', profile: 'Side profile', relief: 'Relief (AI depth)', smooth: 'Smoothness' };
+const pct = v => `${Math.round(v * 100)}%`;
+
+function renderCopy(r) {
+  if (!r) return;
+  r.copy ??= scoreCopy(r.build);
+  r.copyImages ??= { ref: referenceCrop(ui.inputs.front.img, r.build.cutouts.front), model: frontRender(r.build) };
+  $('copy-ref').src = r.copyImages.ref;
+  $('copy-model').src = r.copyImages.model;
+  const d = $('copy-diff');
+  d.width = d.height = r.copy.overlay.width;
+  d.getContext('2d').drawImage(r.copy.overlay, 0, 0);
+  $('copy-score').textContent = pct(r.copy.score);
+  $('copy-parts').innerHTML = Object.entries(PART_LABELS).map(([k, label]) => {
+    const v = r.copy.parts[k];
+    return `<div class="arm${v === undefined ? ' off' : ''}"><span>${label}</span><span class="num">${v === undefined ? (k === 'profile' ? 'add a side view' : 'turn on AI depth') : pct(v)}</span>
+      <div class="bar-t"><span style="width:${v === undefined ? 0 : Math.round(v * 100)}%"></span></div></div>`;
+  }).join('');
+  const m = $('stats').querySelector('[data-copy]');
+  if (m) m.textContent = pct(r.copy.score);
+}
+
+$('auto-copy').addEventListener('click', async () => {
+  if (ui.autoAbort) { ui.autoAbort.abort(); return; }
+  const r = ui.results[ui.selected];
+  if (!r || ui.busy) return;
+  ui.busy = true;
+  ui.autoAbort = new AbortController();
+  $('go').disabled = true;
+  $('auto-copy').textContent = 'Stop';
+  const before = r.copy?.score ?? scoreCopy(r.build).score;
+  try {
+    await ensureDepth().catch(() => {});
+    const start = { ...pick(r.settings, ['style', 'tolerance', 'cutoutMode', ...SHAPE_KEYS]) };
+    const res = await autoCopy(currentInputs(), start, {
+      signal: ui.autoAbort.signal,
+      onStep: s => { $('auto-note').textContent = `Try ${s.i} of ${s.total} · best ${pct(s.best)}`; },
+    });
+    ui.busy = false;
+    await generate({ recipes: [{ id: 'copy', label: 'Auto-copy', settings: pick(res.settings, SHAPE_KEYS) }], quiet: true, append: true });
+    const now = ui.results[ui.selected];
+    $('auto-note').textContent = `Copy match ${pct(before)} → ${pct(now.copy.score)}. Settings: thickness ${now.settings.inflate.toFixed(2)}, smoothing ${now.settings.smooth}×, detail ${now.settings.detail.toFixed(2)}${now.settings.usedDepth ? `, AI depth ${now.settings.depthWeight.toFixed(2)}` : ''}.`;
+  } catch (err) {
+    $('auto-note').textContent = err.name === 'AbortError' ? 'Stopped.' : `Auto-copy failed: ${err.message}`;
+  } finally {
+    ui.busy = false;
+    ui.autoAbort = null;
+    $('go').disabled = false;
+    $('auto-copy').textContent = 'Auto-copy';
+  }
+});
 
 function renderVariants() {
   const box = $('variant-list');
@@ -331,13 +486,15 @@ function renderResult() {
     <div><dt>Triangles</dt><dd>${fmtInt(r.stats.triangles)}</dd></div>
     <div><dt>Vertices</dt><dd>${fmtInt(r.stats.vertices)}</dd></div>
     <div><dt>Views used</dt><dd>${r.stats.views}</dd></div>
-    <div><dt>Build time</dt><dd>${(r.stats.ms / 1000).toFixed(2)} s</dd></div>` : '';
-  $('caption').innerHTML = r ? `<b>${esc(r.recipeLabel)}</b> · thickness ${r.settings.inflate.toFixed(2)} · smoothing ${r.settings.smooth}× · detail ${r.settings.detail.toFixed(2)}` : '';
+    <div><dt>Build time</dt><dd>${(r.stats.ms / 1000).toFixed(2)} s</dd></div>
+    <div><dt>Copy match</dt><dd data-copy>${r.copy ? pct(r.copy.score) : '…'}</dd></div>
+    <div><dt>Cutout</dt><dd>${esc({ alpha: 'Alpha', color: 'Colour', depth: 'AI depth' }[r.build.cutouts.front.method] || '')}</dd></div>` : '';
+  $('caption').innerHTML = r ? `<b>${esc(r.recipeLabel)}</b> · thickness ${r.settings.inflate.toFixed(2)} · smoothing ${r.settings.smooth}× · detail ${r.settings.detail.toFixed(2)}${r.settings.usedDepth ? ` · AI depth ${r.settings.depthWeight.toFixed(2)}` : ''}` : '';
   $('stars').innerHTML = [1, 2, 3, 4, 5].map(n =>
     `<button type="button" data-n="${n}" class="${r && r.rating >= n ? 'on' : ''}" aria-label="${n} star${n > 1 ? 's' : ''}" aria-pressed="${r?.rating === n}">★</button>`).join('');
   $('rate-note').className = 'note';
-  $('rate-note').textContent = !r ? '' : r.recipe === 'manual'
-    ? 'Manual settings are saved but do not train the recipes.'
+  $('rate-note').textContent = !r ? '' : r.recipe === 'manual' || r.recipe === 'copy'
+    ? 'These settings are saved but do not train the recipes.'
     : r.rating ? (ui.store ? 'Saved to your collection.' : 'Rated for this session.') : 'Ratings teach Artoo which shape settings to use for you.';
 }
 
@@ -440,10 +597,12 @@ async function reopen(g) {
   for (const v of ['front', 'side', 'back']) if (g[v]) await setView(v, await loadImage(g[v]));
   ui.tolerance = g.settings.tolerance; $('tolerance').value = ui.tolerance; $('tolerance-v').textContent = ui.tolerance;
   ui.style = g.settings.style; ui.resolution = g.settings.resolution;
-  for (const [id, v] of [['style', ui.style], ['quality', ui.resolution]]) {
+  if (g.settings.cutoutMode) ui.cutoutMode = g.settings.cutoutMode;
+  if (g.settings.usedDepth && !ui.ai.on) await setAI(true);
+  for (const [id, v] of [['style', ui.style], ['quality', ui.resolution], ['cutmode', ui.cutoutMode]]) {
     $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(v)));
   }
-  await generate({ recipes: [{ id: g.recipe, label: g.recipeLabel, settings: { inflate: g.settings.inflate, smooth: g.settings.smooth, detail: g.settings.detail } }], quiet: true });
+  await generate({ recipes: [{ id: g.recipe, label: g.recipeLabel, settings: pick(g.settings, SHAPE_KEYS) }], quiet: true });
   const r = ui.results[0];
   if (r) {
     Object.assign(r, { key: g.key, rating: g.rating, storedRating: g.rating });
@@ -518,10 +677,14 @@ renderArms();
 renderShelf();
 renderResult();
 
+let aiPref = false;
+try { aiPref = localStorage.getItem('artoo.aiDepth') === '1'; } catch { /* no storage */ }
+aiStatus('Off. Turn on for real photos: finds the subject and its relief. One-time 50 MB download, runs on your device.');
 await setView('front', cactusFront(640));
 await setView('side', cactusSide(448));
 await generate({ recipes: [RECIPES[1]], quiet: true });
 if (ui.results[0]) { ui.results[0].sample = true; renderResult(); }
+if (aiPref) setAI(true);
 
 (async () => {
   const runtime = window.claude;

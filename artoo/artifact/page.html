@@ -83,6 +83,7 @@ details[open] summary { margin-bottom: 12px; }
   overflow: hidden; cursor: pointer; background: rgba(0,0,0,.08); text-align: center; }
 .slot:hover, .slot.over { border-color: var(--chalk); }
 .slot.filled { border-style: solid; border-color: var(--line); }
+.slot .body { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
 .slot canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
 .slot input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .slot .tag { position: absolute; left: 6px; top: 6px; font-size: 10.5px; padding: 2px 6px; border-radius: 99px; background: rgba(20,26,29,.75); color: var(--ink); pointer-events: none; }
@@ -142,6 +143,25 @@ details[open] summary { margin-bottom: 12px; }
 .arm .bar-t { grid-column: 1 / -1; height: 5px; border-radius: 5px; background: rgba(232,238,241,.08); overflow: hidden; }
 .arm .bar-t span { display: block; height: 100%; background: var(--faint); }
 .arm.lead .bar-t span { background: var(--ok); }
+.note.ok { color: var(--ok); }
+.ai { display: grid; gap: 8px; padding-top: 4px; border-top: 1px solid var(--line); padding-block: 12px 0; }
+.ai-body { display: flex; gap: 10px; align-items: center; }
+.ai-body canvas { width: 56px; height: auto; border-radius: 6px; flex: none; }
+.switch { min-width: 54px; padding: 5px 10px; border-radius: 99px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; }
+.switch[aria-checked="true"] { background: var(--ok); color: #16201a; border-color: transparent; font-weight: 600; }
+.meter { height: 4px; border-radius: 4px; background: rgba(232,238,241,.1); overflow: hidden; }
+.meter span { display: block; height: 100%; width: 0; background: var(--chalk); transition: width .2s; }
+.copy-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.copy-tiles figure { margin: 0; display: grid; gap: 6px; }
+.copy-tiles img, .copy-tiles canvas { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #2f393f; display: block; image-rendering: auto; }
+.copy-tiles canvas { image-rendering: pixelated; }
+.copy-tiles figcaption { font-size: 11.5px; color: var(--muted); display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+.key { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.k-ok { background: #7ec896; } .k-miss { background: #f1786e; } .k-extra { background: #6ea0f0; }
+.copy-foot { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px; }
+.big { font-size: 20px; color: var(--ink); }
+.arm.off { opacity: .55; }
+@media (max-width: 760px) { .copy-foot { grid-template-columns: 1fr; } }
 .pill { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: rgba(147,211,170,.16); color: var(--ok); margin-left: 6px; }
 
 /* collection */
@@ -193,15 +213,30 @@ details[open] summary { margin-bottom: 12px; }
     <section class="col" aria-label="Inputs">
       <div class="card intro">
         <h1 style="font-size:24px">Image to 3D</h1>
-        <p>Drop a photo of one object. Add a side view for real depth. Rate what comes out, and Artoo learns which shape settings suit your images.</p>
+        <p>Drop a photo of one object. For real photos, turn on AI depth. Add a side view for true thickness. Rate what comes out, and Artoo learns which settings suit your images.</p>
       </div>
 
       <div class="card">
         <div class="row"><span class="label">Views</span><span class="num" id="view-count"></span></div>
         <div class="views" id="views"></div>
         <p class="tip" id="tip">Front is required. Side: the same object turned to face right. Back is used for colour only.</p>
+        <div class="ai">
+          <div class="row">
+            <span class="label" id="ai-l">AI depth</span>
+            <button class="switch" id="ai-toggle" type="button" role="switch" aria-checked="false" aria-labelledby="ai-l">Off</button>
+          </div>
+          <div class="ai-body">
+            <canvas id="ai-preview" width="56" height="56" hidden aria-label="Depth map of the front view"></canvas>
+            <p class="note" id="ai-note" aria-live="polite"></p>
+          </div>
+          <div class="meter" id="ai-meter" hidden><span></span></div>
+        </div>
         <div class="field">
-          <div class="row"><label class="label" for="tolerance">Background cutout</label><span class="num" id="tolerance-v"></span></div>
+          <span class="label" id="cut-l">Background</span>
+          <div class="seg" id="cutmode" role="group" aria-labelledby="cut-l"></div>
+        </div>
+        <div class="field">
+          <div class="row"><label class="label" for="tolerance">Colour tolerance</label><span class="num" id="tolerance-v"></span></div>
           <input type="range" id="tolerance" min="10" max="90" step="1">
         </div>
       </div>
@@ -233,6 +268,7 @@ details[open] summary { margin-bottom: 12px; }
           <div class="field"><div class="row"><label class="label" for="inflate">Thickness</label><span class="num" id="inflate-v"></span></div><input type="range" id="inflate" min="0.3" max="1.4" step="0.05"></div>
           <div class="field"><div class="row"><label class="label" for="smooth">Smoothing</label><span class="num" id="smooth-v"></span></div><input type="range" id="smooth" min="0" max="12" step="1"></div>
           <div class="field"><div class="row"><label class="label" for="detail">Surface detail</label><span class="num" id="detail-v"></span></div><input type="range" id="detail" min="0" max="0.3" step="0.01"></div>
+          <div class="field"><div class="row"><label class="label" for="depthWeight">AI depth strength</label><span class="num" id="depthWeight-v"></span></div><input type="range" id="depthWeight" min="0" max="1" step="0.05"></div>
         </div>
         <button class="btn primary" id="go" type="button">Generate 3D model</button>
       </div>
@@ -255,6 +291,22 @@ details[open] summary { margin-bottom: 12px; }
         </div>
       </div>
       <div class="variants" id="variant-list" aria-label="Candidates"></div>
+      <section class="card copy" id="copy" aria-labelledby="copy-h">
+        <div class="row"><h2 id="copy-h" style="font-size:16px">Copy</h2><span class="big num" id="copy-score"></span></div>
+        <p class="note">Your front image is the original. Artoo renders the 3D copy from the same viewpoint and scores how closely it matches. Auto-copy tries settings until the copy is as close and as smooth as it can get.</p>
+        <div class="copy-tiles">
+          <figure><img id="copy-ref" alt="Your image, cropped to the subject"><figcaption>Your image</figcaption></figure>
+          <figure><img id="copy-model" alt="The 3D copy seen from the same viewpoint"><figcaption>3D copy</figcaption></figure>
+          <figure><canvas id="copy-diff" aria-label="Difference between the two outlines"></canvas><figcaption><span class="key k-ok"></span>match <span class="key k-miss"></span>missing <span class="key k-extra"></span>extra</figcaption></figure>
+        </div>
+        <div class="copy-foot">
+          <div class="arms" id="copy-parts"></div>
+          <div class="field" style="align-content:start">
+            <button class="btn primary" id="auto-copy" type="button">Auto-copy</button>
+            <p class="note" id="auto-note" aria-live="polite">About 10 seconds. Thickness is only judged when there is a side view.</p>
+          </div>
+        </div>
+      </section>
     </section>
 
     <aside class="col result" aria-label="Result">
@@ -289,23 +341,24 @@ details[open] summary { margin-bottom: 12px; }
     <div>
       <h2 style="font-size:18px;margin-bottom:10px">How it builds a model</h2>
       <ul>
-        <li><strong>Cutout.</strong> The plain background is flooded away from the edges; transparent PNGs use their alpha.</li>
-        <li><strong>Shape.</strong> A Poisson solve inside the outline gives every part a round cross-section sized to its own width. A side photo replaces that guess with the real profile and carves the volume.</li>
+        <li><strong>Cutout.</strong> A plain background is flooded away from the edges; transparent PNGs use their alpha. With AI depth, the subject is whatever stands out from the floor and backdrop in depth, so busy real photos work too.</li>
+        <li><strong>Shape.</strong> A Poisson solve inside the outline gives every part a round cross-section sized to its own width. AI depth (Depth Anything V2, running on your device) pushes forward what is nearer, and a side photo replaces the thickness guess with the real profile.</li>
         <li><strong>Surface.</strong> Marching cubes extracts the volume; Taubin smoothing removes the stair-steps without shrinking it.</li>
         <li><strong>Texture.</strong> Each face takes colour from the photo that faces it, with colours bled past the outline so edges stay clean.</li>
+        <li><strong>Copy check.</strong> The model is rendered from the photo's viewpoint and scored on outline, side profile, relief and smoothness; Auto-copy searches the settings for the best score.</li>
       </ul>
     </div>
     <div>
       <h2 style="font-size:18px;margin-bottom:10px">What "learning" means here</h2>
       <p>Each candidate uses a different shape recipe. Your stars update a running estimate for each recipe (Thompson sampling), so good recipes get picked more often and untried ones still get a turn. Artoo does not retrain a neural network.</p>
-      <p>Tips: one object, filling most of the frame, on a plain background that contrasts with it, lit evenly. For a side view, keep the same distance and turn the object to face right.</p>
+      <p>Tips: one object, filling most of the frame, lit evenly. Plain backgrounds need no AI; for real photos turn AI depth on. Thin parts touching the floor (legs, cables) can be lost. For a side view, keep the same distance and turn the object to face right.</p>
     </div>
     <div class="scroll-x">
       <h2 style="font-size:18px;margin-bottom:10px">Artoo next to cloud image-to-3D</h2>
       <table class="cmp">
         <thead><tr><th></th><th>Artoo (this page)</th><th>Cloud services such as Meshy, Tripo or Rodin</th></tr></thead>
         <tbody>
-          <tr><th>Hidden sides</th><td>Inferred from outline and side view</td><td>Imagined by a trained network</td></tr>
+          <tr><th>Hidden sides</th><td>Inferred from outline, AI depth and side view</td><td>Imagined by a trained network</td></tr>
           <tr><th>Speed</th><td>About a second, in your browser</td><td>Usually minutes, on their servers</td></tr>
           <tr><th>Cost and privacy</th><td>Free; images stay on your device</td><td>Paid credits; images are uploaded</td></tr>
           <tr><th>Best for</th><td>Toys, mascots, logos, rounded objects</td><td>Complex shapes, people, realistic assets</td></tr>

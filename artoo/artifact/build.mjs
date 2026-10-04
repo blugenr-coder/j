@@ -26,7 +26,8 @@ const header = [
 ].join('\n');
 
 const sources = [
-  [path.join(JS, 'engine.js')], [path.join(JS, 'sample.js')], [path.join(JS, 'viewer.js')], [path.join(HERE, 'app.js')],
+  [path.join(JS, 'engine.js')], [path.join(JS, 'sample.js')], [path.join(JS, 'viewer.js')],
+  [path.join(JS, 'depth.js')], [path.join(JS, 'match.js')], [path.join(HERE, 'app.js')],
 ];
 
 const seen = new Map();

@@ -13,6 +13,8 @@ It shares nothing with it except the `package.json` scripts.
   no cost. Signed-in viewers keep a private collection (claude.ai `db`), and
   exports are offered through claude.ai's file saving. Build it with
   `npm run build:artoo-artifact` → `artifact/dist/artoo-studio.html`.
+  Publish it with the files from `node artoo/artifact/fetch-ai.mjs` under
+  `ai/`, or the AI depth switch reports that it cannot start.
 - **Server app** (`server.mjs` + `public/`) — the same browser engine, plus
   real image-to-3D through Meshy with your API key, and a shared dataset export.
 
@@ -34,6 +36,36 @@ It shares nothing with it except the `package.json` scripts.
 
 Exports: GLB (textures embedded as JPEG), OBJ, and STL scaled to 100 mm tall.
 It still cannot see what a photo hides; for that, use the Meshy engine.
+
+Also: the voxel grid is fitted to the subject (not the photo), outlines and
+height fields are Gaussian-smoothed, mirror-symmetric subjects get symmetric
+depth, and models get a flat base so they stand (and print).
+
+### AI depth (`public/js/depth.js`)
+
+Depth Anything V2 Small (Apache-2.0, int8 ONNX, 27 MB) running in ONNX Runtime
+Web on the CPU, single-threaded: about 1–3 s per photo at 392 px. It does two
+jobs:
+
+- **Cutout for real photos.** The backdrop's depth is estimated row by row
+  from the image's left and right edges, so a floor that is "near" is not
+  mistaken for the subject; the subject is what rises above it (Otsu threshold,
+  plus a short hysteresis reach for feet and wheels).
+- **Relief.** Nearer parts come forward on the front surface, scaled to the
+  body's own thickness and tapered at the outline. The back stays smooth.
+
+The artifact serves the runtime and model next to the page
+(`node artoo/artifact/fetch-ai.mjs` downloads them into `artifact/dist/ai/`).
+
+### Copy check and auto-copy (`public/js/match.js`)
+
+The model is rendered from the photo's viewpoint and scored on outline (front
+silhouette IoU), side profile (with a side photo), relief (correlation with
+the AI depth, interior only) and smoothness (normal-map roughness). Auto-copy
+runs a coordinate search over smoothing, detail, AI-depth strength and
+symmetry, at draft detail without textures (about 10 s), then rebuilds the
+winner. Thickness is not searched: a front photo cannot show it, and a flatter
+model would only score as smoother.
 
 ## Run it
 
