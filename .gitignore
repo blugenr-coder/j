@@ -15,3 +15,4 @@ node_modules/
 # Artoo keeps its generated models, uploads and ratings here.
 /artoo/data/
 /artoo/test/out/
+/artoo/artifact/dist/

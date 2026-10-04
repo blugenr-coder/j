@@ -1,6 +1,6 @@
 import { mountShell, api, toast, esc, starsHtml, icons } from './shell.js';
 import { createViewer } from './viewer.js';
-import { loadImage, buildRelief, toGlb } from './relief.js';
+import { loadImage, buildModel, toGLB } from './engine.js';
 
 mountShell();
 
@@ -37,7 +37,7 @@ function updateNote() {
   if (!model) { note.hidden = true; return; }
   if (model.engine === 'demo') {
     note.hidden = false;
-    note.textContent = 'Demo engine: builds a 2.5D "inflated" relief in your browser. Free and instant, but it can only guess the front — use a Meshy model for real 3D.';
+    note.textContent = 'Browser engine: free and instant. It rounds the outline into a solid and paints the photo on, so hidden sides are a guess. Use a Meshy model when the back matters.';
   } else {
     note.hidden = config.engines.meshy;
     note.textContent = 'The server has no MESHY_API_KEY, so this model cannot generate yet.';
@@ -79,10 +79,8 @@ async function show(el, gen) {
 
 async function runDemo(el, gen) {
   try {
-    setStatus(el, 'Building relief…', 40);
-    await new Promise(r => setTimeout(r, 30)); // let the label paint first
-    const obj = await buildRelief(imageEl, gen.settings);
-    const glb = await toGlb(obj);
+    const { object } = await buildModel({ front: imageEl }, gen.settings, (i, stage) => setStatus(el, `${stage}…`, (i + 1) * 20));
+    const glb = await toGLB(object);
     const saved = await api(`generations/${gen.id}/glb`, { method: 'PUT', raw: glb });
     await show(el, saved);
   } catch (e) {

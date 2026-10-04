@@ -4,8 +4,8 @@
 //
 //   MESHY_API_KEY=msy_... node artoo/server.mjs      → http://127.0.0.1:8100
 //
-// Without a key the "demo" engine still works: it builds a 2.5D relief in the
-// browser. That is a stand-in so the loop can be tried, not real image-to-3D.
+// Without a key the "demo" engine still works: public/js/engine.js builds the
+// model in the browser from the outline (and guesses the hidden sides).
 
 import http from 'node:http';
 import { readFile, writeFile, mkdir, rename, unlink, stat } from 'node:fs/promises';
@@ -40,11 +40,13 @@ const PRESETS = {
     { label: 'Smart topology (T2)', settings: { model_type: 'smart-topology', ai_model: 'meshy-t2', target_polycount: 20000 } },
     { label: 'Meshy 6', settings: { model_type: 'standard', ai_model: 'meshy-6', should_remesh: false } },
   ],
+  // Browser engine (public/js/engine.js): shape recipes and styles.
   demo: [
-    { label: 'Soft inflate', settings: { inflate: 0.55, detail: 0.08, resolution: 96, smooth: 2 } },
-    { label: 'Deep inflate', settings: { inflate: 0.9, detail: 0.05, resolution: 96, smooth: 3 } },
-    { label: 'Relief detail', settings: { inflate: 0.35, detail: 0.22, resolution: 128, smooth: 1 } },
-    { label: 'Chunky low-res', settings: { inflate: 0.6, detail: 0.1, resolution: 48, smooth: 2 } },
+    { label: 'Round', settings: { style: 'textured', inflate: 1.0, smooth: 6, detail: 0.04 } },
+    { label: 'Balanced', settings: { style: 'textured', inflate: 0.85, smooth: 4, detail: 0.08 } },
+    { label: 'Puffy', settings: { style: 'textured', inflate: 1.25, smooth: 8, detail: 0.02 } },
+    { label: 'Relief', settings: { style: 'textured', inflate: 0.5, smooth: 3, detail: 0.16 } },
+    { label: 'Low-poly', settings: { style: 'lowpoly', inflate: 0.9, smooth: 2, detail: 0.06 } },
   ],
 };
 

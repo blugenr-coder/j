@@ -6,6 +6,35 @@ which generation settings give the best results for your kind of images.
 This folder is a separate app from WorksheetHub in the rest of the repository.
 It shares nothing with it except the `package.json` scripts.
 
+## Two editions
+
+- **Artifact** (`artifact/`) — one HTML page published on claude.ai as
+  *Artoo Studio*. Everything runs in the viewer's browser: no server, no key,
+  no cost. Signed-in viewers keep a private collection (claude.ai `db`), and
+  exports are offered through claude.ai's file saving. Build it with
+  `npm run build:artoo-artifact` → `artifact/dist/artoo-studio.html`.
+- **Server app** (`server.mjs` + `public/`) — the same browser engine, plus
+  real image-to-3D through Meshy with your API key, and a shared dataset export.
+
+## The browser engine (`public/js/engine.js`)
+
+1. **Cutout** — floods the plain background in from the edges (or uses alpha),
+   removes specks, keeps the largest piece. A slider sets the tolerance.
+2. **Shape** — solves a Poisson equation inside the outline; its square root
+   gives every part a round cross-section sized to its own width (arms stay
+   thinner than bodies). A side photo replaces that guess with the measured
+   profile and also carves the volume (visual hull, smooth-min seam).
+3. **Surface** — samples the volume on a grid, extracts it with marching cubes
+   and applies Taubin smoothing, which removes stair-steps without shrinking.
+4. **Texture** — each face takes colour from the photo that faces it (front,
+   back or side), from an atlas whose colours are bled past the outline so rims
+   never pick up the backdrop.
+5. **Style** — textured, clay, low-poly (flat facets, vertex colours) or voxel
+   (exposed cube faces only).
+
+Exports: GLB (textures embedded as JPEG), OBJ, and STL scaled to 100 mm tall.
+It still cannot see what a photo hides; for that, use the Meshy engine.
+
 ## Run it
 
 ```bash
@@ -54,10 +83,8 @@ the material a real fine-tune of an open-source 3D network would need later.
   (`POST /openapi/v1/image-to-3d`, then polls the task), downloads the GLB as
   soon as it is ready (Meshy's links expire) and serves it locally. The key
   stays on the server. Each generation spends Meshy credits.
-- **Demo** (`public/js/relief.js`) — free, runs in the browser: cuts the
-  subject out of a plain background and inflates it into a 2.5D relief. It
-  cannot see the back of an object. It exists so the full loop can be tried
-  without a key.
+- **Browser** (`public/js/engine.js`, called "demo" in the API) — free and
+  instant, described above. Hidden sides are inferred, not seen.
 
 Adding another engine (Tripo, Hunyuan3D, TRELLIS on your own GPU…) means a new
 entry in `PRESETS` and a start/poll pair like `startMeshy` / `refreshMeshy`.

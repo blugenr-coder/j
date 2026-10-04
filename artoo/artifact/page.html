@@ -1,0 +1,317 @@
+<title>Artoo Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: a three-column workbench under a slim bar: inputs | turntable stage | result,
+   with the saved collection running along the bottom like a contact sheet. */
+:root {
+  --ground: #2c353b;
+  --slate: #39444b;
+  --panel: #3f4b53;
+  --raised: #4b5961;
+  --line: rgba(232, 238, 241, 0.1);
+  --ink: #eef2f4;
+  --muted: #a7b3ba;
+  --faint: #7f8c93;
+  --chalk: #e3e9ec;
+  --ok: #93d3aa;
+  --warn: #f0c27a;
+  --bad: #f1a5a0;
+  --star: #f3d27a;
+  --display: 'Sora', 'Avenir Next', 'Segoe UI', sans-serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --r: 10px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 14px/1.5 var(--body); -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(120% 70% at 50% 18%, #4a565e 0%, var(--slate) 40%, var(--ground) 100%);
+  background-attachment: fixed;
+}
+button, input, select { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.wrap { padding-inline: clamp(16px, 3vw, 36px); padding-block: 0 40px; max-width: 1560px; margin: 0 auto; }
+
+/* ---- bar */
+.bar { display: flex; align-items: center; gap: 24px; padding-block: 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+.logo { font: 600 24px var(--display); letter-spacing: -0.02em; display: flex; align-items: baseline; }
+.logo .oo { font-weight: 400; letter-spacing: -0.2em; margin-right: 0.14em; }
+.logo .dot { color: var(--faint); }
+.bar nav { display: flex; gap: 22px; margin-left: auto; }
+.bar nav a { color: var(--muted); text-decoration: none; font-size: 13px; }
+.bar nav a:hover, .bar nav a:focus-visible { color: var(--ink); }
+.who { font-size: 12px; color: var(--faint); }
+
+/* ---- controls */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 14px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--raised); color: var(--ink);
+  font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s, transform .1s; }
+.btn:hover { background: #57666f; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--chalk); color: #1d2529; border-color: transparent; }
+.btn.primary:hover { background: #fff; }
+.btn.quiet { background: transparent; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn svg { width: 16px; height: 16px; }
+:focus-visible { outline: 2px solid var(--chalk); outline-offset: 2px; }
+.seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; flex-wrap: wrap; }
+.seg button { flex: 1; background: transparent; border: 0; padding: 7px 10px; font-size: 12.5px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--raised); color: var(--ink); }
+.label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); }
+.field { display: grid; gap: 7px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+input[type=range] { width: 100%; accent-color: var(--chalk); }
+.num { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+details summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+details[open] summary { margin-bottom: 12px; }
+
+/* ---- workbench */
+.bench { display: grid; grid-template-columns: 300px minmax(0, 1fr) 290px; gap: 20px; padding-top: 22px; align-items: start; }
+.col { display: grid; gap: 16px; min-width: 0; }
+.card { background: color-mix(in srgb, var(--panel) 80%, transparent); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.intro p { margin: 0; color: var(--muted); font-size: 13px; }
+
+/* views: front / side / back */
+.views { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.slot { position: relative; aspect-ratio: 1; border: 1.5px dashed rgba(232,238,241,.22); border-radius: 8px; display: grid; place-items: center;
+  overflow: hidden; cursor: pointer; background: rgba(0,0,0,.08); text-align: center; }
+.slot:hover, .slot.over { border-color: var(--chalk); }
+.slot.filled { border-style: solid; border-color: var(--line); }
+.slot canvas { width: 100%; height: 100%; object-fit: contain; display: block; }
+.slot input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.slot .tag { position: absolute; left: 6px; top: 6px; font-size: 10.5px; padding: 2px 6px; border-radius: 99px; background: rgba(20,26,29,.75); color: var(--ink); pointer-events: none; }
+.slot .hint { font-size: 11px; color: var(--faint); padding: 6px; pointer-events: none; }
+.slot .x { position: absolute; right: 4px; top: 4px; z-index: 2; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(20,26,29,.8); color: var(--ink); cursor: pointer; font-size: 13px; line-height: 1; }
+.tip { font-size: 12px; color: var(--muted); margin: 0; }
+
+/* stage */
+.stage { position: relative; border-radius: 14px; overflow: hidden; min-height: 420px; height: min(68vh, 680px);
+  background: radial-gradient(70% 60% at 50% 38%, #5a676f 0%, #3b464d 55%, #2e373d 100%); border: 1px solid var(--line); }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.toolbar { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; gap: 8px; flex-wrap: wrap; justify-content: space-between; pointer-events: none; }
+.toolbar > * { pointer-events: auto; }
+.toolbar .seg { background: rgba(28,34,38,.72); backdrop-filter: blur(6px); }
+.toolbar .seg button { padding: 6px 10px; }
+.tools-right { display: flex; gap: 6px; }
+.icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--line); background: rgba(28,34,38,.72); cursor: pointer; color: var(--ink); }
+.icon[aria-pressed="true"] { background: var(--raised); }
+.icon svg { width: 16px; height: 16px; }
+.caption { position: absolute; left: 14px; bottom: 12px; font-size: 12px; color: var(--muted); pointer-events: none; }
+.caption b { color: var(--ink); font-weight: 500; }
+
+.pipeline { position: absolute; inset: auto 12px 12px auto; background: rgba(28,34,38,.82); backdrop-filter: blur(6px); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px; width: 220px; display: grid; gap: 6px; font-size: 12.5px; }
+.pipeline ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.pipeline li { display: flex; align-items: center; gap: 8px; color: var(--faint); }
+.pipeline li::before { content: ''; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid currentColor; flex: none; }
+.pipeline li.done { color: var(--muted); }
+.pipeline li.done::before { background: var(--ok); border-color: var(--ok); }
+.pipeline li.now { color: var(--ink); }
+.pipeline li.now::before { border-color: var(--warn); background: var(--warn); animation: pulse 1s infinite alternate; }
+@keyframes pulse { to { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .pipeline li.now::before { animation: none; } }
+
+/* variants */
+.variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.variant { border: 1px solid var(--line); border-radius: 9px; background: rgba(0,0,0,.1); padding: 0; overflow: hidden; cursor: pointer; text-align: left; display: grid; color: var(--ink); }
+.variant[aria-pressed="true"] { border-color: var(--chalk); box-shadow: 0 0 0 1px var(--chalk); }
+.variant img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #3b464d; }
+.variant span { padding: 6px 8px; font-size: 12px; display: flex; justify-content: space-between; gap: 6px; }
+.variant .stars-mini { color: var(--star); font-size: 11px; }
+
+/* result */
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin: 0; }
+.stats div { display: grid; gap: 2px; }
+.stats dt { font-size: 11px; color: var(--faint); text-transform: uppercase; letter-spacing: .07em; }
+.stats dd { margin: 0; font-family: var(--mono); font-size: 15px; font-variant-numeric: tabular-nums; }
+.stars { display: flex; gap: 4px; }
+.stars button { background: none; border: 0; font-size: 26px; line-height: 1; padding: 0 1px; color: rgba(232,238,241,.22); cursor: pointer; }
+.stars button.on { color: var(--star); }
+.stars button:hover { transform: scale(1.1); }
+.note { font-size: 12px; color: var(--muted); margin: 0; }
+.note.warn { color: var(--warn); }
+.note.bad { color: var(--bad); }
+.arms { display: grid; gap: 9px; }
+.arm { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; font-size: 12.5px; }
+.arm .bar-t { grid-column: 1 / -1; height: 5px; border-radius: 5px; background: rgba(232,238,241,.08); overflow: hidden; }
+.arm .bar-t span { display: block; height: 100%; background: var(--faint); }
+.arm.lead .bar-t span { background: var(--ok); }
+.pill { font-size: 10.5px; padding: 1px 7px; border-radius: 99px; background: rgba(147,211,170,.16); color: var(--ok); margin-left: 6px; }
+
+/* collection */
+.sheet { margin-top: 26px; border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 14px; }
+.shelf { display: grid; grid-auto-flow: column; grid-auto-columns: 150px; gap: 12px; overflow-x: auto; padding-bottom: 6px; }
+.item { border: 1px solid var(--line); border-radius: 9px; overflow: hidden; background: rgba(0,0,0,.12); display: grid; }
+.item button.open { all: unset; cursor: pointer; display: block; }
+.item button.open:focus-visible { outline: 2px solid var(--chalk); }
+.item img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: #3b464d; }
+.item .meta { padding: 7px 9px; font-size: 12px; display: grid; gap: 2px; }
+.item .meta .sub { color: var(--faint); font-size: 11px; display: flex; justify-content: space-between; }
+.item .del { all: unset; cursor: pointer; color: var(--faint); font-size: 11px; }
+.item .del:hover, .item .del:focus-visible { color: var(--bad); }
+.empty { color: var(--muted); font-size: 13px; padding: 18px; border: 1px dashed var(--line); border-radius: 9px; }
+
+/* how it works */
+.how { margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; }
+.how p, .how li { color: var(--muted); font-size: 13px; max-width: 62ch; }
+.how ul { padding-left: 18px; margin: 0; }
+.how strong { color: var(--ink); font-weight: 500; }
+.cmp { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.cmp th, .cmp td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.cmp th { color: var(--faint); font-weight: 500; }
+.scroll-x { overflow-x: auto; }
+
+.toast { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: min(420px, calc(100vw - 32px)); z-index: 30;
+  background: var(--raised); border: 1px solid var(--line); border-radius: 9px; padding: 11px 14px; font-size: 13px; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+
+@media (max-width: 1180px) {
+  .bench { grid-template-columns: 290px minmax(0, 1fr); }
+  .result { grid-column: 1 / -1; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); }
+}
+@media (max-width: 760px) {
+  .bench { grid-template-columns: 1fr; }
+  .stage { height: 62vh; min-height: 360px; }
+  .bar nav { display: none; }
+  .pipeline { width: auto; left: 12px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="logo" aria-label="Artoo">Art<span class="oo">oo</span><span class="dot">.</span></div>
+    <span class="who" id="who"></span>
+    <nav aria-label="Sections"><a href="#studio">Studio</a><a href="#collection">Collection</a><a href="#how">How it works</a></nav>
+  </header>
+
+  <main class="bench" id="studio">
+    <section class="col" aria-label="Inputs">
+      <div class="card intro">
+        <h1 style="font-size:24px">Image to 3D</h1>
+        <p>Drop a photo of one object. Add a side view for real depth. Rate what comes out, and Artoo learns which shape settings suit your images.</p>
+      </div>
+
+      <div class="card">
+        <div class="row"><span class="label">Views</span><span class="num" id="view-count"></span></div>
+        <div class="views" id="views"></div>
+        <p class="tip" id="tip">Front is required. Side: the same object turned to face right. Back is used for colour only.</p>
+        <div class="field">
+          <div class="row"><label class="label" for="tolerance">Background cutout</label><span class="num" id="tolerance-v"></span></div>
+          <input type="range" id="tolerance" min="10" max="90" step="1">
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <span class="label" id="style-l">Style</span>
+          <div class="seg" id="style" role="group" aria-labelledby="style-l"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="quality-l">Mesh detail</span>
+          <div class="seg" id="quality" role="group" aria-labelledby="quality-l"></div>
+        </div>
+        <div class="field">
+          <span class="label" id="shape-l">Shape settings</span>
+          <div class="seg" id="shape-mode" role="group" aria-labelledby="shape-l">
+            <button type="button" data-v="auto" aria-pressed="true">Learned</button>
+            <button type="button" data-v="manual" aria-pressed="false">Manual</button>
+          </div>
+        </div>
+        <div class="field" id="variants-f">
+          <span class="label" id="variants-l">Candidates</span>
+          <div class="seg" id="variants" role="group" aria-labelledby="variants-l">
+            <button type="button" data-v="1" aria-pressed="false">1</button>
+            <button type="button" data-v="3" aria-pressed="true">3 to compare</button>
+          </div>
+        </div>
+        <div id="manual" hidden class="field" style="gap:12px">
+          <div class="field"><div class="row"><label class="label" for="inflate">Thickness</label><span class="num" id="inflate-v"></span></div><input type="range" id="inflate" min="0.3" max="1.4" step="0.05"></div>
+          <div class="field"><div class="row"><label class="label" for="smooth">Smoothing</label><span class="num" id="smooth-v"></span></div><input type="range" id="smooth" min="0" max="12" step="1"></div>
+          <div class="field"><div class="row"><label class="label" for="detail">Surface detail</label><span class="num" id="detail-v"></span></div><input type="range" id="detail" min="0" max="0.3" step="0.01"></div>
+        </div>
+        <button class="btn primary" id="go" type="button">Generate 3D model</button>
+      </div>
+    </section>
+
+    <section class="col" aria-label="Model">
+      <div class="stage" id="stage">
+        <div class="toolbar">
+          <div class="seg" id="viewmode" role="group" aria-label="View mode"></div>
+          <div class="tools-right">
+            <div class="seg" id="light" role="group" aria-label="Lighting"></div>
+            <button class="icon" id="spin" type="button" aria-pressed="true" aria-label="Turntable" title="Turntable"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M20 12a8 8 0 1 1-3-6.2"/><path d="M20 4v5h-5"/></svg></button>
+            <button class="icon" id="reset" type="button" aria-label="Reset view" title="Reset view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9V4h5M20 15v5h-5M4 4l6 6M20 20l-6-6"/></svg></button>
+          </div>
+        </div>
+        <div class="caption" id="caption"></div>
+        <div class="pipeline" id="pipeline" hidden aria-live="polite">
+          <div class="row"><b id="pipe-title" style="font-weight:500">Building</b><span class="num" id="pipe-time"></span></div>
+          <ol id="pipe-steps"></ol>
+        </div>
+      </div>
+      <div class="variants" id="variant-list" aria-label="Candidates"></div>
+    </section>
+
+    <aside class="col result" aria-label="Result">
+      <div class="card">
+        <div class="row"><h2 style="font-size:16px" id="result-title">Result</h2><span class="label" id="result-tag"></span></div>
+        <dl class="stats" id="stats"></dl>
+        <div class="field">
+          <span class="label" id="rate-l">Your rating</span>
+          <div class="stars" id="stars" role="group" aria-labelledby="rate-l"></div>
+          <p class="note" id="rate-note">Ratings teach Artoo which shape settings to use for you.</p>
+        </div>
+      </div>
+      <div class="card">
+        <span class="label">Export</span>
+        <button class="btn" id="dl-zip" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>GLB + OBJ + STL (.zip)</button>
+        <button class="btn quiet" id="dl-png" type="button">Save this view as PNG</button>
+        <p class="note" id="dl-note">GLB for web, games and AR. OBJ for editing. STL for 3D printing, 100 mm tall.</p>
+      </div>
+      <div class="card">
+        <div class="row"><span class="label">What it has learned</span><span class="num" id="learn-n"></span></div>
+        <div class="arms" id="arms"></div>
+      </div>
+    </aside>
+  </main>
+
+  <section class="sheet" id="collection" aria-label="Your collection">
+    <div class="row"><h2 style="font-size:18px">Your collection</h2><span class="note" id="store-note"></span></div>
+    <div class="shelf" id="shelf"></div>
+  </section>
+
+  <section class="how" id="how">
+    <div>
+      <h2 style="font-size:18px;margin-bottom:10px">How it builds a model</h2>
+      <ul>
+        <li><strong>Cutout.</strong> The plain background is flooded away from the edges; transparent PNGs use their alpha.</li>
+        <li><strong>Shape.</strong> A Poisson solve inside the outline gives every part a round cross-section sized to its own width. A side photo replaces that guess with the real profile and carves the volume.</li>
+        <li><strong>Surface.</strong> Marching cubes extracts the volume; Taubin smoothing removes the stair-steps without shrinking it.</li>
+        <li><strong>Texture.</strong> Each face takes colour from the photo that faces it, with colours bled past the outline so edges stay clean.</li>
+      </ul>
+    </div>
+    <div>
+      <h2 style="font-size:18px;margin-bottom:10px">What "learning" means here</h2>
+      <p>Each candidate uses a different shape recipe. Your stars update a running estimate for each recipe (Thompson sampling), so good recipes get picked more often and untried ones still get a turn. Artoo does not retrain a neural network.</p>
+      <p>Tips: one object, filling most of the frame, on a plain background that contrasts with it, lit evenly. For a side view, keep the same distance and turn the object to face right.</p>
+    </div>
+    <div class="scroll-x">
+      <h2 style="font-size:18px;margin-bottom:10px">Artoo next to cloud image-to-3D</h2>
+      <table class="cmp">
+        <thead><tr><th></th><th>Artoo (this page)</th><th>Cloud services such as Meshy, Tripo or Rodin</th></tr></thead>
+        <tbody>
+          <tr><th>Hidden sides</th><td>Inferred from outline and side view</td><td>Imagined by a trained network</td></tr>
+          <tr><th>Speed</th><td>About a second, in your browser</td><td>Usually minutes, on their servers</td></tr>
+          <tr><th>Cost and privacy</th><td>Free; images stay on your device</td><td>Paid credits; images are uploaded</td></tr>
+          <tr><th>Best for</th><td>Toys, mascots, logos, rounded objects</td><td>Complex shapes, people, realistic assets</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+<!--APP-->
