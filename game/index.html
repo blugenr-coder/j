@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Drop Zone — Character Prototype</title>
+  <meta name="description" content="Playable 3D prototype of a stylised battle-royale character: WASD to run, Space to jump, six skins on one body.">
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="scene" aria-label="3D game view"></canvas>
+
+  <header class="badge">
+    <div class="logo">DROP ZONE</div>
+    <div class="sub">character prototype</div>
+  </header>
+
+  <aside class="help" aria-label="Controls">
+    <h2>Controls</h2>
+    <ul>
+      <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> run</li>
+      <li><kbd>Space</kbd> jump</li>
+      <li><kbd>Q</kbd><kbd>E</kbd> / drag — orbit camera</li>
+      <li>Wheel — zoom</li>
+      <li><kbd>1</kbd>–<kbd>6</kbd> skins · <kbd>F</kbd> face</li>
+      <li><kbd>H</kbd> hide this</li>
+    </ul>
+  </aside>
+
+  <nav class="dock" aria-label="Character options">
+    <div class="row" id="skins" role="group" aria-label="Skins"></div>
+    <div class="row small" id="faces" role="group" aria-label="Expressions"></div>
+  </nav>
+
+  <noscript><p class="nojs">This prototype needs JavaScript and WebGL.</p></noscript>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
