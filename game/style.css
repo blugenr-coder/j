@@ -30,6 +30,8 @@ kbd { display: inline-block; min-width: 22px; padding: 1px 6px; margin-right: 3p
 .row button.on { background: var(--accent); color: var(--ink); border-color: #fff3; }
 .row button .num { font-size: 12px; opacity: .7; margin-right: 6px; }
 .row.small button { font-size: 13px; padding: 5px 10px; }
+.loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 26px; color: #fff; -webkit-text-stroke: 1.5px var(--ink); paint-order: stroke fill; background: #8fc8f2; transition: opacity .4s; }
+.ready .loading { opacity: 0; pointer-events: none; }
 .nojs { position: fixed; inset: 40% 0 auto; text-align: center; font-size: 20px; }
 
 @media (max-width: 640px) {

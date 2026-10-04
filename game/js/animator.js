@@ -193,5 +193,6 @@ export class Animator {
     j.knR.rotation.x = p.kneeR;
     j.anL.rotation.x = p.ankL;
     j.anR.rotation.x = p.ankR;
+    this.c.sync();
   }
 }

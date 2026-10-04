@@ -24,7 +24,8 @@ const TYPES = {
   '.woff2': 'font/woff2',
   '.txt':  'text/plain; charset=utf-8',
   '.xml':  'application/xml; charset=utf-8',
-  '.webmanifest': 'application/manifest+json'
+  '.webmanifest': 'application/manifest+json',
+  '.glb':  'model/gltf-binary'
 };
 
 /* Sent on every page. A site with no third-party scripts can afford a strict

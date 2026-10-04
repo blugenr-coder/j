@@ -42,7 +42,13 @@ const world = buildWorld(scene);
 /* ───────────── the player ───────────── */
 
 const params = new URLSearchParams(location.search);
-const character = new BaseCharacter();
+let character;
+try {
+  character = await BaseCharacter.load('models/character.glb');
+} catch (err) {
+  document.getElementById('loading').textContent = 'Could not load the character model.';
+  throw err;
+}
 character.applySkin(skinById(params.get('skin') ?? 'default'));
 scene.add(character.root);
 const animator = new Animator(character);
