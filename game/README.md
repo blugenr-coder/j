@@ -34,9 +34,13 @@ If `npx` is available the script then quantizes the file with glTF-Transform
 
 How it is built: every part is a signed distance field joined with smooth
 unions, so arms, neck and legs grow out of the torso as one skin. Marching
-cubes meshes each field; Blender cleans, decimates, assigns materials and
-UVs, builds the armature, skins every layer with the same weight function
-(so clothes bend exactly with the body) and adds shape keys for blinking and
+cubes meshes each field; Blender cleans and decimates it, then every vertex
+is snapped back onto the exact surface and given the surface's exact normal
+(the field's gradient), so shading is smooth whatever the triangle count.
+Garment edges are rounded intersections, so hems come out soft. Blender then
+assigns materials and UVs, builds the armature, skins every layer with the
+same weight function (so clothes bend exactly with the body; boots blend from
+ankle to shin like real boots) and adds shape keys for blinking and
 expressions. Arms are modelled in an A-pose; the game lowers them on load.
 
 What the file contains:

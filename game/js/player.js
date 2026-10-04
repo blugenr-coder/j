@@ -28,6 +28,7 @@ export class Player {
     this.sinceGround = 0;
     this.jumpBuffered = 1;
     this.peakVy = 0;
+    this.visualY = this.pos.y;
   }
 
   requestJump() { this.jumpBuffered = 0; }
@@ -48,8 +49,12 @@ export class Player {
     }
     this.yawRate = dt > 0 ? wrapAngle(this.yaw - prevYaw) / dt : 0;
 
+    // Steps up and down small ledges are instant for the physics; the
+    // visible body eases over them so the move never pops.
+    const stepping = this.grounded && Math.abs(this.pos.y - this.visualY) <= STEP + 0.01;
+    this.visualY = stepping ? damp(this.visualY, this.pos.y, 22, dt) : this.pos.y;
     const root = this.char.root;
-    root.position.copy(this.pos);
+    root.position.set(this.pos.x, this.visualY, this.pos.z);
     root.rotation.y = this.yaw;
 
     this.anim.update(dt, {

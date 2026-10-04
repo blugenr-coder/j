@@ -94,6 +94,8 @@ const hawaiian = lazy('hawaiian', () => canvasTexture(256, 256, (g, w, h) => {
 
 /* ───────────── the skins ───────────── */
 
+// Garments are unwrapped as closed cylinders, so the horizontal repeat must
+// be a whole number or a seam shows where the texture wraps round.
 const tex = (map, repeat) => ({ map: map(), repeat });
 
 export const SKINS = [
@@ -106,7 +108,7 @@ export const SKINS = [
     id: 'army', name: 'Army',
     show: ['ShirtCrew', 'SleeveLong', 'Pants', 'Helmet'],
     colors: {
-      Shirt: tex(camo, [2.5, 1]), Sleeve: tex(camo, [1, 1]), Pants: tex(camo, [2, 1]),
+      Shirt: tex(camo, [3, 1]), Sleeve: tex(camo, [1, 1]), Pants: tex(camo, [1, 1]),
       Belt: 0x3a3f22, Boots: 0x3a2a1c, Gloves: 0x3a3f22, Helmet: 0x56653a,
     },
   },
@@ -129,7 +131,7 @@ export const SKINS = [
   {
     id: 'beach', name: 'Beach',
     show: ['ShirtCrew', 'SleeveShort', 'Shorts', 'Sunglasses'],
-    colors: { Shirt: tex(hawaiian, [2.5, 1]), Sleeve: tex(hawaiian, [1, 0.8]), Shorts: 0x2a3550, Belt: 0x2a3550, Boots: 0x2b2b30 },
+    colors: { Shirt: tex(hawaiian, [2, 1]), Sleeve: tex(hawaiian, [1, 0.8]), Shorts: 0x2a3550, Belt: 0x2a3550, Boots: 0x2b2b30 },
   },
 ];
 

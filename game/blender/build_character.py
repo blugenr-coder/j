@@ -237,7 +237,7 @@ def head_full(P):
 # the stair-steps a hard cut leaves after meshing.
 
 def cut(a, b):
-    return smax(a, b, 0.012)
+    return smax(a, b, 0.022)
 
 
 def collar_y(P, front, back, strap_top=2.6, arm_y=1.97):
@@ -296,8 +296,8 @@ def belt(P):
 
 
 def socks(P):
-    d = np.minimum(shin(P, 1), shin(P, -1)) - 0.022
-    return cut(cut(d, above(P, 0.52)), below(P, 0.7))
+    d = np.minimum(shin(P, 1), shin(P, -1)) - 0.03
+    return cut(cut(d, above(P, 0.52)), below(P, 0.75))
 
 
 def boot(P, s):
@@ -355,7 +355,7 @@ def fingers(P):
 def helmet(P):
     shell = cut(head_base(P) - 0.065, above(P, 2.975))
     brim = sd_ellipsoid(P, V(0, 2.985, 0.025), V(0.575, 0.028, 0.6))
-    return np.minimum(shell, brim)
+    return smin(shell, brim, 0.015)
 
 
 def hood(P):
@@ -500,12 +500,47 @@ def face_centres(ob):
     return from_bl(c)
 
 
+def gradient(fn, P, e=5e-4):
+    g = np.empty_like(P)
+    for i in range(3):
+        o = np.zeros(3)
+        o[i] = e
+        g[:, i] = (fn(P + o) - fn(P - o)) / (2 * e)
+    return g
+
+
+def snap(ob, fn, voxel):
+    """Pull every vertex back onto the exact surface. Decimation moves
+    vertices off it; a few clamped Newton steps put them back, so the
+    silhouette follows the true curve instead of the simplified one."""
+    P = mesh_verts(ob)
+    for _ in range(4):
+        d = fn(P)
+        g = gradient(fn, P)
+        gg = np.maximum((g * g).sum(1), 1e-8)
+        step = np.clip(d / gg, -voxel, voxel)[:, None] * g
+        P = P - step
+    ob.data.vertices.foreach_set('co', to_bl(P).ravel())
+    ob.data.update()
+
+
+def exact_normals(ob, fn):
+    """Shade from the surface's true normal (the field's gradient) rather
+    than from the triangles. This is what removes faceting and streaks: the
+    lighting is as smooth as the math, whatever the triangle count."""
+    P = mesh_verts(ob)
+    g = gradient(fn, P)
+    n = g / np.maximum(np.linalg.norm(g, axis=1, keepdims=True), 1e-9)
+    ob.data.normals_split_custom_set_from_vertices(to_bl(n).tolist())
+
+
 def sdf_object(name, fn, lo, hi, voxel, tris):
     verts, faces = polygonize(fn, lo, hi, voxel)
     ob = new_object(name, verts, faces)
     cleanup(ob)
     decimate(ob, tris)
     cleanup(ob)
+    snap(ob, fn, voxel)
     return ob
 
 
@@ -538,28 +573,34 @@ def blob(w, h, d, box=0.0, nu=24, nv=16):
     return v * V(w / 2, h / 2, d / 2), f
 
 
-def torus_arc(R, r, arc, start, nu=20, nv=8):
+def crescent(R, r, arc, start, nu=32, nv=12, flat=0.55):
+    """A tube bent along an arc that tapers to rounded points at both ends:
+    a brush-stroke line for the mouth, with no caps or seams."""
     verts, faces = [], []
     for i in range(nu + 1):
-        a = start + arc * i / nu
-        cx, cy = math.cos(a) * R, math.sin(a) * R
+        t = i / nu
+        a = start + arc * t
+        rad = r * max(math.sin(math.pi * t), 0.0) ** 0.55
+        rad = max(rad, r * 0.04)
         for j in range(nv):
             b = 2 * math.pi * j / nv
-            rr = R + math.cos(b) * r
-            verts.append((math.cos(a) * rr, math.sin(a) * rr, math.sin(b) * r))
+            rr = R + math.cos(b) * rad
+            verts.append((math.cos(a) * rr, math.sin(a) * rr, math.sin(b) * rad * flat))
     for i in range(nu):
         for j in range(nv):
             a0, a1 = i * nv + j, i * nv + (j + 1) % nv
             b0, b1 = a0 + nv, a1 + nv
             faces += [(a0, b0, b1), (a0, b1, a1)]
-    v, f = np.array(verts), np.array(faces)
-    # round end caps
-    for a in (start, start + arc):
-        sv, sf = sphere_mesh(8, 6)
-        sv = sv * r + V(math.cos(a) * R, math.sin(a) * R, 0)
-        f = np.vstack([f, sf + len(v)])
-        v = np.vstack([v, sv])
-    return v, f
+    # close the two pointed ends with a fan
+    v = list(verts)
+    for i, (ring, flip) in enumerate(((0, True), (nu, False))):
+        a = start + arc * (ring / nu)
+        v.append((math.cos(a) * R, math.sin(a) * R, 0.0))
+        c = len(v) - 1
+        for j in range(nv):
+            q0, q1 = ring * nv + j, ring * nv + (j + 1) % nv
+            faces.append((c, q1, q0) if flip else (c, q0, q1))
+    return np.array(v, float), np.array(faces)
 
 
 class Frame:
@@ -678,10 +719,11 @@ def uv_arms(P):
 
 
 def uv_legwear(P):
-    u = 0.5 + np.arctan2(P[:, 0], P[:, 2]) / (2 * np.pi)
-    legs = P[:, 1] < 1.18
-    xs = np.sign(P[:, 0]) * 0.2
-    u = np.where(legs, 0.5 + np.arctan2(P[:, 0] - xs, P[:, 2]) / (2 * np.pi), u)
+    """Each half is unwrapped around its own leg, all the way up to the
+    waist, so the only seams run down the centre front and back, where
+    real trousers have them, and the texture never jumps sideways."""
+    xs = np.where(P[:, 0] >= 0, 0.2, -0.2)
+    u = 0.5 + np.arctan2(P[:, 0] - xs, P[:, 2]) / (2 * np.pi)
     return u, P[:, 1] / 0.9
 
 
@@ -739,12 +781,13 @@ def weight_shapes():
             ('hand' + side, 'cap', W, W + d * 0.25, 0.13),
             ('hip' + side, 'cap', H, K, 0.18),
             ('kn' + side, 'cap', K, A, 0.15),
-            ('an' + side, 'cap', A, A + V(0, -0.25, 0.2), 0.17),
         ]
+        # No ankle volume: the ankle moves only the rigid boots. Letting it
+        # pull on the shins as well dragged trouser hems through the boots.
     return shapes
 
 
-def compute_weights(P, blend=0.12):
+def compute_weights(P, blend=0.17):
     names = list(BONES)
     D = np.full((len(P), len(names)), 1e9)
     for bone, kind, a, b, r in weight_shapes():
@@ -758,11 +801,27 @@ def compute_weights(P, blend=0.12):
     return names, W / W.sum(1, keepdims=True)
 
 
-def skin(ob, rig, rigid=None):
-    """Bind to the armature. rigid: a bone name, or fn(P) -> bone name per vertex."""
+def boot_weights(P):
+    """Boots bend like boots: the foot turns with the ankle, the shaft
+    follows the shin, blended across the ankle so the leather flexes."""
+    names = list(BONES)
+    W = np.zeros((len(P), len(names)))
+    t = ss(0.3, 0.5, P[:, 1])
+    left = P[:, 0] >= 0
+    for side, m in (('L', left), ('R', ~left)):
+        W[m, names.index('an' + side)] = 1 - t[m]
+        W[m, names.index('kn' + side)] = t[m]
+    return W
+
+
+def skin(ob, rig, rigid=None, weights=None):
+    """Bind to the armature. rigid: a bone name, or fn(P) -> bone name per
+    vertex. weights: fn(P) -> full weight matrix. Neither: body weights."""
     P = mesh_verts(ob)
     names = list(BONES)
-    if rigid is None:
+    if weights is not None:
+        W = weights(P)
+    elif rigid is None:
         names, W = compute_weights(P)
     else:
         W = np.zeros((len(P), len(names)))
@@ -852,7 +911,7 @@ def build_mouth():
     fr = face_frame(V(0.04, -0.43, 1), sink=0.004, front=2)
     arc = 1.5
     rz = -math.pi / 2 - arc / 2 + 0.12
-    sv, sf = torus_arc(0.095, 0.017, arc, 0)
+    sv, sf = crescent(0.095, 0.02, arc, 0)
     smirk = rotz(sv, rz) + V(0, 0.06, 0)
     frown = rotz(sv, rz + math.pi) + V(0, -0.08, 0)
     gv, gf = blob(0.17, 0.145, 0.03, 0.1)
@@ -895,7 +954,7 @@ def main():
         ('Skin', 0xf0b48e, 0.62), ('HeadSkin', 0xf0b48e, 0.58), ('FaceSkin', 0xf0b48e, 0.58),
         ('Shirt', 0xf2efe8, 0.8), ('Sleeve', 0xf2efe8, 0.8), ('Shorts', 0x2e3d5c, 0.8),
         ('Pants', 0x2e3d5c, 0.85), ('Sock', 0xffffff, 0.85), ('Belt', 0xdad8d2, 0.6),
-        ('Boots', 0x25262b, 0.55), ('Sole', 0x18181b, 0.7), ('Gloves', 0x2a2c31, 0.65),
+        ('Boots', 0x25262b, 0.72), ('Sole', 0x18181b, 0.7), ('Gloves', 0x2a2c31, 0.65),
         ('Brow', 0x2a1d17, 0.9), ('EyeWhite', 0xffffff, 0.3), ('Pupil', 0x1b1714, 0.2),
         ('Mouth', 0x6b2e24, 0.9), ('MouthIn', 0x4a1c18, 0.9), ('Teeth', 0xffffff, 0.4),
         ('Helmet', 0x56653a, 0.85), ('Hood', 0x3a4357, 0.92), ('Headband', 0xffffff, 0.85),
@@ -913,38 +972,40 @@ def main():
     X = 1.05
     objs = {}
 
-    def make(name, fn, lo, hi, voxel, tris, mats, rigid=None, uv=None):
+    def make(name, fn, lo, hi, voxel, tris, mats, rigid=None, uv=None, weights=None):
         ob = sdf_object(name, fn, lo, hi, voxel, tris)
         set_material(ob, *mats)
         if uv:
             set_uv(ob, uv)
         smooth(ob)
-        skin(ob, rig, rigid)
+        exact_normals(ob, fn)
+        skin(ob, rig, rigid, weights)
         objs[name] = ob
         print(f'  {name:16s} {len(ob.data.polygons):6d} tris')
         return ob
 
     print('Meshing…')
-    make('Body', body_skin, (-X, 0.3, -0.36), (X, 2.48, 0.36), 0.02, 9000, ['Skin'])
-    make('ShirtTank', shirt_tank, (-0.5, 1.36, -0.34), (0.5, 2.36, 0.34), 0.016, 4000, ['Shirt'], uv=uv_body(1.38, 2.32))
-    make('ShirtCrew', shirt_crew, (-0.5, 1.36, -0.34), (0.5, 2.3, 0.34), 0.016, 4000, ['Shirt'], uv=uv_body(1.38, 2.32))
-    make('SleeveShort', lambda P: sleeve(P, 0.21), (-0.9, 1.7, -0.25), (0.9, 2.3, 0.25), 0.014, 2400, ['Sleeve'], uv=uv_arms)
-    make('SleeveLong', lambda P: sleeve(P, 0.55), (-1.05, 1.3, -0.25), (1.05, 2.3, 0.25), 0.015, 4000, ['Sleeve'], uv=uv_arms)
-    make('Shorts', lambda P: legwear(P, 0.86), (-0.48, 0.8, -0.34), (0.48, 1.5, 0.34), 0.016, 3200, ['Shorts'], uv=uv_legwear)
-    make('Pants', lambda P: legwear(P, 0.5, off=0.04, shins=True), (-0.48, 0.45, -0.34), (0.48, 1.5, 0.34), 0.016, 4500, ['Pants'], uv=uv_legwear)
-    make('Socks', socks, (-0.42, 0.48, -0.22), (0.42, 0.74, 0.22), 0.012, 1200, ['Sock'])
-    make('Belt', belt, (-0.46, 1.34, -0.34), (0.46, 1.5, 0.34), 0.012, 1600, ['Belt'])
-    make('Boots', boots, (-0.45, 0.05, -0.25), (0.45, 0.65, 0.45), 0.014, 3200, ['Boots'], rigid=by_side('an'))
-    make('Soles', soles, (-0.45, -0.02, -0.25), (0.45, 0.12, 0.42), 0.012, 1000, ['Sole'], rigid=by_side('an'))
-    make('BootCuffs', boot_cuffs, (-0.45, 0.55, -0.24), (0.45, 0.66, 0.24), 0.01, 1000, ['Sole'], rigid=by_side('an'))
-    make('Gloves', gloves, (-1.05, 1.05, -0.2), (1.05, 1.65, 0.25), 0.012, 2400, ['Gloves'], rigid=by_side('hand'))
-    make('Fingers', fingers, (-1.1, 0.95, -0.15), (1.1, 1.5, 0.28), 0.011, 1600, ['Skin'], rigid=by_side('hand'))
+    make('Body', body_skin, (-X, 0.3, -0.36), (X, 2.48, 0.36), 0.02, 14000, ['Skin'])
+    make('ShirtTank', shirt_tank, (-0.5, 1.36, -0.34), (0.5, 2.36, 0.34), 0.016, 5500, ['Shirt'], uv=uv_body(1.38, 2.32))
+    make('ShirtCrew', shirt_crew, (-0.5, 1.36, -0.34), (0.5, 2.3, 0.34), 0.016, 5500, ['Shirt'], uv=uv_body(1.38, 2.32))
+    make('SleeveShort', lambda P: sleeve(P, 0.21), (-0.9, 1.7, -0.25), (0.9, 2.3, 0.25), 0.014, 3200, ['Sleeve'], uv=uv_arms)
+    make('SleeveLong', lambda P: sleeve(P, 0.55), (-1.05, 1.3, -0.25), (1.05, 2.3, 0.25), 0.015, 5500, ['Sleeve'], uv=uv_arms)
+    make('Shorts', lambda P: legwear(P, 0.86), (-0.48, 0.8, -0.34), (0.48, 1.5, 0.34), 0.016, 4800, ['Shorts'], uv=uv_legwear)
+    make('Pants', lambda P: legwear(P, 0.5, off=0.04, shins=True), (-0.48, 0.45, -0.34), (0.48, 1.5, 0.34), 0.016, 6000, ['Pants'], uv=uv_legwear)
+    make('Socks', socks, (-0.42, 0.48, -0.22), (0.42, 0.74, 0.22), 0.012, 1600, ['Sock'])
+    make('Belt', belt, (-0.46, 1.34, -0.34), (0.46, 1.5, 0.34), 0.012, 2200, ['Belt'])
+    make('Boots', boots, (-0.45, 0.05, -0.25), (0.45, 0.65, 0.45), 0.014, 4400, ['Boots'], weights=boot_weights)
+    make('Soles', soles, (-0.45, -0.02, -0.25), (0.45, 0.12, 0.42), 0.012, 1400, ['Sole'], rigid=by_side('an'))
+    make('BootCuffs', boot_cuffs, (-0.45, 0.55, -0.24), (0.45, 0.66, 0.24), 0.01, 1400, ['Sole'], weights=boot_weights)
+    make('Gloves', gloves, (-1.05, 1.05, -0.2), (1.05, 1.65, 0.25), 0.012, 3200, ['Gloves'], rigid=by_side('hand'))
+    make('Fingers', fingers, (-1.1, 0.95, -0.15), (1.1, 1.5, 0.28), 0.011, 2200, ['Skin'], rigid=by_side('hand'))
 
     # Head, and the eye opening the masked skin leaves uncovered: a thin
     # patch of the skull, raised a hair, cut to a soft-edged oval.
-    head = sdf_object('Head', head_full, (-0.56, 2.2, -0.52), (0.56, 3.32, 0.52), 0.016, 12000)
+    head = sdf_object('Head', head_full, (-0.56, 2.2, -0.52), (0.56, 3.32, 0.52), 0.014, 14000)
     set_material(head, 'HeadSkin')
     smooth(head)
+    exact_normals(head, head_full)
     skin(head, rig, 'head')
     print(f'  Head             {len(head.data.polygons):6d} tris')
     make('MaskBand', mask_band, (-0.42, 2.66, 0.0), (0.42, 3.02, 0.52), 0.007, 2400, ['FaceSkin'], rigid='head')
@@ -972,12 +1033,12 @@ def main():
     face_part('MouthOh', v, f, ['MouthIn'])
 
     print('Accessories…')
-    make('Helmet', helmet, (-0.62, 2.85, -0.62), (0.62, 3.42, 0.66), 0.014, 2400, ['Helmet'], rigid='head')
-    make('Hood', hood, (-0.62, 2.2, -0.62), (0.62, 3.42, 0.6), 0.012, 4000, ['Hood'], rigid='head')
-    make('Headband', headband, (-0.54, 2.85, -0.54), (0.54, 3.12, 0.54), 0.01, 1600, ['Headband'], rigid='head')
-    make('HeadbandStripe', headband_stripe, (-0.55, 2.9, -0.55), (0.55, 3.08, 0.55), 0.008, 1200, ['HeadbandStripe'], rigid='head')
-    make('Vest', vest, (-0.56, 1.42, -0.4), (0.56, 2.25, 0.42), 0.016, 3000, ['Vest'])
-    make('VestPouches', vest_pouches, (-0.3, 1.55, 0.26), (0.3, 1.77, 0.4), 0.008, 800, ['Pouch'])
+    make('Helmet', helmet, (-0.62, 2.85, -0.62), (0.62, 3.42, 0.66), 0.014, 3200, ['Helmet'], rigid='head')
+    make('Hood', hood, (-0.62, 2.2, -0.62), (0.62, 3.42, 0.6), 0.012, 5500, ['Hood'], rigid='head')
+    make('Headband', headband, (-0.54, 2.85, -0.54), (0.54, 3.12, 0.54), 0.01, 2000, ['Headband'], rigid='head')
+    make('HeadbandStripe', headband_stripe, (-0.55, 2.9, -0.55), (0.55, 3.08, 0.55), 0.008, 1400, ['HeadbandStripe'], rigid='head')
+    make('Vest', vest, (-0.56, 1.42, -0.4), (0.56, 2.25, 0.42), 0.016, 4000, ['Vest'])
+    make('VestPouches', vest_pouches, (-0.3, 1.55, 0.26), (0.3, 1.77, 0.4), 0.008, 900, ['Pouch'])
     make('Drawstrings', drawstrings, (-0.12, 1.95, 0.28), (0.12, 2.23, 0.35), 0.005, 300, ['String'])
     v, f, mi = build_sunglasses()
     face_part('Sunglasses', v, f, ['Lens', 'Frame'], mi)

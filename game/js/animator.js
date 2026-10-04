@@ -12,6 +12,7 @@ const LEG = DIM.thigh + DIM.shin;
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const damp = (a, b, rate, dt) => lerp(a, b, 1 - Math.exp(-rate * dt));
+const smoothstep = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
 const KEYS = ['bodyY', 'pitch', 'roll', 'spineX', 'spineY', 'headX', 'headY',
   'armLX', 'armRX', 'armOut', 'elbL', 'elbR',
@@ -95,25 +96,25 @@ export class Animator {
     return p;
   }
 
+  /* Rising and falling poses, blended by vertical speed so the apex is a
+     smooth turnover rather than a switch. */
   air(vy) {
-    const p = blank();
     const tuck = clamp(1 - Math.abs(vy) / 9, 0, 1);
-    if (vy > 0) {
-      p.legLX = -0.25 - 0.45 * tuck; p.kneeL = 0.35 + 1.0 * tuck; p.ankL = -0.1;
-      p.legRX = 0.25;                 p.kneeR = 0.45 + 0.5 * tuck; p.ankR = 0.25;
-      p.armLX = -0.5; p.armRX = -0.2;
-      p.armOut = 0.55 + 0.25 * tuck;
-      p.elbL = -0.9; p.elbR = -0.5;
-      p.pitch = 0.06;
-    } else {
-      const f = clamp(-vy / 12, 0, 1);  // reach for the ground as it nears
-      p.legLX = -0.35 + 0.2 * f; p.kneeL = 0.9 - 0.6 * f; p.ankL = -0.1;
-      p.legRX = 0.1;             p.kneeR = 0.6 - 0.35 * f; p.ankR = 0.1;
-      p.armLX = -0.3; p.armRX = -0.1;
-      p.armOut = 0.75 + 0.2 * f;
-      p.elbL = -0.7; p.elbR = -0.6;
-      p.pitch = -0.04;
-    }
+    const f = clamp(-vy / 12, 0, 1);  // reach for the ground as it nears
+    const rise = blank(), fall = blank();
+    rise.legLX = -0.25 - 0.45 * tuck; rise.kneeL = 0.35 + 1.0 * tuck; rise.ankL = -0.1;
+    rise.legRX = 0.25;                rise.kneeR = 0.45 + 0.5 * tuck; rise.ankR = 0.25;
+    rise.armLX = -0.5; rise.armRX = -0.2;
+    rise.armOut = 0.55 + 0.25 * tuck;
+    rise.elbL = -0.9; rise.elbR = -0.5;
+    rise.pitch = 0.06;
+    fall.legLX = -0.45 + 0.3 * f; fall.kneeL = 1.0 - 0.7 * f; fall.ankL = -0.1;
+    fall.legRX = 0.15;            fall.kneeR = 0.75 - 0.5 * f; fall.ankR = 0.1;
+    fall.armLX = -0.3; fall.armRX = -0.1;
+    fall.armOut = 0.75 + 0.2 * f;
+    fall.elbL = -0.7; fall.elbR = -0.6;
+    fall.pitch = -0.04;
+    const p = mix(fall, rise, smoothstep(-3, 3, vy));
     p.headX = -0.08;
     p.sy = 1 + 0.03 * clamp(vy / 10, -1, 1);
     return p;
@@ -126,28 +127,32 @@ export class Animator {
     this.t += dt;
     const k = clamp(state.speed / state.maxSpeed, 0, 1);
     this.runW = damp(this.runW, state.grounded ? k : this.runW, 12, dt);
-    this.airW = damp(this.airW, state.grounded ? 0 : 1, state.grounded ? 20 : 14, dt);
-    this.phase += dt * (4 + state.speed * 1.75);
+    // Leave the air pose a little slower than entering it: the landing
+    // crouch covers the hand-off, and nothing jumps between frames.
+    this.airW = damp(this.airW, state.grounded ? 0 : 1, state.grounded ? 9 : 12, dt);
+    this.phase += dt * (3.5 + state.speed * 1.35);   // ≈ 4.3 steps a second at full speed
 
     let p = mix(this.idle(this.t), this.run(this.phase, Math.max(k, 0.35)), clamp(this.runW * 1.6, 0, 1));
-    p = mix(p, this.air(state.vy), this.airW);
+    // The air pose is driven by vertical speed, which snaps to zero on
+    // touchdown; keep the last airborne value while the pose fades out.
+    if (!state.grounded) this.airVy = state.vy;
+    p = mix(p, this.air(this.airVy ?? 0), this.airW);
 
-    // Take-off push: start crouched, snap the legs straight while rising.
-    if (this.jumpT < 0.18) {
-      const u = this.jumpT / 0.18;
-      const ext = 1 - u;
-      crouch(p, 0.55 * ext * ext);
-      p.armLX -= 0.9 * u * ext * 2; p.armRX -= 0.9 * u * ext * 2;
-      p.ankL += 0.5 * u * ext * 2; p.ankR += 0.5 * u * ext * 2;
-      p.sy *= 1 + 0.07 * u * ext * 4;
+    // Take-off push: ankles extend, body stretches, arms swing up. The
+    // envelope rises from and returns to zero, so nothing snaps.
+    if (this.jumpT < 0.22) {
+      const e = Math.sin(Math.PI * (this.jumpT / 0.22));
+      p.armLX -= 0.8 * e; p.armRX -= 0.8 * e;
+      p.ankL += 0.45 * e; p.ankR += 0.45 * e;
+      p.sy *= 1 + 0.06 * e;
       this.jumpT += dt;
     }
 
     // Landing: fast drop into the knees, slower recovery, body squashes.
     if (this.landT < 1) {
-      this.landT = Math.min(1, this.landT + dt / 0.32);
+      this.landT = Math.min(1, this.landT + dt / 0.38);
       const u = this.landT;
-      const c = (u < 0.25 ? u / 0.25 : 1 - (u - 0.25) / 0.75) ** 1.2 * this.landAmt;
+      const c = (u < 0.3 ? smoothstep(0, 0.3, u) : 1 - smoothstep(0.3, 1, u)) * this.landAmt;
       crouch(p, 0.55 * c);
       p.armOut += 0.25 * c;
       p.elbL -= 0.35 * c; p.elbR -= 0.35 * c;
