@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/artoo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ea' stroke-width='1.6'%3E%3Cpath d='M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+<title>Gallery — Artoo</title>
+<style>
+  .filters { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .filters select { width: auto; }
+  .card button.open { all: unset; cursor: pointer; display: block; }
+  .card button.open:focus-visible { outline: 2px solid var(--accent); }
+  .dialog-side { display: grid; gap: 12px; align-content: start; }
+  .dialog-side img { border-radius: 8px; max-height: 200px; object-fit: contain; background: var(--bg-deep); }
+</style>
+</head>
+<body data-page="gallery">
+<main>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">/04 Gallery</p>
+      <h1>Every generation</h1>
+    </div>
+    <div class="filters">
+      <select id="filter" aria-label="Filter by model"><option value="">All models</option></select>
+      <select id="sort" aria-label="Sort">
+        <option value="new">Newest</option>
+        <option value="best">Highest rated</option>
+        <option value="unrated">Unrated first</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+
+  <dialog id="dlg">
+    <div class="dialog-body">
+      <div class="viewer" id="dlg-viewer"></div>
+      <div class="dialog-side" id="dlg-side"></div>
+    </div>
+  </dialog>
+</main>
+<script type="module" src="/js/gallery.js"></script>
+</body>
+</html>

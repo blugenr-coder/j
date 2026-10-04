@@ -1,0 +1,3 @@
+# Artoo is a separate Node app (see artoo/README.md); it does not belong on
+# the static WorksheetHub deployment.
+artoo

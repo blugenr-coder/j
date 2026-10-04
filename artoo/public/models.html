@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/artoo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ea' stroke-width='1.6'%3E%3Cpath d='M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+<title>Models — Artoo</title>
+<style>
+  .layout { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 24px; align-items: start; }
+  .layout form { display: grid; gap: 14px; }
+  .models { display: grid; gap: 18px; }
+  .model-head { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; align-items: start; margin-bottom: 8px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body data-page="models">
+<main>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">/03 Models</p>
+      <h1>Your models</h1>
+    </div>
+    <p class="muted small" style="max-width:52ch">A model is a set of settings for a 3D engine. Each rating you give tells it which settings work for your kind of images; it then uses the winners more often.</p>
+  </div>
+
+  <div class="layout">
+    <form class="panel" id="create">
+      <h2>New model</h2>
+      <label class="field">Name
+        <input type="text" id="name" required maxlength="80" placeholder="e.g. Clay figurines">
+      </label>
+      <label class="field">Engine
+        <select id="engine">
+          <option value="meshy">Meshy — real image-to-3D (needs API key)</option>
+          <option value="demo">Demo — 2.5D relief, free, in the browser</option>
+        </select>
+      </label>
+      <label class="field">What is it for? (optional)
+        <textarea id="desc" maxlength="400" placeholder="e.g. Toy-like characters for a mobile game"></textarea>
+      </label>
+      <button class="btn primary" type="submit">Create model</button>
+    </form>
+
+    <section class="models" id="models" aria-live="polite"></section>
+  </div>
+</main>
+<script type="module" src="/js/models.js"></script>
+</body>
+</html>

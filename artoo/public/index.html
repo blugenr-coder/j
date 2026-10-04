@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/artoo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ea' stroke-width='1.6'%3E%3Cpath d='M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+<title>Artoo — image to 3D studio</title>
+<meta name="description" content="Turn images into 3D models, rate the results, and let your model learn which settings make the best ones.">
+<style>
+  .hero { display: grid; grid-template-columns: 1fr minmax(320px, 1.5fr) 1fr; align-items: center; gap: 24px; min-height: calc(100vh - 260px); }
+  .hero-left { align-self: start; padding-top: 12vh; }
+  .hero-left .num { font-size: 13px; color: var(--muted); }
+  .hero-left h3 { margin: 6px 0 4px; font-size: 15px; }
+  .hero-left a { display: block; font-size: 12px; color: var(--faint); text-decoration: none; line-height: 1.8; }
+  .hero-left a:hover { color: var(--text); }
+  .stage { aspect-ratio: 1; width: 100%; position: relative; }
+  .stage canvas { width: 100%; height: 100%; display: block; }
+  .chip { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; padding: 7px 12px; border-radius: 7px; background: rgba(255,255,255,.08); text-decoration: none; }
+  .chip svg { width: 14px; height: 14px; }
+  .hero-right h1 { margin: 18px 0 14px; font-size: clamp(30px, 3.2vw, 44px); }
+  .hero-right p { color: var(--muted); font-size: 13px; max-width: 30ch; margin: 0 0 22px; }
+  .strip { display: grid; grid-template-columns: 1fr 1fr 180px 1.2fr; border-top: 1px solid var(--line); margin: 0 calc(-1 * clamp(16px, 4vw, 48px)) calc(-1 * clamp(16px, 4vw, 48px)); }
+  .strip > div { padding: 18px clamp(16px, 2vw, 28px); border-left: 1px solid var(--line); font-size: 12px; min-width: 0; }
+  .strip > div:first-child { border-left: 0; }
+  .strip .label { font-size: 11px; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+  .strip .title { font-weight: 500; font-size: 13px; }
+  .strip .sub { color: var(--faint); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .strip .pic { padding: 0; background: radial-gradient(circle at 50% 40%, #66727a, #3d474e); }
+  .strip .pic img { width: 100%; height: 100%; object-fit: cover; min-height: 120px; max-height: 220px; }
+  @media (max-width: 980px) {
+    .hero { grid-template-columns: 1fr; text-align: center; min-height: 0; }
+    .hero-left { display: none; }
+    .hero-right p { margin-inline: auto; }
+    .stage { max-width: 520px; margin: 0 auto; }
+    .strip { grid-template-columns: 1fr 1fr; }
+    .strip > div:nth-child(3) { border-left: 0; }
+    .strip > div { border-top: 1px solid var(--line); }
+  }
+  @media (max-width: 560px) { .strip { grid-template-columns: 1fr; } .strip > div { border-left: 0; } }
+</style>
+</head>
+<body data-page="index">
+<main>
+  <section class="hero">
+    <div class="hero-left">
+      <div class="num">/01</div>
+      <h3>Work Collection</h3>
+      <a href="/gallery">Your generations</a>
+      <a href="/models">Your trained models</a>
+      <a href="/about">How training works</a>
+    </div>
+
+    <div class="stage" id="stage" role="img" aria-label="A grey clay elephant figure, slowly turning"></div>
+
+    <div class="hero-right">
+      <a class="chip" href="/gallery"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/></svg>Explore 3D Art Creations</a>
+      <h1>Shape the Future with Artoo</h1>
+      <p>Drop in an image, get a 3D model back. Rate what you get, and your model learns which settings make the best ones.</p>
+      <a class="btn" href="/studio">Start your work</a>
+    </div>
+  </section>
+
+  <section class="strip" aria-label="Latest activity">
+    <div id="latest-1"><div class="label">LATEST</div><div class="title">Nothing generated yet</div><div class="sub">Open the Studio to make your first model</div></div>
+    <div id="latest-2"><div class="label">&nbsp;</div><div class="title">Train a model</div><div class="sub">Rate results from 1 to 5 stars</div></div>
+    <div class="pic" id="latest-pic"></div>
+    <div id="news"><div class="label">BEST SETTINGS</div><div class="title">No ratings yet</div><div class="sub">Rate a few results and the winner shows here</div></div>
+  </section>
+</main>
+<script type="module" src="/js/home.js"></script>
+</body>
+</html>

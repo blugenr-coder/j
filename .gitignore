@@ -11,3 +11,7 @@ node_modules/
 # A scratch page for eyeballing preschool artwork in a real browser. It is a
 # development harness, not a page of the site, so it never ships.
 /pk-preview.html
+
+# Artoo keeps its generated models, uploads and ratings here.
+/artoo/data/
+/artoo/test/out/

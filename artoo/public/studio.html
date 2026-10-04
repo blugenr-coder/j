@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/artoo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ea' stroke-width='1.6'%3E%3Cpath d='M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+<title>Studio — Artoo</title>
+<style>
+  .studio { display: grid; grid-template-columns: minmax(280px, 360px) 1fr; gap: 24px; align-items: start; }
+  .controls { display: grid; gap: 18px; position: sticky; top: 20px; }
+  .results { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+  .notice { font-size: 12px; color: var(--muted); border-left: 2px solid var(--star); padding: 4px 0 4px 10px; }
+  @media (max-width: 860px) { .studio { grid-template-columns: 1fr; } .controls { position: static; } }
+</style>
+</head>
+<body data-page="studio">
+<main>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">/02 Studio</p>
+      <h1>Image to 3D</h1>
+    </div>
+    <p class="muted small" id="leader"></p>
+  </div>
+
+  <div class="studio">
+    <form class="panel controls" id="form">
+      <label class="field">Model
+        <select id="model" required></select>
+      </label>
+      <p class="notice" id="engine-note" hidden></p>
+
+      <div class="field">
+        <span>Image</span>
+        <label class="drop" id="drop">
+          <span id="drop-text">Drop an image or click to choose<br><span class="small">PNG or JPG · one object on a plain background works best</span></span>
+          <input type="file" id="file" accept="image/png,image/jpeg" aria-label="Choose an image">
+        </label>
+      </div>
+
+      <label class="field">Name (optional)
+        <input type="text" id="name" maxlength="80" placeholder="e.g. Clay elephant">
+      </label>
+
+      <div class="field">
+        <span>Candidates — generate several variants and keep the best</span>
+        <div class="segmented" id="count" role="group" aria-label="Number of candidates">
+          <button type="button" data-n="1" aria-pressed="true">1</button>
+          <button type="button" data-n="2" aria-pressed="false">2</button>
+          <button type="button" data-n="3" aria-pressed="false">3</button>
+          <button type="button" data-n="4" aria-pressed="false">4</button>
+        </div>
+      </div>
+
+      <button class="btn primary" id="go" type="submit" disabled>Generate 3D model</button>
+    </form>
+
+    <section aria-live="polite">
+      <div class="results" id="results">
+        <div class="empty panel">Your 3D models appear here. Rate each one — that is how the model trains.</div>
+      </div>
+    </section>
+  </div>
+</main>
+<script type="module" src="/js/studio.js"></script>
+</body>
+</html>

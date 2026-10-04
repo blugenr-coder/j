@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/artoo.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23dfe6ea' stroke-width='1.6'%3E%3Cpath d='M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z'/%3E%3Cpath d='M4 7.5 12 12l8-4.5M12 12v9'/%3E%3C/svg%3E">
+<script type="importmap">
+{ "imports": { "three": "/vendor/three/build/three.module.js", "three/addons/": "/vendor/three/addons/" } }
+</script>
+<title>How it works — Artoo</title>
+<style>
+  .prose { max-width: 70ch; display: grid; gap: 18px; }
+  .prose p, .prose li { color: var(--muted); }
+  .prose strong { color: var(--text); font-weight: 500; }
+  .steps { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); margin-bottom: 24px; }
+  .steps .panel b { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+</style>
+</head>
+<body data-page="about">
+<main>
+  <div class="page-head">
+    <div>
+      <p class="eyebrow">/05 About</p>
+      <h1>How Artoo makes and trains models</h1>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="panel"><b>01</b><h3>Upload</h3><p class="muted small">One object, plain background. The cleaner the photo, the better the model.</p></div>
+    <div class="panel"><b>02</b><h3>Generate</h3><p class="muted small">Your model picks the settings it thinks will win and sends the image to the 3D engine.</p></div>
+    <div class="panel"><b>03</b><h3>Rate</h3><p class="muted small">Give each result 1–5 stars. Make several candidates at once to compare.</p></div>
+    <div class="panel"><b>04</b><h3>Improve</h3><p class="muted small">Winning settings get chosen more often. The model converges on what works for you.</p></div>
+  </div>
+
+  <div class="prose">
+    <h2>What "training" means here</h2>
+    <p>The 3D shape itself comes from an image-to-3D engine — a neural network trained by its maker on millions of 3D objects. Artoo does <strong>not</strong> retrain that network: doing so takes rented data-centre GPUs and a large 3D dataset, which is a separate project.</p>
+    <p>What Artoo trains is <strong>your model's choice of settings</strong>: engine version, polygon budget, quads or triangles, textures and so on. Each rating updates its estimate of how good each setting variant is (a method called Thompson sampling). It keeps trying untested variants now and then, and uses the winners more and more.</p>
+    <p>Every rated pair — image in, 3D model out, your score — is also kept as a <strong>dataset</strong> you can download from the Models page. That is the raw material for a real fine-tune of an open-source 3D network later, if you decide it is worth it.</p>
+
+    <h2>Engines</h2>
+    <ul>
+      <li><strong>Meshy</strong> — real image-to-3D through the Meshy API: full shape including the back, textures, GLB download. Needs an API key on the server and uses Meshy credits for every generation.</li>
+      <li><strong>Demo</strong> — runs in your browser for free. It cuts out the subject and inflates it into a 2.5D relief. It cannot invent the back of an object; it is there so you can try the whole loop.</li>
+    </ul>
+  </div>
+</main>
+<script type="module">import { mountShell } from '/js/shell.js'; mountShell();</script>
+</body>
+</html>
