@@ -25,6 +25,9 @@ export class SceneView {
     this.atmo = new Atmosphere(world, createRng(99), { W, H, pad: PAD, reducedMotion });
     this.time = 0;
     this.revealed = false;
+    /* 0 shows the loading screen's foreground, 1 the main menu's */
+    this.menuMix = 0;
+    this.menuTarget = 0;
   }
 
   /* ---------- building (called by loading tasks) ---------- */
@@ -137,12 +140,17 @@ export class SceneView {
     ctx.translate(-W / 2, -H / 2);
   }
 
-  #layer(id) {
+  #layer(id, alpha = 1) {
     const l = this.layers.get(id);
-    if (!l) return;
+    if (!l || alpha <= 0) return;
     this.#apply(l.parallax);
+    this.ctx.globalAlpha = alpha;
     this.ctx.drawImage(l.canvas, -PAD, -PAD, W + PAD * 2, H + PAD * 2);
+    this.ctx.globalAlpha = 1;
   }
+
+  /** Cross-fades the foreground from the loading composition to the menu's. */
+  showMenuForeground(on = true) { this.menuTarget = on ? 1 : 0; }
 
   draw(dt) {
     if (!this.revealed || !this.fit) return;
@@ -167,7 +175,12 @@ export class SceneView {
     this.#apply(PARALLAX.mid);
     this.atmo.drawSmoke(ctx, 'mid');
 
-    this.#layer('near');
+    const step = this.reducedMotion ? 1 : dt / 1.1;
+    this.menuMix += Math.max(-step, Math.min(step, this.menuTarget - this.menuMix));
+    /* ease so the swap starts and lands softly */
+    const m = this.menuMix * this.menuMix * (3 - 2 * this.menuMix);
+    this.#layer('near', 1 - m);
+    this.#layer('nearMenu', m);
     this.#apply(PARALLAX.near * 1.3);
     this.atmo.drawMotes(ctx);
   }

@@ -544,8 +544,6 @@ export function gantry(rng, { span = 14, h = 7 } = {}) {
   for (let x = -span / 2; x < span / 2 - 0.1; x += 0.9) {
     f.push(...bar([x, h, -s], [x + 0.9, h + 0.9, -s], t * 0.6, c));
   }
-  f.push(...trafficLight([-1.6, h - 0.15, -s - 0.1], 'red'));
-  f.push(...trafficLight([1.6, h - 0.15, -s - 0.1], 'green'));
   return { faces: weather(f, rng, 0.06), shadow: null };
 }
 
@@ -581,4 +579,34 @@ export function rock(rng, { h = 12, r = 4 } = {}) {
       { x: Math.cos(a) * r * 1.1, z: Math.sin(a) * r * 0.8, yaw: rng.range(0, 3) }));
   }
   return { faces: weather(f, rng, 0.08), shadow: { rx: r * 1.3, rz: r, h } };
+}
+
+/** A scaffold tower carrying a lit arena sign. */
+export function signTower(rng, { text = 'JUNKYARD ARENA', h = 6, board = 9 } = {}) {
+  const base = scaffold(rng, { w: 3, d: 3, h, flag: P.orange });
+  const f = [...base.faces];
+  const add = (faces, t) => f.push(...place(faces, t));
+  const bh = 2.2, y0 = h + 0.6, z0 = -1.8;
+  for (const x of [-board * 0.3, board * 0.3]) f.push(...bar([x, h, z0 + 0.2], [x, y0 + 0.2, z0 + 0.2], 0.14, P.darkSteel));
+  add(box(board + 0.4, bh + 0.4, 0.25, P.black), { y: y0 - 0.2, z: z0 + 0.1 });
+  add(box(board, bh, 0.1, hex('#2a2018')), { y: y0, z: z0 - 0.05 });
+  const zf = z0 - 0.11, x = board / 2 - 0.2;
+  f.push(...panel([[-x, y0 + bh - 0.25, zf], [x, y0 + bh - 0.25, zf], [x, y0 + 0.25, zf], [-x, y0 + 0.25, zf]], hex('#1c1712'),
+    { label: { text, aspect: (bh - 0.5) / (board - 0.4), color: '#ffb800', size: 0.8 } }));
+  /* hazard strips along the top and bottom of the board */
+  for (const y of [y0 - 0.12, y0 + bh + 0.02]) add(box(board + 0.3, 0.12, 0.05, P.hazard), { y, z: z0 - 0.06 });
+  /* bulbs along the top edge */
+  for (let i = 0; i < 9; i++) add(box(0.18, 0.18, 0.1, P.lamp, { glow: true }), { x: -board / 2 + 0.3 + i * (board - 0.6) / 8, y: y0 + bh + 0.22, z: z0 - 0.1 });
+  return { faces: f, shadow: base.shadow };
+}
+
+/** A hazard triangle on a post. */
+export function warningSign(rng, text = '!') {
+  const f = [...bar([0, 0, 0], [0, 1.6, 0], 0.08, P.darkSteel)];
+  const s = 0.75, y = 1.5;
+  f.push(...panel([[-s / 2, y, -0.06], [s / 2, y, -0.06], [0, y + s * 0.87, -0.06]], P.black));
+  f.push(...panel([[-s * 0.38, y + 0.06, -0.08], [s * 0.38, y + 0.06, -0.08], [0, y + s * 0.78, -0.08]], P.hazard));
+  f.push(...panel([[-0.12, y + 0.5, -0.09], [0.12, y + 0.5, -0.09], [0.12, y + 0.08, -0.09], [-0.12, y + 0.08, -0.09]], P.hazard,
+    { label: { text, aspect: 1.75, color: '#141414', size: 0.55, font: '"Rajdhani", Impact, sans-serif' } }));
+  return { faces: f, shadow: { rx: 0.4, rz: 0.4, h: 1.6 } };
 }

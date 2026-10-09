@@ -45,6 +45,17 @@ export function buildJunkyard(seed = 7) {
   put('near', (r) => M.pipe(r, 2.2, 0.18), { x: 2.6, z: 10.4, yaw: -0.4 });
   put('near', (r) => M.tyreFlat(r, 0.45), { x: 1.6, z: 9.9 });
 
+  /* ---- near, main menu: the menu has its own foreground, swapped in when
+     loading ends, because the left of the frame belongs to the buttons and
+     the hero machine moves to the right. ---- */
+  put('nearMenu', (r) => M.buggy(r, { body: P.blue, accent: P.orange }), { x: 3.3, z: 10.4, yaw: 2.35, scale: 1.3 });
+  put('nearMenu', (r) => M.tyreStack(r, 4, 0.55), { x: 6.4, z: 13.2 });
+  put('nearMenu', (r) => M.tyreStack(r, 2, 0.55), { x: 7.3, z: 12.6 });
+  put('nearMenu', (r) => M.barrel(r, P.hazard), { x: 5.6, z: 13.8 });
+  put('nearMenu', (r) => M.tyreFlat(r, 0.5), { x: 0.6, z: 9.6 });
+  put('nearMenu', (r) => M.pipe(r, 2.4, 0.18), { x: -0.6, z: 11.8, yaw: 0.6 });
+  put('nearMenu', (r) => M.warningSign(r), { x: -2.6, z: 13.6, yaw: 0.2 });
+
   /* ---- mid: the fight, the start gantry and the garages ---- */
   put('mid', (r) => M.buggy(r, { body: P.red, accent: P.hazard }), { x: 4.0, z: 20.5, yaw: 2.55 });
   put('mid', (r) => M.ramp(r, 3.4, 1.3, 4), { x: -5.6, z: 21.8, yaw: Math.PI / 2 + 0.1 });
@@ -66,6 +77,9 @@ export function buildJunkyard(seed = 7) {
   put('mid', (r) => M.scaffold(r, { w: 2.6, d: 2.6, h: 5, flag: P.orange }), { x: -13.5, z: 32, yaw: 0.15 });
   put('mid', (r) => M.crate(r, 1.1), { x: -11.2, z: 27.4 });
   put('mid', (r) => M.pipe(r, 4.5, 0.35), { x: 2.5, z: 36.5, yaw: 0.4 });
+  put('mid', (r) => M.signTower(r, { text: 'JUNKYARD ARENA', h: 3.6 }), { x: 0.6, z: 39.5 });
+  put('mid', (r) => M.warningSign(r), { x: -8.2, z: 17.5, yaw: 0.3 });
+  put('mid', (r) => M.warningSign(r), { x: 6.8, z: 18.2, yaw: -0.4 });
 
   /* ---- far: the yard and the desert beyond ---- */
   put('far', (r) => M.floodlight(r, 10), { x: -16, z: 45 });
@@ -98,8 +112,9 @@ export function buildJunkyard(seed = 7) {
     if (!built.has(band)) {
       const list = objects.filter((o) => o.band === band).map((o) => {
         const model = o.build(o.rng);
-        const { x = 0, y = 0, z = 0, yaw = 0, pitch = 0, roll = 0 } = o.at;
-        const faces = place(model.faces, { x, y, z, yaw, pitch, roll });
+        const { x = 0, y = 0, z = 0, yaw = 0, pitch = 0, roll = 0, scale = 1 } = o.at;
+        const faces = place(model.faces, { x, y, z, yaw, pitch, roll, scale });
+        if (model.shadow && scale !== 1) model.shadow = { ...model.shadow, rx: model.shadow.rx * scale, rz: model.shadow.rz * scale, h: model.shadow.h * scale };
         if (model.lamps) for (const l of model.lamps) lamps.push(place([{ p: [l], n: [0, 0, -1], c: [0, 0, 0] }], { x, y, z, yaw })[0].p[0]);
         return { faces, shadow: model.shadow && !o.at.noShadow ? { ...model.shadow, strength: o.at.noShadowLift ? 0.32 : undefined } : null, x, z };
       });
@@ -133,7 +148,8 @@ export function buildJunkyard(seed = 7) {
       } },
       { id: 'far', parallax: PARALLAX.far, ground: { fromY: camera.horizonY - 2 }, paint: paintBand('far') },
       { id: 'mid', parallax: PARALLAX.mid, ground: { fromY: groundY(FAR_EDGE) }, paint: paintBand('mid') },
-      { id: 'near', parallax: PARALLAX.near, ground: { fromY: groundY(NEAR_EDGE) }, paint: paintBand('near') }
+      { id: 'near', parallax: PARALLAX.near, ground: { fromY: groundY(NEAR_EDGE) }, paint: paintBand('near') },
+      { id: 'nearMenu', parallax: PARALLAX.near, ground: { fromY: groundY(NEAR_EDGE) }, paint: paintBand('nearMenu') }
     ],
     paintGround: (ctx, W, H, pad) => drawGround(ctx, camera, createRng(seed + 2), W, H, pad),
     /* Building the meshes is part of the real loading work. */

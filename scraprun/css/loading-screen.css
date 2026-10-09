@@ -54,13 +54,12 @@ html, body {
 }
 .scene.is-ready { opacity: 1; }
 
-/* Vignette, plus a darker floor so the loading bar always reads. */
+/* Vignette. (Darkening behind the loading bar and menu: see menu.css.) */
 .shade {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 34% 30% at 50% 40%, rgba(18, 9, 4, 0.55) 0%, rgba(18, 9, 4, 0.3) 55%, rgba(18, 9, 4, 0) 100%),
     radial-gradient(ellipse 75% 70% at 50% 42%, rgba(0, 0, 0, 0) 55%, rgba(10, 5, 2, 0.5) 100%);
 }
 

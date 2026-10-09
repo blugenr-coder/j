@@ -248,7 +248,7 @@ export function renderFaces(ctx, faces, cam, { light = DEFAULT_LIGHT, rng = null
     const pts = f.p.map((p) => cam.project(p));
     if (pts.some((p) => p[2] < 0.05)) continue;
     const { color, fog } = shade({ ...f, n }, cam, light);
-    visible.push({ pts, depth: dot(toFace, cam.fwd), color, fog, glow: f.glow, clean: f.clean });
+    visible.push({ pts, depth: dot(toFace, cam.fwd), color, fog, glow: f.glow, clean: f.clean || !!f.label, label: f.label });
   }
   visible.sort((a, b) => b.depth - a.depth);
 
@@ -271,6 +271,7 @@ export function renderFaces(ctx, faces, cam, { light = DEFAULT_LIGHT, rng = null
     ctx.lineWidth = 1.1 * px;
     ctx.fill();
     ctx.stroke();
+    if (v.label) drawLabel(ctx, v);
 
     if (!rng || v.glow || v.clean) continue;
     const a = area(v.pts);
@@ -311,6 +312,29 @@ export function renderFaces(ctx, faces, cam, { light = DEFAULT_LIGHT, rng = null
     }
     ctx.restore();
   }
+}
+
+/** Paints text onto a quad face whose corners were given top-left, top-right,
+    bottom-right, bottom-left. An affine map from the first three corners is
+    exact for a flat sign seen at this distance and keeps the text crisp. */
+function drawLabel(ctx, v) {
+  const { text, aspect = 0.25, color = '#ffb800', font = '"Black Ops One", Impact, sans-serif', size = 0.62 } = v.label;
+  const [a, b, , d] = v.pts;
+  const vw = 1000, vh = vw * aspect;
+  ctx.save();
+  ctx.transform((b[0] - a[0]) / vw, (b[1] - a[1]) / vw, (d[0] - a[0]) / vh, (d[1] - a[1]) / vh, a[0], a[1]);
+  ctx.globalAlpha = 1 - v.fog * 0.85;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.round(vh * size)}px ${font}`;
+  /* shrink to fit the board, leaving a margin */
+  const w = ctx.measureText(text).width;
+  if (w > vw * 0.9) ctx.font = `${Math.round(vh * size * (vw * 0.9) / w)}px ${font}`;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  ctx.fillText(text, vw / 2 + vh * 0.03, vh / 2 + vh * 0.05);
+  ctx.fillStyle = color;
+  ctx.fillText(text, vw / 2, vh / 2);
+  ctx.restore();
 }
 
 /** Hard shadows cast on the ground (y = 0) by `faces`, drawn opaque into
