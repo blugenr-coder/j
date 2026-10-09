@@ -43,12 +43,62 @@ export function bar(a, b, t, color) {
   ], color);
 }
 
+/* ---------- vehicle parts ---------- */
+
+/** A wheel on the z axis: lugged tread, sidewall, and a spoked steel rim on
+    the outer face (`side` = +1 or -1 says which face is outer). */
+export function wheel(r, width, side = 1, { rim = P.steel, segments = 16, lugs = true } = {}) {
+  const f = [
+    ...cylinder(r * 0.94, width, P.tyre, { axis: 'z', segments, cap: P.sidewall }),
+    ...cylinder(r * 0.6, width + 0.04, mix(rim, P.black, 0.35), { axis: 'z', segments: 10, cap: rim })
+  ];
+  if (lugs) {
+    for (let i = 0; i < segments; i += 1) {
+      if (i % 2) continue;
+      const a = (i / segments) * Math.PI * 2;
+      f.push(...place(box(r * 0.3, r * 0.1, width * 0.96, P.tyre), {
+        x: Math.cos(a) * r * 0.9, y: Math.sin(a) * r * 0.9, roll: a - Math.PI / 2
+      }));
+    }
+  }
+  const zf = side * (width / 2 + 0.03);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2 + 0.3;
+    f.push(...bar([Math.cos(a) * r * 0.12, Math.sin(a) * r * 0.12, zf], [Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, zf], r * 0.1, mix(rim, P.black, 0.2)));
+  }
+  f.push(...place(cylinder(r * 0.14, 0.1, P.darkSteel, { axis: 'z', segments: 6, cap: P.hazard }), { z: zf }));
+  return f;
+}
+
+/** A tapered steel spike pointing along +y; place() it to aim it. */
+export const spike = (len = 0.4, r = 0.12, color = P.steel) => box(r, len, r, color, { taper: 0.92 });
+
+/** A row of glowing roof lamps on a bar. */
+function lampBar(width, n = 4) {
+  const f = [...box(0.16, 0.12, width, P.darkSteel)];
+  for (let i = 0; i < n; i++) {
+    const z = -width / 2 + (i + 0.5) * (width / n);
+    f.push(...place(box(0.22, 0.2, width / n * 0.7, P.darkSteel), { y: 0.1, z }));
+    f.push(...place(box(0.03, 0.14, width / n * 0.55, P.lamp, { glow: true }), { x: 0.12, y: 0.13, z }));
+  }
+  return f;
+}
+
+/** An oil drum and a jerry can, strapped down as cargo. */
+function cargo(rng) {
+  return [
+    ...place(cylinder(0.26, 0.62, P.hazard, { axis: 'y', segments: 10, cap: mix(P.hazard, P.black, 0.3) }), { y: 0.31 }),
+    ...place(cylinder(0.26, 0.62, P.blue, { axis: 'y', segments: 10, cap: mix(P.blue, P.black, 0.3) }), { y: 0.31, z: 0.56 }),
+    ...place(box(0.42, 0.5, 0.2, P.red), { x: 0.45, z: -0.3, yaw: 0.2 })
+  ];
+}
+
 /* ---------- vehicles ---------- */
 
 /** A scrap-built combat machine. `weapon` is 'ram', 'saw' or 'flipper'. */
 export function vehicle(rng, {
   body, accent, length = 4.4, width = 2.3, wheelR = 0.62, weapon = 'ram',
-  wing = true, cage = true, stacks = true, cabinColor = body
+  wing = true, cage = true, stacks = true, cabinColor = body, roofLamps = true, withCargo = false
 }) {
   const L = length / 2, W = width / 2;
   const f = [];
@@ -57,10 +107,12 @@ export function vehicle(rng, {
   /* wheels: chunky, outboard, monster-truck stance */
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     const at = { x: sx * L * 0.64, y: wheelR, z: sz * (W + 0.02) };
-    add(cylinder(wheelR, 0.52, P.tyre, { axis: 'z', segments: 14, cap: P.sidewall }), at);
-    add(cylinder(wheelR * 0.46, 0.58, P.darkSteel, { axis: 'z', segments: 8, cap: accent }), at);
-    /* fender over each wheel */
+    add(wheel(wheelR, 0.56, sz), at);
+    /* fender over each wheel, with spikes along its edge */
     add(box(wheelR * 2.25, 0.12, 0.66, accent, { taper: 0.12 }), { x: at.x, y: wheelR * 2 + 0.06, z: sz * (W + 0.02) });
+    for (let k = -1; k <= 1; k++) {
+      add(spike(0.32, 0.1), { x: at.x + k * wheelR * 0.7, y: wheelR * 2 + 0.16, z: sz * (W + 0.3), pitch: sz * 0.9 });
+    }
   }
 
   /* chassis and hull */
@@ -103,6 +155,11 @@ export function vehicle(rng, {
     for (const sz of [-1, 1]) f.push(...bar([-L * 0.92, 1.3, sz * 0.62], [-L * 1.0, 2.02, sz * 0.62], 0.08, P.darkSteel));
     add(box(0.68, 0.07, width * 0.98, accent), { x: -L * 1.02, y: 2.0 });
   }
+
+  if (roofLamps) add(lampBar(width * 0.62), { x: cabX + 0.42, y: cabY + 1.0 });
+  /* grille slats across the nose */
+  for (let i = 0; i < 4; i++) add(box(0.05, 0.05, width * 0.5, P.black), { x: L * 0.97, y: 0.82 + i * 0.07 });
+  if (withCargo) add(cargo(rng), { x: -L * 0.55, y: 1.36, z: -width * 0.15 });
 
   /* spare tyre bolted to the tail */
   add(cylinder(0.42, 0.24, P.tyre, { axis: 'x', segments: 12, cap: P.sidewall }), { x: -L - 0.08, y: 1.08 });
@@ -360,4 +417,168 @@ export function bunting(rng, a, b, count = 12, colors = [P.orange, P.hazard, P.b
 export function pipe(rng, len = 4, r = 0.3, color = P.rust) {
   const f = cylinder(r, len, color, { axis: 'x', segments: 10, cap: P.black });
   return { faces: weather(place(f, { y: r }), rng, 0.1), shadow: { rx: len / 2, rz: r * 1.5, h: r * 2 } };
+}
+
+/** Recolours a share of faces with rust, so paint looks patched and worn. */
+export function patch(faces, rng, share = 0.3, colors = [P.rust, P.rustLight, P.rustDark]) {
+  for (const f of faces) if (!f.glow && rng.chance(share)) f.c = mix(f.c, rng.pick(colors), rng.range(0.5, 0.9));
+  return faces;
+}
+
+/** An open tube-frame buggy with a spiked roller on the nose. */
+export function buggy(rng, { body = P.red, accent = P.hazard } = {}) {
+  const f = [];
+  const add = (faces, t) => f.push(...place(faces, t));
+  const W = 0.6;
+  add(box(3.0, 0.12, 1.3, P.darkSteel), { y: 0.5 });
+  for (const sz of [-1, 1]) {
+    add(wheel(0.66, 0.5, sz), { x: -1.1, y: 0.66, z: sz * 1.0 });
+    add(wheel(0.54, 0.42, sz), { x: 1.25, y: 0.54, z: sz * 0.95 });
+    const s = (p) => [p[0], p[1], p[2] * sz];
+    f.push(...bar(s([-1.45, 0.62, W]), s([1.5, 0.62, 0.48]), 0.1, body));
+    f.push(...bar(s([-0.45, 0.62, W]), s([-0.32, 1.78, 0.5]), 0.1, body));
+    f.push(...bar(s([-0.32, 1.78, 0.5]), s([0.62, 0.98, 0.55]), 0.1, body));
+    f.push(...bar(s([-0.32, 1.78, 0.5]), s([-1.35, 0.95, 0.55]), 0.1, body));
+    f.push(...bar(s([0.62, 0.98, 0.55]), s([1.5, 0.68, 0.45]), 0.1, body));
+    f.push(...bar(s([-1.35, 0.95, 0.55]), s([-1.45, 0.62, W]), 0.1, body));
+    /* side armour plate */
+    add(box(1.3, 0.42, 0.05, mix(body, P.rust, 0.3)), { x: 0.05, y: 0.6, z: sz * 0.62 });
+  }
+  f.push(...bar([-0.32, 1.78, -0.5], [-0.32, 1.78, 0.5], 0.1, body));
+  f.push(...bar([1.5, 0.68, -0.45], [1.5, 0.68, 0.45], 0.1, body));
+  /* hood */
+  f.push(...hexa([[0.55, 0.62, -0.55], [1.5, 0.62, -0.45], [1.5, 0.62, 0.45], [0.55, 0.62, 0.55],
+    [0.6, 0.98, -0.5], [1.45, 0.72, -0.42], [1.45, 0.72, 0.42], [0.6, 0.98, 0.5]], body));
+  /* engine, intake, exhausts */
+  add(box(0.85, 0.55, 0.9, P.darkSteel), { x: -1.0, y: 0.56 });
+  add(box(0.45, 0.22, 0.5, accent), { x: -1.0, y: 1.11 });
+  for (const z of [-0.28, 0.28]) f.push(...bar([-1.35, 0.9, z], [-1.7, 1.55, z * 1.2], 0.11, P.steel));
+  /* seat */
+  add(box(0.5, 0.5, 0.6, P.black, { taper: 0.1 }), { x: -0.2, y: 0.56 });
+  add(lampBar(1.0), { x: -0.28, y: 1.84 });
+  /* spiked roller on two arms */
+  for (const z of [-0.6, 0.6]) f.push(...bar([1.4, 0.65, z * 0.8], [2.0, 0.5, z], 0.1, P.darkSteel));
+  add(cylinder(0.27, 1.5, P.steel, { axis: 'z', segments: 10, cap: P.darkSteel }), { x: 2.05, y: 0.5 });
+  for (let i = 0; i < 6; i++) for (const z of [-0.5, 0, 0.5]) {
+    const a = (i / 6) * Math.PI * 2 + (z ? 0.5 : 0);
+    add(spike(0.3, 0.1), { x: 2.05 + Math.cos(a) * 0.24, y: 0.5 + Math.sin(a) * 0.24, z, roll: a - Math.PI / 2 });
+  }
+  /* pole flag */
+  f.push(...bar([-1.3, 0.9, -0.5], [-1.4, 2.7, -0.55], 0.05, P.darkSteel));
+  f.push(...flagCloth([-1.4, 2.65, -0.55], 0.9, 0.55, accent, rng));
+  return { faces: weather(f, rng, 0.07), shadow: { rx: 2.2, rz: 1.4, h: 1.2 } };
+}
+
+/** A long spiked muscle car with blower stacks and cargo on the trunk. */
+export function muscleCar(rng, { body = P.green, accent = P.hazard } = {}) {
+  const f = [];
+  const add = (faces, t) => f.push(...place(faces, t));
+  const body2 = mix(body, P.rust, 0.25);
+  const hull = [[-2.25, 0.38], [2.2, 0.38], [2.3, 0.78], [1.0, 0.95], [-2.25, 0.98]];
+  add(patch(extrude(hull, 1.75, body, { sideColor: body2 }), rng, 0.35));
+  add(box(1.7, 0.5, 1.5, body, { taper: 0.26, taperZ: 0.1, colors: { right: P.glass, left: P.glass, front: P.glass, back: P.glass } }), { x: -0.45, y: 0.95 });
+  add(box(1.3, 0.06, 1.24, body2), { x: -0.5, y: 1.45 });
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    add(wheel(0.48, 0.4, sz), { x: sx * 1.4, y: 0.48, z: sz * 0.86 });
+  }
+  /* spikes along both flanks */
+  for (const sz of [-1, 1]) for (let i = 0; i < 6; i++) {
+    add(spike(0.28, 0.1), { x: -1.9 + i * 0.75, y: 0.72, z: sz * 0.9, pitch: sz * 1.4 });
+  }
+  /* blower and stacks through the hood */
+  add(box(0.6, 0.3, 0.55, P.steel), { x: 1.05, y: 0.92 });
+  add(box(0.5, 0.14, 0.5, P.black), { x: 1.05, y: 1.22 });
+  for (const z of [-0.18, 0.18]) f.push(...bar([0.8, 1.0, z], [0.45, 1.7, z * 1.4], 0.13, P.darkSteel));
+  /* ram bumper with spikes */
+  add(box(0.18, 0.32, 1.9, P.darkSteel), { x: 2.3, y: 0.35 });
+  for (const z of [-0.7, 0, 0.7]) add(spike(0.36, 0.12), { x: 2.38, y: 0.5, z, roll: -Math.PI / 2 });
+  add(cargo(rng), { x: -1.7, y: 0.98, z: -0.25 });
+  for (const sz of [-1, 1]) add(box(0.06, 0.12, 0.3, P.lamp, { glow: true }), { x: 2.27, y: 0.68, z: sz * 0.6 });
+  return { faces: weather(f, rng, 0.07), shadow: { rx: 2.6, rz: 1.3, h: 1.2 } };
+}
+
+/** A garage front: walls of patched sheet metal, a dark open bay, an awning,
+    and a sign on the roof. Built facing -z. */
+export function garage(rng, { w = 5, h = 3.8, d = 5, sign = P.orange, signAccent = P.hazard } = {}) {
+  const f = [];
+  const add = (faces, t) => f.push(...place(faces, t));
+  const wall = rng.pick([hex('#8a6a4a'), hex('#7b5236'), hex('#6d7470'), hex('#9a5a32')]);
+  f.push(...patch(box(w, h, d, wall, { colors: { front: hex('#3a2618') } }), rng, 0.5, [P.rust, hex('#5d6b6a'), hex('#a07a4c')]));
+  /* bay frame: two pillars and a lintel standing proud of the dark opening */
+  for (const sx of [-1, 1]) add(box(0.6, h, 0.5, P.concrete), { x: sx * (w / 2 - 0.3), z: -d / 2 - 0.2 });
+  add(box(w, 0.8, 0.5, P.concrete), { y: h - 0.8, z: -d / 2 - 0.2 });
+  add(box(w * 0.98, 0.1, 0.5, P.hazard), { y: h - 0.85, z: -d / 2 - 0.46 });
+  /* corrugation ribs on the side wall */
+  for (let i = 0; i < 7; i++) add(box(0.08, h * 0.96, 0.08, mix(wall, P.black, 0.25)), { x: -w / 2 - 0.03, z: -d / 2 + 0.4 + i * (d - 0.8) / 6 });
+  /* roof slab and awning */
+  add(box(w + 0.6, 0.2, d + 0.4, P.darkSteel), { y: h });
+  f.push(...hexa([[-w / 2, h - 0.9, -d / 2 - 0.5], [w / 2, h - 0.9, -d / 2 - 0.5], [w / 2, h - 0.75, -d / 2 - 0.4], [-w / 2, h - 0.75, -d / 2 - 0.4],
+    [-w / 2, h - 0.5, -d / 2 - 1.9], [w / 2, h - 0.5, -d / 2 - 1.9], [w / 2, h - 0.38, -d / 2 - 1.8], [-w / 2, h - 0.38, -d / 2 - 1.8]], rng.pick([P.red, P.blue, P.rustLight])));
+  /* sign: board, frame, posts and two bulbs */
+  const sw = w * 0.8, sy = h + 0.4;
+  for (const sx of [-1, 1]) f.push(...bar([sx * sw * 0.35, h, -d / 2 + 0.3], [sx * sw * 0.35, sy + 0.2, -d / 2 + 0.3], 0.1, P.darkSteel));
+  add(box(sw + 0.2, 1.3, 0.12, P.black), { y: sy, z: -d / 2 + 0.15, pitch: -0.08 });
+  add(box(sw, 1.1, 0.14, sign), { y: sy + 0.1, z: -d / 2 + 0.12, pitch: -0.08 });
+  add(box(sw * 0.7, 0.26, 0.16, signAccent), { y: sy + 0.52, z: -d / 2 + 0.1, pitch: -0.08 });
+  add(box(sw * 0.45, 0.2, 0.16, mix(signAccent, P.white, 0.4)), { y: sy + 0.2, z: -d / 2 + 0.1, pitch: -0.08 });
+  return { faces: weather(f, rng, 0.06), shadow: { rx: w * 0.6, rz: d * 0.6, h } };
+}
+
+/** A start gantry: two steel truss towers with traffic lights, a truss beam
+    across the track, bunting along it. Spans x from -span/2 to span/2. */
+export function gantry(rng, { span = 14, h = 7 } = {}) {
+  const f = [];
+  const c = hex('#4a3b33'), t = 0.16, s = 0.45;
+  for (const sx of [-1, 1]) {
+    const x = sx * span / 2;
+    for (const [dx, dz] of [[-s, -s], [s, -s], [s, s], [-s, s]]) f.push(...bar([x + dx, 0, dz], [x + dx, h + 0.9, dz], t, c));
+    for (let y = 0; y < h; y += 1.2) {
+      f.push(...bar([x - s, y, -s], [x + s, y + 1.2, -s], t * 0.6, c));
+      f.push(...bar([x - s, y + 1.2, -s], [x + s, y + 1.2, -s], t * 0.6, c));
+      f.push(...bar([x + sx * s, y, -s], [x + sx * s, y + 1.2, s], t * 0.6, c));
+    }
+    /* traffic light on the inner face of each tower */
+    f.push(...trafficLight([x - sx * (s + 0.25), h - 2.2, -s - 0.1], sx < 0 ? 'red' : 'green'));
+  }
+  for (const y of [h, h + 0.9]) for (const z of [-s, s]) f.push(...bar([-span / 2, y, z], [span / 2, y, z], t, c));
+  for (let x = -span / 2; x < span / 2 - 0.1; x += 0.9) {
+    f.push(...bar([x, h, -s], [x + 0.9, h + 0.9, -s], t * 0.6, c));
+  }
+  f.push(...trafficLight([-1.6, h - 0.15, -s - 0.1], 'red'));
+  f.push(...trafficLight([1.6, h - 0.15, -s - 0.1], 'green'));
+  return { faces: weather(f, rng, 0.06), shadow: null };
+}
+
+function trafficLight([x, y, z], on) {
+  const f = place(box(0.55, 1.35, 0.35, P.black), { x, y: y - 1.35, z });
+  const lamps = [['red', hex('#ff3b26'), 0.95], ['amber', hex('#ffb020'), 0.5], ['green', hex('#3dff6a'), 0.05]];
+  for (const [name, col, dy] of lamps) {
+    const lit = name === on;
+    f.push(...place(cylinder(0.17, 0.06, lit ? col : mix(col, P.black, 0.75), { axis: 'z', segments: 10 }),
+      { x, y: y - 1.35 + 0.2 + dy, z: z - 0.2 }).map((q) => (lit ? { ...q, glow: true } : q)));
+    f.push(...place(box(0.42, 0.06, 0.2, P.black), { x, y: y - 1.35 + 0.42 + dy, z: z - 0.27 }));
+  }
+  return f;
+}
+
+/** A red desert rock spire: stacked, tapered blocks in sandstone bands. */
+export function rock(rng, { h = 12, r = 4 } = {}) {
+  const f = [];
+  const bands = [hex('#b5562d'), hex('#c46a37'), hex('#9c4423'), hex('#d07d45')];
+  let y = 0, rr = r;
+  const levels = rng.int(2, 4);
+  for (let i = 0; i < levels; i++) {
+    const lh = (h / levels) * rng.range(0.8, 1.2);
+    f.push(...place(box(rr * 2, lh, rr * rng.range(1.4, 2), rng.pick(bands), { taper: rng.range(0.1, 0.3) }),
+      { y, x: rng.range(-0.4, 0.4) * rr * 0.3, yaw: rng.range(-0.5, 0.5) }));
+    y += lh * 0.98;
+    rr *= rng.range(0.65, 0.85);
+  }
+  /* scree at the foot */
+  for (let i = 0; i < 6; i++) {
+    const a = rng.range(0, Math.PI * 2);
+    f.push(...place(box(rng.range(0.8, 2), rng.range(0.6, 1.6), rng.range(0.8, 2), rng.pick(bands), { taper: 0.3 }),
+      { x: Math.cos(a) * r * 1.1, z: Math.sin(a) * r * 0.8, yaw: rng.range(0, 3) }));
+  }
+  return { faces: weather(f, rng, 0.08), shadow: { rx: r * 1.3, rz: r, h } };
 }

@@ -5,7 +5,7 @@
 
 import { hex, mix, rgb } from '../render/lowpoly.js';
 
-export const SUN = { x: 1460, y: 300 };
+export const SUN = { x: 1720, y: 96 };
 
 export function drawSky(ctx, cam, rng, W, H, pad) {
   const hy = cam.horizonY;
@@ -41,7 +41,11 @@ function drawClouds(ctx, rng, hy) {
     { x: 120, y: 330, w: 420, s: 0.6 }, { x: 1700, y: 380, w: 520, s: 0.55 },
     { x: 560, y: 360, w: 560, s: 0.5 }
   ];
-  for (const b of banks) {
+  /* the bank positions were laid out for a horizon at y≈470; squeeze them
+     into whatever sky the camera leaves */
+  const k = Math.min(1, hy / 470);
+  for (const b0 of banks) {
+    const b = { ...b0, y: b0.y * k, s: b0.s * (0.6 + 0.4 * k) };
     const puffs = 7 + Math.round(b.w / 60);
     const pts = [];
     for (let i = 0; i < puffs; i++) {

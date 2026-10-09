@@ -188,13 +188,13 @@ export class Camera {
 /* ---------- lighting ---------- */
 
 export const DEFAULT_LIGHT = {
-  sun: norm([0.62, 0.62, 0.48]),          // high, to the right, slightly behind the scene
-  sunColor: [1.18, 0.95, 0.72],           // warm key
-  skyColor: [0.40, 0.47, 0.62],           // cool fill from above
-  bounceColor: [0.34, 0.20, 0.11],        // warm light bouncing off the dirt
+  sun: norm([0.78, 0.48, -0.12]),         // low from the right: long shadows thrown across the arena
+  sunColor: [1.22, 0.98, 0.74],           // warm key
+  skyColor: [0.42, 0.48, 0.60],           // cool fill from above
+  bounceColor: [0.36, 0.22, 0.12],        // warm light bouncing off the dirt
   haze: hex('#e9a56f'),                   // dusty atmosphere
-  hazeStart: 14,
-  hazeDensity: 0.011,
+  hazeStart: 18,
+  hazeDensity: 0.010,
   hazeMax: 0.78
 };
 
@@ -210,18 +210,32 @@ function shade(f, cam, light) {
     const bounce = Math.max(0, -n[1]) + 0.25 * (1 - Math.abs(n[1]));
     const k = [0, 1, 2].map((i) =>
       light.skyColor[i] * sky + light.bounceColor[i] * bounce + light.sunColor[i] * sun);
-    c = [f.c[0] * k[0], f.c[1] * k[1], f.c[2] * k[2]];
+    /* cheap ambient occlusion: surfaces close to the ground get less light */
+    const ao = 0.72 + 0.28 * Math.min(1, Math.max(0, center[1] - (f.base ?? 0)) / 0.9);
+    c = [f.c[0] * k[0] * ao, f.c[1] * k[1] * ao, f.c[2] * k[2] * ao];
   }
   const dist = Math.hypot(...sub(center, cam.pos));
   const fog = Math.min(light.hazeMax, 1 - Math.exp(-Math.max(0, dist - light.hazeStart) * light.hazeDensity));
-  return mix(c, light.haze, fog);
+  return { color: mix(c, light.haze, fog), fog };
 }
 
 /* ---------- drawing ---------- */
 
+function area(pts) {
+  let a = 0;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i], q = pts[(i + 1) % pts.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return Math.abs(a) / 2;
+}
+
 /** Projects, culls, shades, sorts and fills `faces` into a 2D context whose
-    transform already maps the 1920×1080 design space onto the canvas. */
-export function renderFaces(ctx, faces, cam, light = DEFAULT_LIGHT) {
+    transform already maps the 1920×1080 design space onto the canvas.
+    With `rng`, larger faces also get wear: a bevel highlight along their
+    edges and grime and scratches inside — the hand-painted look of stylised
+    game art, done at build time so it costs nothing per frame. */
+export function renderFaces(ctx, faces, cam, { light = DEFAULT_LIGHT, rng = null } = {}) {
   const visible = [];
   for (const f of faces) {
     const cen = centroid(f.p);
@@ -233,24 +247,108 @@ export function renderFaces(ctx, faces, cam, light = DEFAULT_LIGHT) {
     }
     const pts = f.p.map((p) => cam.project(p));
     if (pts.some((p) => p[2] < 0.05)) continue;
-    visible.push({ pts, depth: dot(toFace, cam.fwd), color: shade({ ...f, n }, cam, light) });
+    const { color, fog } = shade({ ...f, n }, cam, light);
+    visible.push({ pts, depth: dot(toFace, cam.fwd), color, fog, glow: f.glow, clean: f.clean });
   }
   visible.sort((a, b) => b.depth - a.depth);
 
   /* A hairline stroke in the fill colour closes the anti-aliasing cracks that
      otherwise show between adjacent faces. */
   const t = ctx.getTransform();
-  ctx.lineWidth = 1.1 / (t.a || 1);
+  const px = 1 / (t.a || 1);
   ctx.lineJoin = 'round';
   for (const v of visible) {
-    ctx.beginPath();
-    ctx.moveTo(v.pts[0][0], v.pts[0][1]);
-    for (let i = 1; i < v.pts.length; i++) ctx.lineTo(v.pts[i][0], v.pts[i][1]);
-    ctx.closePath();
+    const path = () => {
+      ctx.beginPath();
+      ctx.moveTo(v.pts[0][0], v.pts[0][1]);
+      for (let i = 1; i < v.pts.length; i++) ctx.lineTo(v.pts[i][0], v.pts[i][1]);
+      ctx.closePath();
+    };
+    path();
     const col = rgb(v.color);
     ctx.fillStyle = col;
     ctx.strokeStyle = col;
+    ctx.lineWidth = 1.1 * px;
     ctx.fill();
     ctx.stroke();
+
+    if (!rng || v.glow || v.clean) continue;
+    const a = area(v.pts);
+    if (a < 400) continue;
+    const vis = 1 - v.fog;
+    ctx.save();
+    ctx.clip();
+    /* bevel: a light line just inside the edge */
+    ctx.lineWidth = Math.min(5, 1.5 + Math.sqrt(a) * 0.02);
+    ctx.strokeStyle = `rgba(255,236,205,${0.09 * vis})`;
+    ctx.stroke();
+    if (a > 900) {
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of v.pts) { minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]); minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]); }
+      const w = maxX - minX, h = maxY - minY;
+      /* grime collects low on a surface */
+      const g = ctx.createLinearGradient(0, minY, 0, maxY);
+      g.addColorStop(0, 'rgba(40,18,6,0)');
+      g.addColorStop(1, `rgba(40,18,6,${0.28 * vis})`);
+      ctx.fillStyle = g;
+      ctx.fillRect(minX, minY, w, h);
+      const blots = Math.min(10, Math.round(Math.sqrt(a) / 14));
+      for (let i = 0; i < blots; i++) {
+        const x = minX + rng.next() * w, y = minY + rng.next() * h, r = 3 + rng.next() * Math.sqrt(a) * 0.18;
+        const b = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const rust = rng.chance(0.55);
+        b.addColorStop(0, rust ? `rgba(150,62,20,${0.2 * vis})` : `rgba(30,16,8,${0.16 * vis})`);
+        b.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = b;
+        ctx.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+      ctx.lineWidth = 0.8;
+      ctx.strokeStyle = `rgba(255,232,200,${0.22 * vis})`;
+      for (let i = 0; i < blots / 3; i++) {
+        const x = minX + rng.next() * w, y = minY + rng.next() * h, len = 4 + rng.next() * 16;
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + len, y + rng.range(-3, 3)); ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
+}
+
+/** Hard shadows cast on the ground (y = 0) by `faces`, drawn opaque into
+    their own canvas and then laid onto `ctx` at `strength`, so overlapping
+    faces don't stack into darker patches. */
+export function renderCastShadows(ctx, faces, cam, { light = DEFAULT_LIGHT, strength = 0.42, blur = 2 } = {}) {
+  const s = light.sun;
+  const c = document.createElement('canvas');
+  c.width = ctx.canvas.width;
+  c.height = ctx.canvas.height;
+  const sctx = c.getContext('2d');
+  sctx.setTransform(ctx.getTransform());
+  sctx.fillStyle = '#000';
+  for (const f of faces) {
+    if (f.glow && f.noShadow) continue;
+    if (f.p.every((p) => p[1] < 0.03)) continue;
+    sctx.beginPath();
+    f.p.forEach((p, i) => {
+      const k = p[1] / s[1];
+      const q = cam.project([p[0] - s[0] * k, 0, p[2] - s[2] * k]);
+      if (i) sctx.lineTo(q[0], q[1]); else sctx.moveTo(q[0], q[1]);
+    });
+    sctx.closePath();
+    sctx.fill();
+  }
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalAlpha = strength;
+  if (blur) ctx.filter = `blur(${blur}px)`;
+  ctx.globalCompositeOperation = 'multiply';
+  /* tint the shadow warm-brown rather than grey, as it is on dusty ground */
+  const tint = document.createElement('canvas');
+  tint.width = c.width; tint.height = c.height;
+  const tctx = tint.getContext('2d');
+  tctx.drawImage(c, 0, 0);
+  tctx.globalCompositeOperation = 'source-in';
+  tctx.fillStyle = '#3a1a08';
+  tctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(tint, 0, 0);
+  ctx.restore();
 }
