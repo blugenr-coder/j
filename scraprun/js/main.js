@@ -42,10 +42,10 @@ for (const asset of GAME_ASSETS) {
   loader.add(asset.label, (report) => fetchWithProgress(asset.url, report), { weight: asset.weight ?? 1 });
 }
 
-/* Design review only: `?preview=SECONDS` appends a labelled wait so the
+/* Design review only: `?preview=SECONDS` (or `#preview` for 8 s) appends a labelled wait so the
    animation of the bar can be watched. It is never on by default, and the
    console says so whenever it is. */
-const preview = Number(new URLSearchParams(location.search).get('preview'));
+const preview = Number(new URLSearchParams(location.search).get('preview')) || (location.hash === '#preview' ? 8 : 0);
 if (preview > 0) {
   console.info(`[SCRAPRUN] preview mode: adding a ${preview}s artificial wait to the loading bar.`);
   loader.add('Preview wait', async (report) => {
