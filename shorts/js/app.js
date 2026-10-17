@@ -139,6 +139,7 @@
     scene.opts.handle = settings.handle.trim();
     scene.opts.cta = settings.cta.trim().toUpperCase();
     scene.opts.grain = settings.grain;
+    scene.opts.bloom = true;
     audio.setMusicVolume(settings.music);
     audio.setVolume(settings.vol);
   }
@@ -164,11 +165,24 @@
     $('time').textContent = scene.t.toFixed(1) + 's';
     if (mode !== 'idle') $('seek').value = scene.t;
   }
+  // Frame pacing: count frames and, while recording, lighten the costliest
+  // effects if this computer can't keep up, so the video stays smooth.
+  const pace = { frames: 0, slow: 0, ema: 1 / 60 };
   function loop(onDone) {
     let last = performance.now();
+    Object.assign(pace, { frames: 0, slow: 0, ema: 1 / 60, t0: last });
     const frame = (now) => {
-      const dt = Math.min(0.05, (now - last) / 1000);
+      const real = (now - last) / 1000;
+      const dt = Math.min(0.05, real);
       last = now;
+      pace.frames++;
+      pace.ema += (real - pace.ema) * 0.08;
+      if (mode === 'rec' && pace.frames > 20 && pace.ema > 1 / 48) {
+        if (scene.opts.grain) scene.opts.grain = false;
+        else if (scene.opts.bloom && pace.ema > 1 / 44) scene.opts.bloom = false;
+        pace.ema = 1 / 60;
+        pace.slow++;
+      }
       scene.step(dt);
       scene.render();
       tick();
@@ -226,14 +240,98 @@
     : 'This browser cannot record video. Use Chrome or Edge on a computer.';
   if (!mime) $('rec').disabled = $('batch').disabled = true;
 
-  async function record(idea) {
+  // Inside a claude.ai artifact, files reach the viewer through the
+  // `downloads` capability (they confirm each save). Opened from disk, a
+  // plain download link does the job.
+  const framed = !!(window.claude && window.claude.use);
+  const dlReady = framed ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null);
+  async function saveFile(blob, name) {
+    const dl = await dlReady;
+    if (dl) {
+      try {
+        await dl.save({ filename: name, data: blob });
+        return 'saved';
+      } catch (e) {
+        return (e && e.code) || 'unavailable';
+      }
+    }
+    if (framed) return 'unavailable';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    return 'saved';
+  }
+  const SAVE_MSG = {
+    saved: 'Saved.',
+    declined: 'Not saved. Use the Save button in “This session” when you want it.',
+    rate_limited: 'Another save prompt is open. Finish it, then press Save again.',
+    unavailable: 'Saving isn’t available in this view. Open the artifact in claude.ai to save videos.',
+  };
+  const clips = [];
+
+  // Frame-by-frame rendering when the browser can encode video itself;
+  // real-time recording otherwise.
+  let offline = null;
+  WI.offlineSupport().then((s) => {
+    offline = s;
+    if (s) {
+      $('fmt').textContent = `Renders frame by frame: a smooth 60 fps MP4 (${s.v.mux === 'avc' ? 'H.264' : 'VP9'}) on any computer, and you can switch tabs while it works.`;
+      $('rec').disabled = $('batch').disabled = false;
+      $('hint').textContent = $('hint').textContent.replace(' Keep this tab visible while it records.', '');
+    }
+  });
+
+  async function record(idea, opts = {}) {
+    if (offline) {
+      current = idea;
+      await startAudio();
+      refresh();
+      showMeta(idea);
+      mode = 'rec';
+      setRecUI(true);
+      let res = null;
+      try {
+        res = await WI.renderOffline(scene, audio, idea, (p) => {
+          $('rec').textContent = `Rendering ${Math.round(p * 100)}%`;
+          tick();
+        });
+      } catch (e) {
+        console.error('Frame-by-frame render failed, falling back to live recording', e);
+        offline = null;
+        audio.build(audio.live, true);
+      } finally {
+        mode = 'idle';
+        setRecUI(false);
+      }
+      if (res) return finish({ name: `whatif-${idea.id}.mp4`, blob: res.blob, idea, fps: 60, lightened: false, codec: res.codec }, opts);
+    }
+    return recordLive(idea, opts);
+  }
+  function showMeta(idea) {
+    const m = WI.meta(idea);
+    $('mTitle').value = m.title;
+    $('mDesc').value = m.description;
+  }
+  async function finish(clip, { offer = true } = {}) {
+    clips.unshift(clip);
+    done.add(clip.idea.id);
+    store.set('done', [...done]);
+    renderClips();
+    refresh();
+    if (offer) await offerSave(clip);
+    return clip;
+  }
+
+  async function recordLive(idea, opts) {
     current = idea;
     await startAudio();
     load(true);
     refresh();
-    const m = WI.meta(idea);
-    $('mTitle').value = m.title;
-    $('mDesc').value = m.description;
+    showMeta(idea);
     const stream = new MediaStream([...canvas.captureStream(60).getVideoTracks(), ...audio.dest.stream.getAudioTracks()]);
     const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 14e6, audioBitsPerSecond: 192e3 });
     const chunks = [];
@@ -243,6 +341,7 @@
     setRecUI(true);
     rec.start(250);
     await new Promise((res) => loop(res));
+    const fps = pace.frames / ((performance.now() - pace.t0) / 1000);
     await new Promise((r) => setTimeout(r, 150));
     rec.stop();
     await stopped;
@@ -250,20 +349,16 @@
     audio.stopMusic(0.1);
     mode = 'idle';
     setRecUI(false);
+    applySettings(); // restore effects the pacing guard may have switched off
     const blob = new Blob(chunks, { type: mime.split(';')[0] });
     const ext = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
-    const name = `whatif-${idea.id}.${ext}`;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    done.add(idea.id);
-    store.set('done', [...done]);
-    addClip(name, url, blob.size, idea);
-    refresh();
+    return finish({ name: `whatif-${idea.id}.${ext}`, blob, idea, fps, lightened: pace.slow > 0 }, opts);
+  }
+  async function offerSave(clip) {
+    const r = await saveFile(clip.blob, clip.name);
+    clip.status = r;
+    renderClips();
+    $('hint').textContent = SAVE_MSG[r] || SAVE_MSG.unavailable;
   }
   function setRecUI(on) {
     $('recBadge').hidden = !on;
@@ -271,13 +366,30 @@
     $('rec').textContent = on ? 'Recording…' : '● RECORD';
     for (const id of ['rec', 'play', 'batch', 'rand', 'next', 'seek']) $(id).disabled = on;
   }
-  function addClip(name, url, size, idea) {
+  function renderClips() {
     const ul = $('clips');
-    if (ul.querySelector('.small')) ul.innerHTML = '';
-    const li = document.createElement('li');
-    li.innerHTML = `<a href="${url}" download="${esc(name)}">${esc(name)}</a><span class="small">${(size / 1048576).toFixed(1)} MB · ${esc(WI.meta(idea).title)}</span>`;
-    ul.prepend(li);
+    if (!clips.length) return void (ul.innerHTML = '<li class="small">Nothing recorded yet.</li>');
+    ul.innerHTML = clips
+      .map((c, i) => {
+        const fps = Math.round(Math.min(60, c.fps));
+        const note = fps < 55 ? ` · ${fps} fps, your computer struggled: close other tabs and re-record` : c.lightened ? ` · ${fps} fps, effects lightened` : ` · ${fps} fps`;
+        return `<li><div class="clip-row"><span class="clip-name">${esc(c.name)}</span><button class="copy" data-clip="${i}">${c.status === 'saved' ? 'Save again' : 'Save'}</button></div><span class="small">${(c.blob.size / 1048576).toFixed(1)} MB${note}</span></li>`;
+      })
+      .join('');
+    if (clips.length > 1) ul.insertAdjacentHTML('beforeend', `<li><button class="btn" id="saveAll">Save all ${clips.length} as one .zip</button></li>`);
   }
+  $('clips').addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if (!b || mode === 'rec') return;
+    if (b.id === 'saveAll') {
+      b.disabled = true;
+      b.textContent = 'Packing…';
+      const zip = await WI.zip(clips.map((c) => ({ name: c.name, blob: c.blob })));
+      const r = await saveFile(zip, `whatif-batch-${clips.length}-videos.zip`);
+      $('hint').textContent = SAVE_MSG[r] || SAVE_MSG.unavailable;
+      renderClips();
+    } else if (b.dataset.clip) await offerSave(clips[+b.dataset.clip]);
+  });
   $('rec').addEventListener('click', async () => {
     if (!current || mode === 'rec') return;
     stop();
@@ -286,19 +398,31 @@
   $('batch').addEventListener('click', async () => {
     if (mode === 'rec') return;
     stop();
-    const n = Math.max(1, Math.min(50, +$('batchN').value || 1));
+    const n = Math.max(1, Math.min(framed ? 20 : 50, +$('batchN').value || 1));
+    const made = [];
     for (let i = 0; i < n; i++) {
       const idea = !done.has(current && current.id) && i === 0 && current ? current : nextNew();
       if (!idea) break;
-      $('hint').textContent = `Batch: recording ${i + 1} of ${n}… keep this tab visible.`;
-      await record(idea);
+      $('hint').textContent = `Batch: video ${i + 1} of ${n}…` + (offline ? '' : ' Keep this tab visible.');
+      // From disk each file downloads as it finishes; in an artifact the
+      // whole batch is offered once, as a single .zip.
+      made.push(await record(idea, { offer: !framed }));
       await new Promise((r) => setTimeout(r, 600));
     }
-    $('hint').textContent = 'Batch finished. Files are in your Downloads folder.';
+    if (framed && made.length) {
+      $('hint').textContent = 'Batch finished. Packing the videos into one .zip…';
+      const zip = await WI.zip(made.map((c) => ({ name: c.name, blob: c.blob })));
+      const r = await saveFile(zip, `whatif-batch-${made.length}-videos.zip`);
+      for (const c of made) c.status = r;
+      renderClips();
+      $('hint').textContent = SAVE_MSG[r] || SAVE_MSG.unavailable;
+    } else $('hint').textContent = 'Batch finished. Files are in your Downloads folder.';
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && mode === 'rec') $('hint').textContent = '⚠ The tab was hidden while recording — that video may stutter. Re-record it if so.';
+    if (document.hidden && mode === 'rec' && !offline) $('hint').textContent = '⚠ The tab was hidden while recording — that video may stutter. Re-record it if so.';
   });
+
+  if (!framed) $('hint').textContent = 'Pick an idea, preview it, then hit RECORD. The video saves to your Downloads automatically. Keep this tab visible while it records.';
 
   /* ------------------------------------------------------------------ boot */
   (document.fonts ? document.fonts.load('100px Anton').catch(() => {}) : Promise.resolve()).then(() => {

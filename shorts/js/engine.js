@@ -49,7 +49,8 @@
     g.fillRect(0, 0, c.width, c.height);
     return c;
   }
-  WI.FS = 1.3; // base stick-figure size: big enough to read on a phone
+  WI.FS = 1.3;
+  const HEAD = 15.5; // base stick-figure size: big enough to read on a phone
   // "*word*." -> one word drawn in two colours, so punctuation hugs the word.
   function parseMarked(text) {
     const words = [];
@@ -82,12 +83,14 @@
     return [kx, ky, kx + Math.sin(a2) * l2, ky + Math.cos(a2) * l2];
   }
 
+  // Seeded per scene in Scene.load, so a preview and the final render match frame for frame.
+  const figRand = () => (WI.figRng ? WI.figRng() : Math.random());
   class Fig {
     constructor(x, o = {}) {
       Object.assign(this, {
         x, y: GY, vx: 0, vy: 0, face: 1, scale: WI.FS, color: null, state: 'idle', mode: 'wander',
-        phase: Math.random() * TAU, air: false, angle: 0, av: 0, alive: true, visible: true, alpha: 1,
-        tx: x, speed: 1, wait: Math.random() * 2, squash: 1, lie: 0, lieDir: 1, atk: 0, team: 0, hp: 1,
+        phase: figRand() * TAU, air: false, angle: 0, av: 0, alive: true, visible: true, alpha: 1,
+        tx: x, speed: 1, wait: figRand() * 2, squash: 1, lie: 0, lieDir: 1, atk: 0, team: 0, hp: 1,
         eyes: null, gear: null, dieOnLand: false, gmul: 1, hero: false, drag: 0.2, flat: 0,
       }, o);
     }
@@ -180,16 +183,16 @@
         RA: limb(sh[0], sh[1], ra, 21, rf, 21),
       };
     }
-    draw(g, t, col) {
+    draw(g, t, col, lod = 0) {
       if (!this.visible || this.alpha <= 0) return;
       const P = this.pose(t), c = this.color || col;
       g.save();
       g.translate(this.x, this.y + this.lie * 44 * this.scale);
       g.scale(this.face * this.scale, this.scale * this.squash);
-      const ang = this.angle + this.lie * this.lieDir * this.face * (Math.PI / 2);
+      const ang = this.bodyAngle();
       if (ang) {
         g.translate(0, -50);
-        g.rotate(ang * this.face);
+        g.rotate(ang);
         g.translate(0, 50);
       }
       if (this.alpha < 1) g.globalAlpha = this.alpha;
@@ -206,7 +209,7 @@
       g.lineTo(P.RA[0], P.RA[1]); g.lineTo(P.RA[2], P.RA[3]);
       g.stroke();
       g.beginPath();
-      g.arc(P.head[0], P.head[1], 13.5, 0, TAU);
+      g.arc(P.head[0], P.head[1], HEAD, 0, TAU);
       g.fill();
       const gear = this.gear;
       if (gear === 'knight') {
@@ -246,18 +249,124 @@
         g.moveTo(P.head[0] - 20, P.head[1] - 8); g.lineTo(P.head[0] + 20, P.head[1] - 8); g.lineTo(P.head[0] + 4, P.head[1] - 48); g.closePath();
         g.fill();
       }
-      if (this.eyes) {
-        g.fillStyle = this.eyes;
-        g.beginPath();
-        g.arc(P.head[0] + 5, P.head[1] - 2, 3.2, 0, TAU);
-        g.arc(P.head[0] + 11, P.head[1] - 2, 3.2, 0, TAU);
-        g.fill();
-      }
+      // Faces only where they are big enough on screen to read.
+      if (lod > 4.5) this.drawFace(g, P, c, t);
       g.restore();
     }
-    // Head position in world space (for effects that need it).
-    headPos() {
-      return [this.x, this.y - 100 * this.scale * this.squash];
+    bodyAngle() {
+      return this.angle + this.lie * this.lieDir * (Math.PI / 2);
+    }
+    emotion() {
+      if (this.emo) return this.emo;
+      if (!this.alive || this.state === 'dead') return 'dead';
+      if (this.zombie || this.state === 'zombie') return 'zombie';
+      switch (this.state) {
+        case 'panic': case 'air': case 'climb': case 'float': return 'scared';
+        case 'cheer': return 'happy';
+        case 'attack': return 'angry';
+        case 'lookup': return 'shock';
+      }
+      return 'neutral';
+    }
+    // Eyes, brows and mouth in head-local space; +x is the way the figure faces.
+    drawFace(g, P, c, t) {
+      const [hx, hy] = P.head, e = this.emotion();
+      const L = WI.lum(c);
+      const ink = '#121418', line = L < 0.22 ? '#f4f6f8' : ink;
+      const e1 = hx + 2, e2 = hx + 9.5, ey = hy - 3;
+      g.lineCap = 'round';
+      g.lineWidth = 1.9;
+      g.strokeStyle = line;
+      g.fillStyle = line;
+      if (e === 'dead') {
+        g.beginPath();
+        for (const x of [e1, e2]) {
+          g.moveTo(x - 2.6, ey - 2.6); g.lineTo(x + 2.6, ey + 2.6);
+          g.moveTo(x + 2.6, ey - 2.6); g.lineTo(x - 2.6, ey + 2.6);
+        }
+        g.moveTo(hx + 3, hy + 7); g.lineTo(hx + 9, hy + 6);
+        g.stroke();
+        return;
+      }
+      if (e === 'happy') {
+        g.beginPath();
+        g.arc(e1, ey + 1.5, 2.8, Math.PI * 1.1, Math.PI * 1.9);
+        g.moveTo(e2 + 2.8 * Math.cos(Math.PI * 1.1), ey + 1.5 + 2.8 * Math.sin(Math.PI * 1.1));
+        g.arc(e2, ey + 1.5, 2.8, Math.PI * 1.1, Math.PI * 1.9);
+        g.stroke();
+        g.beginPath();
+        g.arc(hx + 6, hy + 4, 5, 0.15 * Math.PI, 0.85 * Math.PI);
+        g.closePath();
+        g.fill();
+        return;
+      }
+      const wide = e === 'scared' || e === 'shock';
+      const blink = !wide && e !== 'zombie' && Math.sin(t * 0.83 + this.phase * 3.1) > 0.985;
+      const er = wide ? 4.3 : 3.4;
+      g.fillStyle = this.eyes || '#ffffff';
+      g.beginPath();
+      g.ellipse(e1, ey, er * 0.85, blink ? 0.6 : er, 0, 0, TAU);
+      g.ellipse(e2, ey, er * 0.85, blink ? 0.6 : er, 0, 0, TAU);
+      g.fill();
+      if (!this.eyes && !blink) {
+        let px = 0.9, py = 0;
+        if (e === 'shock') py = -1.6;
+        if (e === 'scared') px = Math.sin(t * 9 + this.phase) * 1.2;
+        const pr = wide ? 1.4 : 1.8;
+        g.fillStyle = ink;
+        g.beginPath();
+        g.arc(e1 + px, ey + py, pr, 0, TAU);
+        g.arc(e2 + px, ey + py, pr, 0, TAU);
+        g.fill();
+      }
+      g.beginPath();
+      if (wide || e === 'sad') {
+        // brows lifted at the inner corners
+        g.moveTo(e1 - 3, ey - 6.5); g.lineTo(e1 + 2.5, ey - 8);
+        g.moveTo(e2 - 2.5, ey - 8); g.lineTo(e2 + 3, ey - 6.5);
+      } else if (e === 'angry' || e === 'zombie') {
+        g.moveTo(e1 - 3, ey - 7.5); g.lineTo(e1 + 3, ey - 4.5);
+        g.moveTo(e2 - 3, ey - 4.5); g.lineTo(e2 + 3, ey - 7.5);
+      }
+      g.stroke();
+      g.fillStyle = line;
+      g.beginPath();
+      switch (e) {
+        case 'scared':
+          g.ellipse(hx + 6, hy + 7, 3, 4 + Math.sin(t * 20) * 0.6, 0, 0, TAU);
+          g.fill();
+          break;
+        case 'shock':
+          g.ellipse(hx + 6, hy + 7, 2, 2.6, 0, 0, TAU);
+          g.fill();
+          break;
+        case 'sad':
+          g.arc(hx + 6, hy + 10, 4, 1.15 * Math.PI, 1.85 * Math.PI);
+          g.stroke();
+          break;
+        case 'angry':
+          g.moveTo(hx + 2, hy + 7.5); g.lineTo(hx + 10, hy + 6);
+          g.stroke();
+          break;
+        case 'zombie':
+          g.moveTo(hx + 1.5, hy + 6);
+          for (let i = 1; i <= 4; i++) g.lineTo(hx + 1.5 + i * 2.2, hy + 6 + (i % 2 ? 2.2 : 0));
+          g.stroke();
+          break;
+        default:
+          g.moveTo(hx + 3.5, hy + 6.5); g.lineTo(hx + 8.5, hy + 6.5);
+          g.stroke();
+      }
+    }
+    // Head centre in world space, following lean, tumble and lying down.
+    headWorld(t) {
+      const P = this.pose(t), a = this.bodyAngle();
+      let hx = P.head[0], hy = P.head[1];
+      if (a) {
+        const dy = hy + 50;
+        [hx, hy] = [hx * Math.cos(a) - dy * Math.sin(a), hx * Math.sin(a) + dy * Math.cos(a) - 50];
+      }
+      return [this.x + hx * this.face * this.scale, this.y + this.lie * 44 * this.scale + hy * this.scale * this.squash];
     }
   }
   WI.Fig = Fig;
@@ -334,7 +443,24 @@
       this.g = canvas.getContext('2d');
       this.grain = makeGrain();
       this.vig = makeVignette();
-      this.opts = { handle: '', cta: 'FOLLOW FOR PART 2', grain: true };
+      this.opts = { handle: '', cta: 'FOLLOW FOR PART 2', grain: true, bloom: true };
+      // A copy of the frame for motion/zoom blur, and an 1/8-size light
+      // buffer: only emissive things (fire, sparks, sun) are drawn into it,
+      // so the bloom never washes out a bright daytime sky.
+      this.tmp = document.createElement('canvas');
+      this.tmp.width = W;
+      this.tmp.height = H;
+      this.tmpG = this.tmp.getContext('2d');
+      this.lightC = document.createElement('canvas');
+      this.lightC.width = W / 8;
+      this.lightC.height = H / 8;
+      this.lightG = this.lightC.getContext('2d');
+      this.lightB = document.createElement('canvas');
+      this.lightB.width = W / 8;
+      this.lightB.height = H / 8;
+      this.lightBG = this.lightB.getContext('2d');
+      this.lightBG.filter = 'blur(3px)';
+      this.canBlur = this.lightBG.filter === 'blur(3px)';
       this.baseKeys = new Set(Object.keys(this).concat(['baseKeys']));
     }
 
@@ -345,6 +471,7 @@
       this.idea = idea;
       this.audio = audio && audio.ctx ? audio : null;
       this.rng = WI.RNG(WI.hash(idea.id));
+      WI.figRng = WI.RNG(WI.hash(idea.id) ^ 0x5bd1e995);
       this.t = 0;
       this.wt = 0;
       this.timeScale = 1;
@@ -381,11 +508,20 @@
       this.sky = { top: env.sky[0], bot: env.sky[1] };
       this.groundBase = env.ground;
       this.sun = { x: 800, y: 470, r: 62, c: '#fff4c8', a: 1 };
+      this.chunks = [];
+      this.shot = null;
+      this.view = this.cam;
+      this.zblur = 0;
+      this.zfocus = [W / 2, H / 2];
+      this.hblur = 0;
+      this.impactT = -1;
+      this.punchZ = 0;
       this.buildWorld();
+      this.birds();
       this.title = { pre: idea.pre || 'WHAT IF', text: idea.title.toUpperCase() };
       sc.build(this, idea.params, this.rng);
       this.beats.sort((a, b) => a.t - b.t);
-      if (this.audio) this.audio.startMusic(this.rng);
+      if (this.audio) this.audio.startMusic(WI.RNG(WI.hash(idea.id) ^ 0x27d4eb2f));
       this.render();
     }
 
@@ -407,6 +543,8 @@
       }
       if (lm) this.buildings.push({ x: lmX, w: lm.w, h: lm.h, kind: 'landmark', lm, k: 0.4, state: 'ok', ft: 0, tilt: 0, tdir: r.sign(), sink: 0, seed: 1 });
       if (env.trees) for (let i = 0; i < 9; i++) this.props.push({ x: r.range(-500, W + 500), s: r.range(0.8, 1.3), y: GY });
+      this.clouds = [];
+      for (let i = 0; i < 6; i++) this.clouds.push({ x: r.range(-300, W + 300), y: r.range(280, 900), s: r.range(0.6, 1.4), v: r.range(5, 16), seed: r.int(1, 1e6) });
       this.far = [];
       x = -900;
       while (x < W + 900) {
@@ -552,6 +690,10 @@
       this.burst('debris', x, y, 20 + 20 * power, 1300 * Math.sqrt(power), { angle: -Math.PI / 2, spread: 1.3 });
       this.burst('smoke', x, y - 30, 18 + 18 * power, 380 * Math.sqrt(power), { p: { size: 70 * Math.sqrt(power) } });
       if (o.sound !== false) this.sfx('boom', Math.min(1.4, power * 0.7));
+      this.zfocus = this.toScreen(x, y);
+      this.zblur = Math.max(this.zblur, Math.min(1.2, 0.35 + power * 0.3));
+      this.punch(0.03 + 0.03 * power);
+      if (power >= 1.5) this.impactT = 0;
       for (const f of this.figs) {
         if (!f.visible || f.air || f.immune) continue;
         const dx = f.x - x, dy = f.y - 50 - y, d = Math.hypot(dx, dy);
@@ -561,19 +703,154 @@
         }
       }
       if (o.buildings !== false)
-        for (const b of this.buildings) if (b.state === 'ok' && Math.abs(b.x - x) < R * 0.9) this.collapse(b, 0, Math.sign(b.x - x) || 1);
+        for (const b of this.buildings) {
+          const d = Math.abs(b.x - x);
+          if (b.state === 'ok' && d < R * 0.9) this.collapse(b, 0, Math.sign(b.x - x) || 1, 600 + 700 * Math.sqrt(power) * (1 - d / R));
+        }
     }
-    collapse(b, delay = 0, dir) {
-      if (b.state !== 'ok') return;
+    // force > 0 blows the building apart into tumbling chunks; without it
+    // the building sags and sinks, like a demolition.
+    collapse(b, delay = 0, dir, force = 0) {
+      if (!b || b.state !== 'ok') return;
       b.state = 'fall';
       b.ft = -delay;
       b.tdir = dir || b.tdir;
       b.rate = this.rng.range(0.6, 1);
+      b.force = force;
+    }
+    shatter(b) {
+      b.state = 'gone';
+      const r = this.rng, base = b.lm && b.lm.color ? mix(b.lm.color, this.bldColor, 0.35) : mix(this.bldColor, '#000000', b.k * 0.12);
+      const cols = b.w > 150 ? 3 : 2, rows = clamp(Math.round(b.h / 80), 2, 12);
+      const cw = b.w / cols, rh = b.h / rows, F = b.force, dir = b.tdir;
+      for (let i = 0; i < rows; i++)
+        for (let j = 0; j < cols; j++) {
+          if (this.chunks.length > 700) break;
+          const up = (i + 0.5) / rows;
+          this.chunks.push({
+            x: b.x - b.w / 2 + (j + 0.5) * cw, y: GY - (i + 0.5) * rh, w: cw * r.range(0.8, 1), h: rh * r.range(0.8, 1),
+            vx: dir * F * r.range(0.25, 1) * (0.3 + up * 0.9) + r.range(-90, 90), vy: -F * r.range(0.05, 0.5) * up - r.range(0, 160),
+            a: 0, va: r.range(-2.6, 2.6) * Math.min(2, F / 800), c: mix(base, '#000000', r.range(0, 0.18)), win: b.kind === 'tower', rest: false,
+          });
+        }
+      this.burst('dust', b.x, GY - b.h * 0.3, 18, 600, { jy: b.h * 0.3, p: { size: 110, c: '#7d756a' } });
+      this.burst('debris', b.x, GY - b.h * 0.5, 30, 900, { jy: b.h * 0.4 });
+      this.sfx('boom', 0.45);
+      this.shake(0.25);
+    }
+    updateChunks(dt) {
+      const g = this.grav > 0 ? this.grav : 2400;
+      for (const c of this.chunks) {
+        if (c.rest) continue;
+        c.vy += g * dt;
+        c.x += c.vx * dt;
+        c.y += c.vy * dt;
+        c.a += c.va * dt;
+        const rr = Math.min(c.w, c.h) * 0.45;
+        if (c.y + rr > GY && c.vy > 0) {
+          c.y = GY - rr;
+          if (c.vy > 500) {
+            this.part('dust', c.x, GY - 10, { size: 50, vx: c.vx * 0.2, c: '#7d756a' });
+            this.sfx('thud', 0.35);
+          }
+          c.vy *= -0.22;
+          c.vx *= 0.5;
+          c.va *= 0.45;
+          if (Math.abs(c.vy) < 70 && Math.abs(c.vx) < 50) c.rest = true;
+        }
+      }
+      this.chunks = this.chunks.filter((c) => !c.gone && Math.abs(c.x - this.cam.x) < 5000);
+    }
+    drawChunks(g) {
+      const win = mix(this.bldColor, this.sky.top, 0.35);
+      for (const c of this.chunks) {
+        g.save();
+        g.translate(c.x, c.y);
+        g.rotate(c.a);
+        g.fillStyle = c.c;
+        g.fillRect(-c.w / 2, -c.h / 2, c.w, c.h);
+        if (c.win && c.w > 34 && c.h > 40) {
+          g.fillStyle = win;
+          g.fillRect(-c.w / 2 + 8, -c.h / 2 + 10, c.w * 0.3, 20);
+          g.fillRect(c.w * 0.05, -c.h / 2 + 10, c.w * 0.3, 20);
+        }
+        g.restore();
+      }
+    }
+
+    /* -------------------------------------------------------------- camera */
+    toScreen(x, y) {
+      const v = this.view || this.cam;
+      return [(x - v.x) * v.zoom + W / 2, (y - v.y) * v.zoom + H / 2];
+    }
+    punch(a) {
+      this.punchZ = Math.min(0.18, this.punchZ + a);
+    }
+    // Cut in to a face for a beat, then cut back to wherever the main camera
+    // has got to. r is the head's radius on screen in pixels.
+    closeup(f, dur = 1.6, o = {}) {
+      if (!f) return;
+      const t0 = this.t;
+      this.shot = { f, t0, dur, r: o.r || 115, push: o.push ?? 0.14, rot: o.rot ?? 0.035, v: null };
+      this.zblur = Math.max(this.zblur, 0.55);
+      this.zfocus = [W / 2, 1000];
+      this.sfx('whoosh', 0.3, true, 0.16);
+      if (o.slow) this.slowmo(o.slow, dur - 0.35, 0.1, 0.3);
+      this.at(t0 + dur, () => {
+        if (this.shot && this.shot.t0 === t0) {
+          this.shot = null;
+          this.zblur = Math.max(this.zblur, 0.45);
+          this.zfocus = [W / 2, H / 2];
+        }
+      });
+    }
+    updateShot(dt) {
+      const sh = this.shot;
+      if (!sh) return (this.view = this.cam);
+      const f = sh.f, [hx, hy] = f.headWorld(this.t);
+      const k = clamp((this.t - sh.t0) / sh.dur, 0, 1);
+      const zoom = (sh.r / (HEAD * f.scale)) * (1 + sh.push * WI.ease.inOut(k));
+      const tx = hx + (f.face * 120) / zoom, ty = hy - 80 / zoom;
+      if (!sh.v) sh.v = { x: tx, y: ty, zoom, rot: sh.rot * f.face };
+      const q = 1 - Math.exp(-dt * 10);
+      sh.v.x += (tx - sh.v.x) * q;
+      sh.v.y += (ty - sh.v.y) * q;
+      sh.v.zoom = zoom;
+      this.view = sh.v;
+    }
+    birds() {
+      const r = this.rng, flock = [];
+      const y0 = GY - r.range(950, 1150);
+      for (let i = 0; i < 6; i++) flock.push({ x: -300 - i * 50 - r.range(0, 40), y: y0 + r.range(-50, 50) + Math.abs(i - 2.5) * 18, ph: r() * TAU });
+      this.add({
+        layer: 'back',
+        update(dt, s) {
+          const fast = s.danger ? 3.2 : 1;
+          for (const b of flock) {
+            b.x += 120 * fast * dt;
+            if (s.danger) b.y -= 120 * dt;
+            b.ph += dt * (9 + fast * 3);
+          }
+          if (flock.every((b) => b.x > s.cam.x + 2000)) this.dead = true;
+        },
+        draw(g, s) {
+          g.strokeStyle = s.figColor;
+          g.lineWidth = 4;
+          g.lineCap = 'round';
+          g.beginPath();
+          for (const b of flock) {
+            const w = Math.sin(b.ph) * 10;
+            g.moveTo(b.x - 16, b.y - w); g.lineTo(b.x, b.y); g.lineTo(b.x + 16, b.y - w);
+          }
+          g.stroke();
+        },
+      });
     }
 
     /* ---------------------------------------------------------------- update */
     step(dt) {
       this.t += dt;
+      if (this.audio && this.audio.offline) this.audio.tickOffline(this.t);
       // The end is read from duration every frame: a battle can finish early.
       if (!this.endCard && this.t >= this.duration - 3.3) this.end();
       this.fadeA = clamp((this.t - (this.duration - 0.35)) / 0.35, 0, 1);
@@ -594,6 +871,7 @@
       if (this.onUpdate) this.onUpdate(wdt, this.t);
       for (const f of this.figs) this.updateFig(f, wdt);
       for (const b of this.buildings) this.updateBuilding(b, wdt);
+      this.updateChunks(wdt);
       for (const e of this.ents) if (e.update) e.update(wdt, this);
       this.ents = this.ents.filter((e) => !e.dead);
       this.updateParts(wdt);
@@ -609,6 +887,11 @@
         this.cam.y += (p.y - this.cam.y) * k;
         if (p.zoom) this.cam.zoom += (p.zoom - this.cam.zoom) * k;
       }
+      this.updateShot(dt);
+      this.zblur = Math.max(0, this.zblur - dt * 2.6);
+      this.hblur = Math.max(0, this.hblur - dt * 4.5);
+      this.punchZ = Math.max(0, this.punchZ - dt * 0.35);
+      if (this.impactT >= 0) this.impactT += dt;
       this.trauma = Math.max(0, this.trauma - dt * 1.4);
       this.flashA = Math.max(0, this.flashA - dt * 2.2);
       if (this.caption) this.caption.age += dt;
@@ -634,6 +917,11 @@
         f.y += f.vy * dt;
         f.angle += f.av * dt;
         f.phase += dt * 10;
+        // remember a few past poses: fast bodies get a motion trail
+        if (Math.abs(f.vx) + Math.abs(f.vy) > 1100) {
+          (f.trail = f.trail || []).unshift([f.x, f.y, f.angle]);
+          if (f.trail.length > 4) f.trail.pop();
+        } else f.trail = null;
         const floor = f.floor ?? GY;
         if (f.y >= floor && f.vy >= 0) {
           f.y = floor;
@@ -721,6 +1009,7 @@
       if (b.state !== 'fall') return;
       b.ft += dt;
       if (b.ft < 0) return;
+      if (b.force) return this.shatter(b);
       if (!b.rumbled) {
         b.rumbled = true;
         this.sfx('rumble', 2.2, 0.45);
@@ -771,6 +1060,10 @@
     }
     stamp(text) {
       this.stampTx = { text: text.toUpperCase(), age: 0 };
+      if (this.t > 3) {
+        this.hblur = 1;
+        this.flash(Math.max(this.flashA, 0.18));
+      }
       this.sfx('whoosh', 0.4, true, 0.25);
       this.sfx('tick', 0.15);
     }
@@ -820,7 +1113,7 @@
     }
 
     render() {
-      const g = this.g, cam = this.cam, t = this.t;
+      const g = this.g, t = this.t, v = this.view || this.cam;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalAlpha = 1;
       g.globalCompositeOperation = 'source-over';
@@ -834,7 +1127,7 @@
       g.fillRect(0, 0, W, H);
       if (this.stars > 0.01) this.drawStars(g);
       if (this.sun.a > 0.01) {
-        const sx = this.sun.x - (cam.x - W / 2) * 0.05, sy = this.sun.y - (cam.y - H / 2) * 0.05, R = this.sun.r;
+        const [sx, sy] = this.sunPos(v), R = this.sun.r;
         g.globalCompositeOperation = 'lighter';
         g.globalAlpha = 0.55 * this.sun.a;
         g.drawImage(soft(this.sun.c), sx - R * 5, sy - R * 5, R * 10, R * 10);
@@ -846,41 +1139,58 @@
         g.fill();
         g.globalAlpha = 1;
       }
+      this.drawClouds(g, v);
       for (const e of this.ents) if (e.layer === 'sky') e.draw(g, this);
 
-      // shake
+      // camera: shake on top of a slow handheld drift
       const tr = this.trauma * this.trauma;
-      const sx = (Math.sin(t * 47.3) + Math.sin(t * 91.7) * 0.5) * 38 * tr;
-      const sy = (Math.cos(t * 53.1) + Math.sin(t * 77.9) * 0.5) * 38 * tr;
-      const sr = Math.sin(t * 31.3) * 0.025 * tr;
+      const sx = (Math.sin(t * 47.3) + Math.sin(t * 91.7) * 0.5) * 38 * tr + Math.sin(t * 1.1) * 4 + Math.sin(t * 2.3) * 2;
+      const sy = (Math.cos(t * 53.1) + Math.sin(t * 77.9) * 0.5) * 38 * tr + Math.cos(t * 1.3) * 3;
+      const sr = Math.sin(t * 31.3) * 0.025 * tr + Math.sin(t * 0.6) * 0.004;
+      const zoom = v.zoom * (1 + this.punchZ);
 
-      // far layer with parallax
-      const zf = 1 + (cam.zoom - 1) * 0.35;
+      // far layer with parallax, then haze so the near city stands in front of it
+      const zf = 1 + (zoom - 1) * 0.35;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.translate(W / 2 + sx * 0.4, H / 2 + sy * 0.4);
       g.scale(zf, zf);
-      g.translate(-(W / 2 + (cam.x - W / 2) * 0.35), -(H / 2 + (cam.y - H / 2) * 0.35) + (GY - 1500));
+      g.translate(-(W / 2 + (v.x - W / 2) * 0.35), -(H / 2 + (v.y - H / 2) * 0.35) + (GY - 1500));
       this.drawFar(g);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      const gy = H / 2 + (GY - v.y) * zoom, fh = 700 * zoom;
+      if (gy > 0 && gy - fh < H) {
+        const fog = g.createLinearGradient(0, gy - fh, 0, gy);
+        fog.addColorStop(0, rgba(this.sky.bot, 0));
+        fog.addColorStop(1, rgba(this.sky.bot, 0.45));
+        g.fillStyle = fog;
+        g.fillRect(0, gy - fh, W, fh + 2);
+      }
 
       // world
-      g.setTransform(1, 0, 0, 1, 0, 0);
       g.translate(W / 2, H / 2);
-      g.rotate(cam.rot + sr);
-      g.scale(cam.zoom, cam.zoom);
-      g.translate(-cam.x + sx, -cam.y + sy);
+      g.rotate((v.rot || 0) + sr);
+      g.scale(zoom, zoom);
+      g.translate(-v.x + sx, -v.y + sy);
+      const M = g.getTransform();
       for (const e of this.ents) if (e.layer === 'back') e.draw(g, this);
       this.drawBuildings(g);
       for (const e of this.ents) if (e.layer === 'bld') e.draw(g, this);
+      this.drawChunks(g);
       this.drawProps(g);
       g.fillStyle = this.groundColor;
-      g.fillRect(cam.x - 6000, GY, 12000, 6000);
+      g.fillRect(v.x - 6000, GY, 12000, 6000);
       g.fillStyle = mix(this.groundColor, this.sky.bot, 0.3);
-      g.fillRect(cam.x - 6000, GY, 12000, 5);
+      g.fillRect(v.x - 6000, GY, 12000, 5);
+      this.drawShadows(g);
       this.drawParts(g, false);
       for (const e of this.ents) if (e.layer === 'mid') e.draw(g, this);
       const fc = this.figColor;
-      for (const f of this.figs) if (!f.alive) f.draw(g, t, fc);
-      for (const f of this.figs) if (f.alive) f.draw(g, t, fc);
+      for (const f of this.figs) if (!f.alive) f.draw(g, t, fc, HEAD * f.scale * zoom);
+      for (const f of this.figs) {
+        if (!f.alive) continue;
+        if (f.trail) this.drawTrail(g, f, t, fc);
+        f.draw(g, t, fc, HEAD * f.scale * zoom);
+      }
       for (const e of this.ents) if (e.layer === 'front') e.draw(g, this);
       this.drawParts(g, true);
       for (const w of this.waves) {
@@ -893,6 +1203,7 @@
       }
       for (const e of this.ents) if (e.layer === 'top') e.draw(g, this);
       if (this.onDraw) this.onDraw(g);
+      if (this.opts.bloom) this.drawBloom(M, v);
 
       // screen overlays
       g.setTransform(1, 0, 0, 1, 0, 0);
@@ -907,6 +1218,15 @@
       if (this.flashA > 0.005) {
         g.fillStyle = rgba(this.flashC, Math.min(1, this.flashA));
         g.fillRect(0, 0, W, H);
+      }
+      this.drawBlur(g);
+      // Impact frame: two frames inverted, then a beat of black and white.
+      if (this.impactT >= 0 && this.impactT < 0.16) {
+        const inv = this.impactT < 0.07;
+        g.globalCompositeOperation = inv ? 'difference' : 'saturation';
+        g.fillStyle = inv ? '#ffffff' : '#808080';
+        g.fillRect(0, 0, W, H);
+        g.globalCompositeOperation = 'source-over';
       }
       if (this.opts.grain) {
         g.globalAlpha = 0.05;
@@ -924,6 +1244,113 @@
         g.fillStyle = `rgba(0,0,0,${this.fadeA})`;
         g.fillRect(0, 0, W, H);
       }
+    }
+
+    sunPos(v) {
+      return [this.sun.x - (v.x - W / 2) * 0.05, this.sun.y - (v.y - H / 2) * 0.05];
+    }
+    drawClouds(g, v) {
+      if (!this.clouds.length) return;
+      const night = clamp(this.stars, 0, 1);
+      g.fillStyle = mix(this.sky.bot, '#ffffff', 0.5 * (1 - night * 0.8));
+      g.globalAlpha = 0.72 * (1 - night * 0.65);
+      const span = W + 900;
+      for (const c of this.clouds) {
+        const x = ((((c.x + this.t * c.v - (v.x - W / 2) * 0.12) % span) + span) % span) - 450;
+        const y = c.y - (v.y - H / 2) * 0.06, k = c.s;
+        g.beginPath();
+        g.ellipse(x, y, 125 * k, 34 * k, 0, 0, TAU);
+        g.arc(x - 52 * k, y - 14 * k, 42 * k, 0, TAU);
+        g.arc(x + 8 * k, y - 32 * k, 54 * k, 0, TAU);
+        g.arc(x + 66 * k, y - 12 * k, 36 * k, 0, TAU);
+        g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+    drawShadows(g) {
+      g.fillStyle = '#000000';
+      for (const f of this.figs) {
+        if (!f.visible || f.alpha <= 0 || f.noShadow) continue;
+        const floor = f.floor ?? GY, h = floor - f.y;
+        if (h > 900 || h < -20) continue;
+        const k = clamp(1 - h / 900, 0, 1);
+        const lying = f.lie > 0.5;
+        const rx = (lying ? 60 : 30) * f.scale * (0.45 + 0.55 * k);
+        g.globalAlpha = 0.24 * k * f.alpha;
+        g.beginPath();
+        g.ellipse(f.x + (lying ? f.lieDir * f.face * 22 * f.scale : 0), floor + 3, rx, rx * 0.2, 0, 0, TAU);
+        g.fill();
+      }
+      g.globalAlpha = 1;
+    }
+    drawTrail(g, f, t, fc) {
+      const [x, y, a, al] = [f.x, f.y, f.angle, f.alpha];
+      f.trail.forEach(([tx, ty, ta], i) => {
+        f.x = tx;
+        f.y = ty;
+        f.angle = ta;
+        f.alpha = al * (0.28 - i * 0.06);
+        f.draw(g, t, fc, 0);
+      });
+      [f.x, f.y, f.angle, f.alpha] = [x, y, a, al];
+    }
+    drawBloom(M, v) {
+      const L = this.lightG, lw = W / 8, lh = H / 8;
+      L.setTransform(1, 0, 0, 1, 0, 0);
+      L.globalCompositeOperation = 'source-over';
+      L.globalAlpha = 1;
+      L.fillStyle = '#000000';
+      L.fillRect(0, 0, lw, lh);
+      L.globalCompositeOperation = 'lighter';
+      if (this.sun.a > 0.01) {
+        const [sx, sy] = this.sunPos(v), R = this.sun.r * 2.6;
+        L.setTransform(1 / 8, 0, 0, 1 / 8, 0, 0);
+        L.globalAlpha = this.sun.a * 0.7;
+        L.drawImage(soft(this.sun.c), sx - R, sy - R, R * 2, R * 2);
+      }
+      L.setTransform(M.a / 8, M.b / 8, M.c / 8, M.d / 8, M.e / 8, M.f / 8);
+      this.drawParts(L, true, true);
+      L.globalCompositeOperation = 'lighter';
+      for (const e of this.ents) if (e.glow) e.glow(L, this);
+      L.globalAlpha = 1;
+      let src = this.lightC;
+      if (this.canBlur) {
+        this.lightBG.clearRect(0, 0, lw, lh);
+        this.lightBG.drawImage(this.lightC, 0, 0);
+        src = this.lightB;
+      }
+      const g = this.g;
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'lighter';
+      g.globalAlpha = 0.7;
+      g.drawImage(src, 0, 0, W, H);
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
+    }
+    // Zoom blur on hits and cuts, a sideways smear on time-jump whips.
+    drawBlur(g) {
+      if (this.zblur < 0.02 && this.hblur < 0.02) return;
+      const T = this.tmpG;
+      T.globalCompositeOperation = 'copy';
+      T.drawImage(this.canvas, 0, 0);
+      T.globalCompositeOperation = 'source-over';
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      if (this.zblur >= 0.02) {
+        const [fx, fy] = this.zfocus;
+        for (let i = 1; i <= 4; i++) {
+          const k = 1 + this.zblur * 0.045 * i;
+          g.globalAlpha = 0.5 / (i + 1);
+          g.drawImage(this.tmp, fx - fx * k, fy - fy * k, W * k, H * k);
+        }
+      }
+      if (this.hblur >= 0.02) {
+        for (let i = 1; i <= 4; i++) {
+          g.globalAlpha = 0.4 / (i + 0.5);
+          g.drawImage(this.tmp, -this.hblur * 40 * i, 0);
+          g.drawImage(this.tmp, this.hblur * 40 * i, 0);
+        }
+      }
+      g.globalAlpha = 1;
     }
 
     drawStars(g) {
@@ -1054,10 +1481,14 @@
       }
     }
 
-    drawParts(g, front) {
+    drawParts(g, front, addOnly) {
       for (const p of this.parts) {
-        const isFront = p.type === 'spark' || p.type === 'debris' || p.type === 'ember' || p.type === 'drop' || p.type === 'streak' || p.type === 'glow' || p.type === 'fire' || p.type === 'puff' || p.front;
-        if (isFront !== front) continue;
+        if (addOnly) {
+          if (!p.add) continue;
+        } else {
+          const isFront = p.type === 'spark' || p.type === 'debris' || p.type === 'ember' || p.type === 'drop' || p.type === 'streak' || p.type === 'glow' || p.type === 'fire' || p.type === 'puff' || p.front;
+          if (isFront !== front) continue;
+        }
         const k = p.age / p.life;
         g.globalCompositeOperation = p.add ? 'lighter' : 'source-over';
         switch (p.type) {

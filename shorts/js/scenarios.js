@@ -176,6 +176,10 @@
         if (s.rng() < dt * 6) s.part('ember', this.x, GY - 30, { vx: s.rng.range(-40, 40), vy: -s.rng.range(80, 200) });
         if (s.rng() < dt * 3) s.part('smoke', this.x, GY - 60, { vy: -80, size: 30, a: 0.25 });
       },
+      glow(g, s) {
+        g.globalAlpha = 0.8 + Math.sin(s.t * 13) * 0.1;
+        g.drawImage(WI.soft('#ff9a2e'), this.x - 160, GY - 180, 320, 320);
+      },
       draw(g, s) {
         g.globalCompositeOperation = 'lighter';
         g.globalAlpha = 0.5 + Math.sin(s.t * 13) * 0.08;
@@ -204,9 +208,13 @@
   }
   function crater(s, x, rx) {
     return s.add({
-      x, rx, glow: 1, layer: 'mid',
+      x, rx, heat: 1, layer: 'mid',
       update(dt) {
-        this.glow = Math.max(0.15, this.glow - dt * 0.05);
+        this.heat = Math.max(0.15, this.heat - dt * 0.05);
+      },
+      glow(g) {
+        g.globalAlpha = this.heat;
+        g.drawImage(WI.soft('#ff5a1f'), this.x - this.rx, GY - 80, this.rx * 2, 160);
       },
       draw(g) {
         g.fillStyle = '#140c08';
@@ -214,7 +222,7 @@
         g.ellipse(this.x, GY + 6, this.rx, 34, 0, 0, TAU);
         g.fill();
         g.globalCompositeOperation = 'lighter';
-        g.globalAlpha = this.glow;
+        g.globalAlpha = this.heat;
         g.drawImage(WI.soft('#ff5a1f'), this.x - this.rx * 1.2, GY - 120, this.rx * 2.4, 240);
         g.globalAlpha = 1;
         g.globalCompositeOperation = 'source-over';
@@ -232,6 +240,11 @@
         if (s.rng() < dt * 60) s.part('fire', this.x + s.rng.range(-r, r) * 0.6, this.y - s.rng.range(0, r) * 0.8, { size: r * 0.25, vy: -s.rng.range(100, 400), life: 1.2 });
         if (s.rng() < dt * 30) s.part('smoke', this.x + s.rng.range(-r, r) * 0.4, this.y - r * (0.6 + k), { size: r * 0.35, vy: -s.rng.range(100, 300), c: '#2d2626', life: 4 });
       },
+      glow(g) {
+        const k = this.age / dur, r = this.R * Math.min(1, k * 4) * (1 + k * 0.3);
+        g.globalAlpha = Math.max(0, 1 - k);
+        g.drawImage(WI.soft('#ffd27a'), this.x - r * 1.3, this.y - r * 1.3, r * 2.6, r * 2.6);
+      },
       draw(g) {
         const k = this.age / dur, r = this.R * Math.min(1, k * 4) * (1 + k * 0.3);
         g.globalCompositeOperation = 'lighter';
@@ -245,9 +258,15 @@
   }
   function liquid(s, o) {
     return s.add({
-      level: GY + 40, layer: 'front', color: '#2f7fd1', top: '#7cc3ff', glow: false, ...o,
+      level: GY + 40, layer: 'front', color: '#2f7fd1', top: '#7cc3ff', hot: false, ...o,
+      glow(g, s) {
+        if (!this.hot) return;
+        const x0 = s.view.x - W / s.view.zoom, x1 = s.view.x + W / s.view.zoom;
+        g.globalAlpha = 0.7;
+        g.drawImage(WI.soft('#ff7b1f'), x0, this.level - 140, x1 - x0, 280);
+      },
       draw(g, s) {
-        const x0 = s.cam.x - W / s.cam.zoom, x1 = s.cam.x + W / s.cam.zoom;
+        const x0 = s.view.x - W / s.view.zoom, x1 = s.view.x + W / s.view.zoom;
         const gr = g.createLinearGradient(0, this.level, 0, this.level + 900);
         gr.addColorStop(0, rgba(this.top, 0.92));
         gr.addColorStop(1, rgba(this.color, 0.97));
@@ -257,12 +276,12 @@
         for (let x = x0; x <= x1; x += 30) g.lineTo(x, this.level + Math.sin(x * 0.012 + s.t * 2.4) * 12 + Math.sin(x * 0.031 - s.t * 3.1) * 6);
         g.lineTo(x1, this.level + 4000);
         g.fill();
-        g.strokeStyle = rgba('#ffffff', this.glow ? 0.0 : 0.65);
+        g.strokeStyle = rgba('#ffffff', this.hot ? 0.0 : 0.65);
         g.lineWidth = 6;
         g.beginPath();
         for (let x = x0; x <= x1; x += 30) g.lineTo(x, this.level + Math.sin(x * 0.012 + s.t * 2.4) * 12 + Math.sin(x * 0.031 - s.t * 3.1) * 6);
         g.stroke();
-        if (this.glow) {
+        if (this.hot) {
           g.globalCompositeOperation = 'lighter';
           g.globalAlpha = 0.6;
           g.drawImage(WI.soft('#ff7b1f'), x0, this.level - 260, x1 - x0, 520);
@@ -483,6 +502,12 @@
           }
           if (this.k >= 1) impact();
         },
+        glow(g) {
+          if (impacted || this.k < 0.05) return;
+          const gr = this.R * 2.2;
+          g.globalAlpha = I.look === 'moon' ? this.k : 0.9;
+          g.drawImage(WI.soft(I.look === 'ice' ? '#9fe3ff' : '#ff9a3d'), this.x - gr, this.y - gr, gr * 2, gr * 2);
+        },
         draw(g, s) {
           if (impacted) return;
           g.save();
@@ -503,6 +528,10 @@
         s.say('Then someone looks *up*');
         s.counter('t', 'IMPACT IN', 0, { color: '#ff6b6b', fmt: (v) => v.toFixed(1) + 's' });
         lookAt(s, obj.x);
+        me.mode = 'still';
+        me.state = 'lookup';
+        me.face = Math.sign(obj.x - me.x) || 1;
+        s.closeup(me, 2.2, { r: 125 });
         s.music(0.42);
         s.sfx('alarm', 5.5);
       });
@@ -564,7 +593,7 @@
           crater(s, hx, 110 + 90 * pw);
           if (pw >= 2.2) {
             s.flash(1);
-            for (const b of s.buildings) s.collapse(b, Math.abs(b.x - hx) / 2200, Math.sign(b.x - hx) || 1);
+            for (const b of s.buildings) s.collapse(b, Math.abs(b.x - hx) / 2200, Math.sign(b.x - hx) || 1, 1300 + 300 * pw);
             for (const f of s.figs) if (!f.air && !f.immune) s.launch(f, Math.sign(f.x - hx || 1) * r.range(1500, 2600), -r.range(900, 1600), { kill: true });
             for (const pr of s.props) pr.tilt = Math.sign(pr.x - hx) * 0.6;
           }
@@ -622,6 +651,8 @@
           me.y = GY;
           me.x = clamp(me.x, 120, W - 120);
           s.camTo({ x: me.x, zoom: 1.25, y: H / 2 + 180 }, 3);
+          if (!I.air && !I.soft) me.emo = 'sad';
+          s.at(s.t + 1.2, () => s.closeup(me, 2.2, { r: 105, push: 0.2 }));
         });
       }
     },
@@ -635,6 +666,8 @@
       const Z = WI.GIANT_SIZES[p.size], mood = p.mood, r = s.rng;
       const col = { angry: '#c1121f', confused: '#7b2cbf', friendly: '#168aad' }[mood];
       s.crowd(26);
+      const me = hero(s, 360);
+      me.immune = false;
       const G = new Fig(W + 260 + 40 * Z.scale, { scale: Z.scale, color: col, face: -1, mode: 'still', state: 'idle', immune: true, manualLie: true, eyes: mood === 'angry' ? '#ffd60a' : '#ffffff' });
       s.figs.push(G);
       let walking = false, lastS = 0, attackT = -1, stopX = W / 2 + 160;
@@ -659,7 +692,7 @@
         if (Math.sign(sn) !== Math.sign(lastS)) stomp(foot());
         lastS = sn;
         if (mood !== 'friendly' || f.face > 0)
-          for (const b of s.buildings) if (b.state === 'ok' && Math.abs(b.x - f.x) < b.w / 2 + 16 * Z.scale && (mood !== 'friendly')) s.collapse(b, 0, f.face);
+          for (const b of s.buildings) if (b.state === 'ok' && Math.abs(b.x - f.x) < b.w / 2 + 16 * Z.scale && (mood !== 'friendly')) s.collapse(b, 0, f.face, 500);
         if (f.face < 0 && f.x < stopX) {
           walking = false;
           f.state = 'idle';
@@ -682,6 +715,10 @@
       s.at(2.5, () => s.say('*BOOM*... *BOOM*...'));
       s.at(5.0, () => {
         s.say('Something *huge* is coming');
+        me.mode = 'still';
+        me.state = 'lookup';
+        me.face = 1;
+        s.closeup(me, 1.5, { r: 125 });
         s.camTo(fit, 2.6);
         walking = true;
         s.music(0.5);
@@ -700,11 +737,13 @@
       s.at(12, () => {
         if (mood === 'angry') {
           s.say('And it is *ANGRY*');
+          G.emo = 'angry';
+          s.closeup(G, 1.3, { r: 170, push: 0.25 });
           attackT = 0;
           s.at(12.3, () => {
             const b = s.buildings.filter((b) => b.state === 'ok').sort((a, c) => Math.abs(a.x - G.x) - Math.abs(c.x - G.x))[0];
             if (b) {
-              s.collapse(b, 0, -1);
+              s.collapse(b, 0, -1, 1500);
               s.burst('debris', b.x, GY - b.h * 0.6, 70, 1600, { angle: Math.PI, spread: 0.8 });
               s.shake(0.6);
               s.sfx('boom', 0.9);
@@ -717,6 +756,7 @@
         } else {
           s.say('It just wants to *say hi*');
           G.state = 'cheer';
+          s.closeup(G, 1.4, { r: 160 });
         }
       });
       s.at(15, () => {
@@ -755,12 +795,14 @@
           s.to(G, 'lie', 1, 1.1, 'in');
           s.at(20.6, () => {
             s.explode(G.x - 50 * Z.scale, GY - 20, 2.4, { kill: true });
-            for (const b of s.buildings) if (b.x < G.x && b.x > G.x - 120 * Z.scale) s.collapse(b, r.range(0, 0.3), -1);
+            for (const b of s.buildings) if (b.x < G.x && b.x > G.x - 120 * Z.scale) s.collapse(b, r.range(0, 0.3), -1, 900);
             s.flash(0.6);
           });
         } else {
           s.say('But the army *keeps firing*');
           G.state = 'idle';
+          G.emo = 'sad';
+          s.closeup(G, 1.6, { r: 160 });
           s.to(G, 'squash', 0.9, 1);
         }
       });
@@ -939,8 +981,13 @@
         s.shake(0.3);
         humans.forEach((h) => (h.ai = humanAI));
         started = true;
+        s.at(5.5, () => s.closeup(z, 1.4, { r: 120, push: 0.2 }));
       });
       s.at(9.5, () => s.say(Z.speed > 200 ? 'It runs *faster than humans*' : Z.immortal ? 'Weapons *don\'t work* on it' : 'Every bite makes *another zombie*'));
+      s.at(11.6, () => {
+        const prey = humans.filter((h) => !h.zombie && !(h.infect > 0) && h.state === 'panic');
+        if (prey.length) s.closeup(prey[0], 1.3, { r: 115 });
+      });
       s.at(13.5, () => {
         s.stamp('DAY 2');
         s.music(0.8);
@@ -1156,6 +1203,15 @@
       s.at(4.6, () => {
         s.say('Who *wins*?');
         s.sfx('heartbeat');
+        const champ = (ti) => teams[ti].slice().sort((a, b) => Math.abs(a.x - fr.x) - Math.abs(b.x - fr.x))[0];
+        const a = champ(0), b = champ(1);
+        a.emo = b.emo = 'angry';
+        s.closeup(a, 0.85, { r: 120 });
+        s.at(5.45, () => {
+          s.closeup(b, 0.85, { r: 120 });
+          s.sfx('heartbeat');
+        });
+        s.at(6.4, () => (a.emo = b.emo = null));
       });
       s.at(6.4, () => {
         s.stamp('FIGHT!');
@@ -1204,6 +1260,8 @@
     build(s, p) {
       const r = s.rng;
       s.crowd(22);
+      const me = hero(s, 420);
+      me.immune = false;
       const cars = [car(s, 200, 1), car(s, 700, -1), car(s, -200, 1), car(s, 1300, -1)];
       const mult = p.mult || 1;
       s.music(0.2);
@@ -1238,7 +1296,10 @@
             s.to(s, 'stars', 0.8, 9);
           }
         });
-        s.at(7.2, () => s.say(p.kind === 'off' ? 'Everyone starts to *float*' : 'Everyone falls... *UP*'));
+        s.at(7.2, () => {
+          s.say(p.kind === 'off' ? 'Everyone starts to *float*' : 'Everyone falls... *UP*');
+          s.closeup(me, 1.8, { r: 115 });
+        });
         s.at(10.5, () => s.say(p.kind === 'off' ? 'Anything not tied down *drifts away*' : 'Up here the air is *freezing*'));
         s.at(14.2, () => {
           s.clearCounters();
@@ -1299,7 +1360,11 @@
             if (mult >= 10) c.squish = true;
           }
         });
-        s.at(8, () => s.say(mult >= 10 ? "You *can't even stand up*" : 'Every step feels like *climbing stairs*'));
+        s.at(8, () => {
+          s.say(mult >= 10 ? "You *can't even stand up*" : 'Every step feels like *climbing stairs*');
+          me.emo = 'scared';
+          s.closeup(me, 1.8, { r: 110 });
+        });
         s.at(11.5, () => {
           s.say(mult >= 10 ? "Buildings *can't hold their own weight*" : 'Planes *fall out of the sky*');
           const pl = jet(s, -200, GY - 1100, 700, { size: 1.6 });
@@ -1340,6 +1405,9 @@
       s.at(5.0, () => {
         s.say(p.kind === 'stop' ? 'What if it *suddenly stopped*?' : p.kind === 'reverse' ? 'What if it *spun backwards*?' : `What if it spun *${p.x}x faster*?`);
         s.sfx('riser', 2);
+        me.mode = 'still';
+        me.state = 'lookup';
+        s.closeup(me, 1.7, { r: 120 });
         s.music(0.5);
       });
       if (p.kind === 'stop' || p.kind === 'reverse') {
@@ -1361,9 +1429,11 @@
             c.vy = -400;
             c.av = dir * 3;
           }
-          for (const b of s.buildings) s.collapse(b, r.range(0, 1.4), dir);
+          for (const b of s.buildings) s.collapse(b, r.range(0, 1.4), dir, 2200);
           for (const pr of s.props) pr.tilt = dir * 1.2;
           s.camTo({ rot: -dir * 0.06 }, 1, 'out');
+          s.impactT = 0;
+          s.zblur = 1.2;
         });
         s.onUpdate = (dt) => {
           if (wind > 0) {
@@ -1392,6 +1462,8 @@
           me.state = 'lookup';
           me.face = 1;
           me.lie = 0;
+          me.emo = 'sad';
+          s.closeup(me, 2.2, { r: 110, push: 0.2 });
         });
         s.at(23, () => {
           s.say('Half the planet *bakes*. The other half *freezes*.');
@@ -1458,6 +1530,7 @@
     build(s, p) {
       const r = s.rng;
       s.crowd(22);
+      const me = hero(s, 330);
       s.sun.x = 760;
       s.sun.y = 520;
       s.sun.r = 70;
@@ -1483,6 +1556,10 @@
           s.sfx('boom', 0.5);
           s.say('Then... *darkness*');
           lookAt(s, s.sun.x);
+          me.mode = 'still';
+          me.state = 'lookup';
+          me.face = 1;
+          s.closeup(me, 2.2, { r: 125, push: 0.2 });
           s.music(0.7);
           if (p.kind === 'blackhole')
             s.add({
@@ -1508,6 +1585,8 @@
           s.countTo('c', -17, 3);
           s.tintTo('#7fb2ff', 0.2, 2);
           s.groundTo('#c9d6e3', 3);
+          me.emo = 'sad';
+          s.at(17.4, () => s.closeup(me, 1.8, { r: 110 }));
           s.snow = 30;
           campfire(s, W / 2);
           let i = 0;
@@ -1579,6 +1658,10 @@
         s.at(2.5, () => s.say("The Sun *can't* actually go supernova..."));
         s.at(5.0, () => {
           s.say('*But what if it did?*');
+          me.mode = 'still';
+          me.state = 'lookup';
+          me.face = 1;
+          s.closeup(me, 1.8, { r: 120 });
           s.music(0.5);
           s.sfx('rumble', 4, 0.4);
           s.anim(5, (k) => {
@@ -1605,9 +1688,12 @@
           s.music(1);
           s.say('*BOOM*');
           for (const f of s.figs) s.launch(f, -r.range(1500, 2600), -r.range(300, 900), { kill: true });
-          for (const b of s.buildings) s.collapse(b, r.range(0, 0.6), -1);
+          for (const b of s.buildings) s.collapse(b, r.range(0, 0.6), -1, 2000);
           for (const pr of s.props) pr.tilt = -1.2;
           s.wind = 1;
+          s.impactT = 0;
+          s.zblur = 1.2;
+          s.zfocus = s.toScreen(s.sun.x, s.sun.y);
         });
         s.onUpdate = (dt) => {
           if (s.wind) for (let i = 0; i < 8; i++) s.part('fire', W + 200, r.range(0, GY), { vx: -r.range(2000, 3500), size: r.range(40, 90), life: 1 });
@@ -1616,6 +1702,7 @@
           s.wind = 0;
           s.stamp('1 SECOND LATER');
           s.say('Earth is *vaporized*');
+          s.clouds = [];
           s.skyTo('#14020a', '#5a0a0a', 1.5);
           s.groundTo('#1a0505', 1.5);
           s.tintTo('#ff3300', 0.2, 1);
@@ -1662,6 +1749,7 @@
     build(s, p) {
       const r = s.rng;
       s.crowd(26);
+      const me = hero(s, 300);
       s.music(0.2);
       const bx = W / 2, by = GY - 420;
       let pull = 0, coreR = 0, appear = false;
@@ -1696,11 +1784,20 @@
             const k = (pull * 600) / Math.max(d, 200);
             if (b.state === 'ok') {
               b.tilt = clamp(Math.sign(bx - b.x) * k * 0.08, -0.35, 0.35);
-              if (k > 3) s.collapse(b, 0, Math.sign(bx - b.x));
+              if (k > 3) s.collapse(b, 0, Math.sign(bx - b.x), 350);
             }
             if (b.state === 'fall' && r() < dt * 12) {
               s.part('debris', b.x + r.range(-b.w / 2, b.w / 2), GY - r.range(0, b.h - b.sink), { g: 0, pull: true, size: r.range(8, 22), c: s.bldColor, life: 4 });
             }
+          }
+          for (const c of s.chunks) {
+            const dx = bx - c.x, dy = by - c.y, d = Math.hypot(dx, dy) + 1;
+            const a = (pull * 9e6) / Math.max(d * d, 4000) + pull * 60;
+            c.rest = false;
+            c.vx += ((dx / d) * a + (-dy / d) * a * 0.3) * dt;
+            c.vy += ((dy / d) * a + (dx / d) * a * 0.3) * dt - s.grav * dt * 0.95;
+            c.va += dt * 2;
+            if (d < coreR + 30) c.gone = true;
           }
           for (const pt of s.parts) {
             if (!pt.pull) continue;
@@ -1714,6 +1811,12 @@
             const a = r() * TAU, d = r.range(500, 900);
             s.part('dust', bx + Math.cos(a) * d, by + Math.sin(a) * d, { pull: true, size: 50, c: '#6b5b4b', life: 3, drag: 0 });
           }
+        },
+        glow(g) {
+          if (!appear) return;
+          const R = Math.max(coreR, 4);
+          g.globalAlpha = Math.min(1, R / 30);
+          g.drawImage(WI.soft('#ff9a3d'), bx - R * 3, by - R * 3, R * 6, R * 6);
         },
         draw(g, s) {
           if (!appear) return;
@@ -1749,6 +1852,10 @@
         s.sfx('boom', 0.4);
         s.anim(1.2, (k) => (coreR = k * (p.kind === 'car' ? 8 : 22)), 'outBack');
         lookAt(s, bx);
+        me.mode = 'still';
+        me.state = 'lookup';
+        me.face = 1;
+        s.at(5.6, () => s.closeup(me, 1.6, { r: 120 }));
         s.music(0.45);
       });
       if (p.kind === 'car') {
@@ -1763,7 +1870,7 @@
           appear = false;
           s.flash(1);
           s.explode(bx, by, 2.6, { flash: '#ffffff' });
-          for (const b of s.buildings) s.collapse(b, Math.abs(b.x - bx) / 2400, Math.sign(b.x - bx) || 1);
+          for (const b of s.buildings) s.collapse(b, Math.abs(b.x - bx) / 2400, Math.sign(b.x - bx) || 1, 1800);
           for (const f of s.figs) if (!f.air) s.launch(f, Math.sign(f.x - bx || 1) * r.range(1400, 2400), -r.range(800, 1500), { kill: true });
           fireball(s, bx, by, 520, 5);
           s.skyTo('#2a0b08', '#ff6a2a', 1);
@@ -1791,6 +1898,7 @@
           s.anim(5, (k) => (pull = k * (earth ? 1.2 : 0.7)), 'in');
           s.sfx('rumble', 8, 0.6);
           s.music(0.8);
+          me.immune = false;
           flee(s, bx);
         });
         s.onUpdate = (dt) => {
@@ -1823,6 +1931,8 @@
           for (const pr of s.props) pr.gone = true;
           for (const f of s.figs) f.visible = false;
           s.parts.length = 0;
+          s.chunks.length = 0;
+          s.clouds = [];
           s.sky.top = '#020208';
           s.sky.bot = '#07071a';
           s.groundBase = '#020208';
@@ -1883,6 +1993,7 @@
           h.state = 'lookup';
           s.every(0.8, 5.5, 9, () => (h.face = -h.face));
         }
+        if (heroes.length) s.at(6.4, () => s.closeup(heroes[0], 2, { r: 120 }));
       });
       s.onUpdate = (dt) => {
         if (!freeze) {
@@ -1921,7 +2032,8 @@
         });
         s.at(21, () => {
           s.say('You feel completely *alone*');
-          s.camTo({ x: heroes[0].x, zoom: 1.5, y: H / 2 + 300 }, 3);
+          heroes[0].emo = 'sad';
+          s.closeup(heroes[0], 3.3, { r: 120, push: 0.3 });
           s.sfx('heartbeat');
         });
         s.at(24.5, () => {
@@ -1956,7 +2068,11 @@
             s.sfx('boom', 0.25);
           });
           if (heroes.length) campfire(s, heroes[0].x + 70);
-          for (const h of heroes) h.state = 'sit';
+          for (const h of heroes) {
+            h.state = 'sit';
+            h.emo = 'sad';
+          }
+          if (heroes.length) s.at(16.3, () => s.closeup(heroes[0], 1.8, { r: 110 }));
         });
         s.at(18.5, () => {
           s.stamp('1 YEAR LATER');
@@ -2015,7 +2131,7 @@
       const r = s.rng, L = WI.LIQUIDS[p.liquid], LV = WI.LEVELS[p.level];
       s.crowd(28);
       const me = hero(s, W / 2);
-      const liq = liquid(s, { level: GY + 60, color: L.color, top: L.top, glow: L.glow });
+      const liq = liquid(s, { level: GY + 60, color: L.color, top: L.top, hot: L.glow });
       s.music(0.2);
       const maxM = parseInt(p.level, 10);
       s.at(2.5, () => s.say(`*${P(s)}* on a sunny day...`));
@@ -2072,6 +2188,7 @@
             f.phase += 240 * dt * 0.055;
           }
         } else if (c.stage === 1) {
+          f.noShadow = true;
           f.state = 'climb';
           f.phase += dt * 7;
           f.y -= 110 * f.speed * dt;
@@ -2095,6 +2212,7 @@
       s.at(9, () => {
         s.say('Everyone runs for the *rooftops*');
         s.music(0.75);
+        s.closeup(me, 1.6, { r: 115 });
       });
       s.at(13, () => {
         s.stamp('1 HOUR LATER');
@@ -2151,7 +2269,11 @@
       s.music(0.25);
       const clones = [me];
       let n = 1;
-      s.at(2.5, () => s.say(`Every *${WI.INTERVALS[T]}*, you make *a clone*`));
+      s.at(2.5, () => {
+        s.say(`Every *${WI.INTERVALS[T]}*, you make *a clone*`);
+        me.emo = 'happy';
+        s.closeup(me, 1.6, { r: 120 });
+      });
       s.at(4.2, () => s.counter('c', 'CLONES', 1, { color: '#ff6b6b', fmt: (v) => (v < 1e6 ? WI.fmt(v) : WI.big(v).toUpperCase()) }));
       for (let i = 1; i <= 8; i++) {
         s.at(4.2 + i * 1.15, () => {

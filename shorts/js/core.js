@@ -100,9 +100,17 @@
       this.last = {};
     }
     init() {
-      if (this.ctx) return;
+      if (this.live) return;
       const C = window.AudioContext || window.webkitAudioContext;
-      const ctx = (this.ctx = new C());
+      this.live = new C();
+      this.build(this.live, true);
+    }
+    // Builds the mixing graph on a context: the live one for previews, or an
+    // OfflineAudioContext when a video is rendered frame by frame.
+    build(ctx, live) {
+      this.ctx = ctx;
+      this.offline = !live;
+      this.last = {};
       this.master = ctx.createGain();
       this.master.gain.value = this.volume;
       const comp = ctx.createDynamicsCompressor();
@@ -113,8 +121,10 @@
       comp.release.value = 0.2;
       this.master.connect(comp);
       comp.connect(ctx.destination);
-      this.dest = ctx.createMediaStreamDestination();
-      comp.connect(this.dest);
+      if (live) {
+        this.dest = ctx.createMediaStreamDestination();
+        comp.connect(this.dest);
+      }
 
       this.musicBus = ctx.createGain();
       this.musicBus.gain.value = this.musicVol;
@@ -150,12 +160,29 @@
       if (this.musicBus) this.musicBus.gain.value = v;
     }
     get t() {
-      return this.ctx.currentTime;
+      return this.offline ? this.clock : this.ctx.currentTime;
+    }
+    beginOffline(seconds, rate = 48000) {
+      this.stopMusic(0);
+      this.init();
+      this.clock = 0;
+      this.build(new OfflineAudioContext(2, Math.ceil(seconds * rate), rate), false);
+    }
+    // Called by the scene each frame: the offline clock is the scene clock.
+    tickOffline(t) {
+      this.clock = t;
+      this.schedule();
+    }
+    async endOffline() {
+      this.stopMusic(0.05);
+      const buf = await this.ctx.startRendering();
+      this.build(this.live, true);
+      return buf;
     }
     // Rate-limit noisy repeated sounds (battle hits, pops in a crowd).
     gate(name, gap) {
       if (!this.ctx) return false;
-      const now = this.ctx.currentTime;
+      const now = this.t;
       if (this.last[name] && now - this.last[name] < gap) return false;
       this.last[name] = now;
       return true;
@@ -443,7 +470,7 @@
       lfo.connect(lg).connect(filt.frequency);
       lfo.start(t);
       m.nodes.push(lfo);
-      this.musicTimer = setInterval(() => this.schedule(), 25);
+      if (!this.offline) this.musicTimer = setInterval(() => this.schedule(), 25);
     }
     setIntensity(x) {
       if (!this.music) return;

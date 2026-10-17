@@ -42,7 +42,7 @@
         <span id="time" class="time">0.0s</span>
         <button id="rec" class="btn rec">● RECORD</button>
       </div>
-      <p class="hint" id="hint">Pick an idea, preview it, then hit RECORD. The video saves to your Downloads automatically. Keep this tab visible while it records.</p>
+      <p class="hint" id="hint">Pick an idea, preview it, then hit RECORD. When it finishes you’ll be asked where to save the video. Keep this tab visible while it records.</p>
     </section>
 
     <section class="panel side" aria-label="Upload and settings">
@@ -57,7 +57,7 @@
         <input id="batchN" type="number" min="1" max="50" value="5" aria-label="How many">
         <button id="batch" class="btn">Record next <span id="batchLbl">5</span> new ideas</button>
       </div>
-      <p class="small">Records unrecorded ideas from the current filter, one after another, each to its own file.</p>
+      <p class="small">Records new ideas from the current filter one after another, then saves them together.</p>
 
       <h2>Channel</h2>
       <label>Handle on video <input id="handle" placeholder="@yourchannel"></label>
@@ -72,10 +72,13 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.1/build/mp4-muxer.min.js"></script>
   <script src="js/core.js"></script>
   <script src="js/engine.js"></script>
   <script src="js/scenarios.js"></script>
   <script src="js/ideas.js"></script>
+  <script src="js/zip.js"></script>
+  <script src="js/render.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
