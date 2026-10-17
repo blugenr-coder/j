@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>What-If Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="dot"></span> What-If Studio</div>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <main class="layout">
+    <section class="panel ideas" aria-label="Ideas">
+      <div class="search">
+        <input id="q" type="search" placeholder="Search ideas… (e.g. Tokyo, ninja, lava)" autocomplete="off">
+      </div>
+      <div class="chips" id="chips"></div>
+      <label class="check"><input type="checkbox" id="hideDone" checked> Hide ideas I already recorded</label>
+      <div class="row">
+        <button id="rand" class="btn ghost">🎲 Random</button>
+        <button id="next" class="btn ghost">Next new idea →</button>
+      </div>
+      <div class="count" id="count"></div>
+      <ol class="list" id="list"></ol>
+    </section>
+
+    <section class="stage" aria-label="Preview">
+      <div class="screen">
+        <canvas id="cv" width="1080" height="1920"></canvas>
+        <div class="badge" id="recBadge" hidden>● REC</div>
+      </div>
+      <div class="transport">
+        <button id="play" class="btn">▶ Preview</button>
+        <input id="seek" type="range" min="0" max="30" step="0.1" value="0" aria-label="Jump to time">
+        <span id="time" class="time">0.0s</span>
+        <button id="rec" class="btn rec">● RECORD</button>
+      </div>
+      <p class="hint" id="hint">Pick an idea, preview it, then hit RECORD. The video saves to your Downloads automatically. Keep this tab visible while it records.</p>
+    </section>
+
+    <section class="panel side" aria-label="Upload and settings">
+      <h2>Upload copy</h2>
+      <label>Title <button class="copy" data-copy="mTitle">Copy</button></label>
+      <input id="mTitle" readonly>
+      <label>Description <button class="copy" data-copy="mDesc">Copy</button></label>
+      <textarea id="mDesc" rows="6" readonly></textarea>
+
+      <h2>Batch</h2>
+      <div class="row">
+        <input id="batchN" type="number" min="1" max="50" value="5" aria-label="How many">
+        <button id="batch" class="btn">Record next <span id="batchLbl">5</span> new ideas</button>
+      </div>
+      <p class="small">Records unrecorded ideas from the current filter, one after another, each to its own file.</p>
+
+      <h2>Channel</h2>
+      <label>Handle on video <input id="handle" placeholder="@yourchannel"></label>
+      <label>End-card button <input id="cta" value="FOLLOW FOR PART 2"></label>
+      <label>Music <input id="music" type="range" min="0" max="1" step="0.05" value="0.55"></label>
+      <label>Sound effects <input id="vol" type="range" min="0" max="1" step="0.05" value="0.8"></label>
+      <label class="check"><input type="checkbox" id="grain" checked> Film grain</label>
+
+      <h2>This session</h2>
+      <ul class="clips" id="clips"><li class="small">Nothing recorded yet.</li></ul>
+      <p class="small" id="fmt"></p>
+    </section>
+  </main>
+
+  <script src="js/core.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/ideas.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
