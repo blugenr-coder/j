@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Skybrawl — Island Royale</title>
+<meta name="description" content="Skybrawl: a colourful 32-player battle royale you play in the browser. Drop, loot, survive the storm.">
+<meta name="theme-color" content="#1d1b4c">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;800;900&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="loading" class="screen on">
+  <div class="logo big"><span>SKY</span><span>BRAWL</span></div>
+  <div class="load-bar"><div id="load-fill"></div></div>
+  <p id="load-text">Building the island…</p>
+</div>
+
+<!-- ============================== MAIN MENU -->
+<div id="menu" class="screen">
+  <header class="menu-top">
+    <button class="profile-chip" data-open="modal-profile" type="button">
+      <span class="avatar" id="chip-avatar"></span>
+      <span class="chip-body">
+        <b id="chip-name">Player</b>
+        <span class="lvl">Lv <span id="chip-level">1</span></span>
+        <span class="xpbar"><span id="chip-xp"></span></span>
+      </span>
+    </button>
+    <div class="menu-icons">
+      <button class="icon-btn" data-open="modal-stats" type="button" title="Statistics">📊<span>Stats</span></button>
+      <button class="icon-btn" data-open="modal-settings" type="button" title="Settings">⚙️<span>Settings</span></button>
+    </div>
+  </header>
+
+  <div class="menu-logo"><div class="logo"><span>SKY</span><span>BRAWL</span></div><p class="tagline">Island Royale · 32 players · last one standing</p></div>
+
+  <div class="menu-left">
+    <div class="char-tag"><b id="menu-char-name">Pip</b><span id="menu-char-bio"></span></div>
+    <button class="btn secondary" data-open="modal-character" type="button">👕 Change character</button>
+  </div>
+
+  <div class="menu-right">
+    <div class="mode-pick" id="mode-pick"></div>
+    <button id="play-btn" class="btn play" type="button">PLAY</button>
+    <p class="hint-line" id="controls-hint">WASD move · Mouse aim · Click shoot · R reload · E pick up · 1–4 weapons</p>
+  </div>
+</div>
+
+<!-- ============================== MODALS -->
+<div id="modal-character" class="modal">
+  <div class="panel wide">
+    <h2>Choose your brawler</h2>
+    <div class="char-grid" id="char-grid"></div>
+    <div class="panel-actions"><button class="btn" data-close type="button">Done</button></div>
+  </div>
+</div>
+
+<div id="modal-settings" class="modal">
+  <div class="panel">
+    <h2>Settings</h2>
+    <div class="form">
+      <label>Master volume <input type="range" min="0" max="1" step="0.05" id="set-master"></label>
+      <label>Music <input type="range" min="0" max="1" step="0.05" id="set-music"></label>
+      <label>Sound effects <input type="range" min="0" max="1" step="0.05" id="set-sfx"></label>
+      <label>Graphics quality
+        <select id="set-quality"><option value="low">Low (fastest)</option><option value="medium">Medium</option><option value="high">High</option></select>
+      </label>
+      <label>Bot difficulty
+        <select id="set-difficulty"><option value="easy">Easy</option><option value="normal">Normal</option><option value="hard">Hard</option><option value="mixed">Mixed</option></select>
+      </label>
+      <label class="check"><input type="checkbox" id="set-shake"> Camera shake</label>
+      <label class="check"><input type="checkbox" id="set-fps"> Show FPS</label>
+    </div>
+    <div class="panel-actions"><button class="btn" data-close type="button">Done</button></div>
+  </div>
+</div>
+
+<div id="modal-stats" class="modal">
+  <div class="panel">
+    <h2>Statistics</h2>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="panel-actions">
+      <button class="btn ghost" id="reset-stats" type="button">Reset</button>
+      <button class="btn" data-close type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-profile" class="modal">
+  <div class="panel">
+    <h2>Profile</h2>
+    <div class="form">
+      <label>Player name <input type="text" id="set-name" maxlength="14" autocomplete="off"></label>
+    </div>
+    <div class="profile-level">
+      <div class="big-lvl">Level <b id="prof-level">1</b></div>
+      <div class="xpbar big"><span id="prof-xp"></span></div>
+      <p id="prof-xp-text" class="muted"></p>
+    </div>
+    <div class="panel-actions"><button class="btn" data-close type="button">Save</button></div>
+  </div>
+</div>
+
+<!-- ============================== LOBBY -->
+<div id="lobby" class="screen">
+  <div class="panel lobby-panel">
+    <h2>Finding a match</h2>
+    <p class="muted" id="lobby-mode"></p>
+    <div class="lobby-count"><b id="lobby-n">1</b> / <span id="lobby-max">32</span> players</div>
+    <div class="lobby-bar"><div id="lobby-fill"></div></div>
+    <div class="lobby-list" id="lobby-list"></div>
+    <p class="muted small">Open seats are filled with bots.</p>
+    <button class="btn ghost" id="lobby-cancel" type="button">Cancel</button>
+  </div>
+</div>
+
+<!-- ============================== HUD -->
+<div id="hud" class="hidden">
+  <div id="vignette"></div>
+  <div id="storm-vignette"></div>
+  <div id="low-hp"></div>
+  <div id="dmg-dirs"></div>
+  <div id="dmg-layer"></div>
+
+  <div class="hud-tl">
+    <div class="mini-wrap"><canvas id="minimap" width="170" height="170"></canvas></div>
+    <div id="zone-pill" class="pill">🌀 <span id="zone-text">Storm forming</span></div>
+  </div>
+
+  <div class="hud-tr">
+    <div class="counters">
+      <div class="pill big"><span class="ic">👤</span><b id="alive-count">32</b><small>alive</small></div>
+      <div class="pill big"><span class="ic">💀</span><b id="kill-count">0</b><small>kills</small></div>
+      <button class="pill btn-pill" id="pause-btn" type="button" title="Pause">⏸</button>
+    </div>
+    <div id="killfeed"></div>
+  </div>
+
+  <div id="banner"><div class="b-title"></div><div class="b-sub"></div></div>
+  <div id="elim"><div class="e-tag">ELIMINATED</div><div class="e-name"></div><div class="e-count"></div></div>
+  <div id="toasts"></div>
+  <div id="jump-hint"><span class="desk">Press <kbd>SPACE</kbd> or click to jump · <kbd>M</kbd> map</span><span class="tch">Tap <b>JUMP</b> when you're over a good spot</span></div>
+  <div id="spectate">Spectating <b id="spect-name"></b></div>
+
+  <div id="prompt"><kbd id="prompt-key">E</kbd><span id="prompt-text"></span></div>
+
+  <div class="hud-bottom">
+    <div id="reload-wrap"><span id="reload-label">Reloading</span><div><div id="reload-bar"></div></div></div>
+    <div class="weapon-row">
+      <div class="slots">
+        <div class="slot" data-slot="0" data-act="slot1"><i>1</i><canvas width="96" height="40"></canvas><span class="slot-name">—</span><span class="slot-ammo"></span></div>
+        <div class="slot" data-slot="1" data-act="slot2"><i>2</i><canvas width="96" height="40"></canvas><span class="slot-name">—</span><span class="slot-ammo"></span></div>
+        <div class="slot" data-slot="2" data-act="slot3"><i>3</i><canvas width="96" height="40"></canvas><span class="slot-name">—</span><span class="slot-ammo"></span></div>
+        <div class="slot" data-slot="3" data-act="slot4"><i>4</i><canvas width="96" height="40"></canvas><span class="slot-name">—</span><span class="slot-ammo"></span></div>
+      </div>
+      <div id="ammo-box"><div id="weapon-name">Fists</div><div><b id="ammo-main">—</b><span id="ammo-reserve"></span></div></div>
+    </div>
+    <div class="bars">
+      <div class="bar armor"><div id="ar-fill"></div><span id="ar-text">0</span></div>
+      <div class="bar health"><div id="hp-fill"></div><span id="hp-text">100</span></div>
+    </div>
+  </div>
+
+  <div class="hud-br">
+    <button class="item" data-act="heal" type="button"><span class="ic">➕</span><b id="cnt-medkit">0</b><kbd>Q</kbd></button>
+    <button class="item" data-act="grenade" type="button"><span class="ic">💣</span><b id="cnt-grenade">0</b><kbd>G</kbd></button>
+    <button class="item" data-act="soda" type="button"><span class="ic">🥤</span><b id="cnt-soda">0</b><kbd>C</kbd><i id="boost-ind"></i></button>
+  </div>
+
+  <!-- touch controls -->
+  <div id="touch-layer"></div>
+  <div id="stick-move" class="stick"><div class="knob"></div></div>
+  <div id="stick-aim" class="stick aim"><div class="knob"></div></div>
+  <div class="touch-btns">
+    <button class="tbtn fire" data-act="fire" type="button" aria-label="Fire">🔫</button>
+    <button class="tbtn reload" data-act="reload" type="button" aria-label="Reload">R</button>
+    <button class="tbtn use hidden" id="btn-pickup" data-act="pickup" type="button" aria-label="Pick up">✋</button>
+    <button class="tbtn use jump hidden" id="btn-jump" data-act="jump" type="button">JUMP</button>
+    <button class="tbtn map" data-act="map" type="button" aria-label="Map">🗺</button>
+  </div>
+</div>
+
+<div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
+<div id="fps"></div>
+
+<div id="bigmap" class="modal">
+  <div class="panel map-panel">
+    <h2>Island map</h2>
+    <canvas id="bigmap-canvas" width="560" height="560"></canvas>
+    <div class="panel-actions"><button class="btn" data-close type="button">Close (M)</button></div>
+  </div>
+</div>
+
+<div id="pause" class="modal">
+  <div class="panel">
+    <h2>Paused</h2>
+    <div class="pause-actions">
+      <button class="btn" id="resume-btn" type="button">Resume</button>
+      <button class="btn secondary" data-open="modal-settings" type="button">Settings</button>
+      <button class="btn ghost" id="quit-btn" type="button">Leave match</button>
+    </div>
+    <div class="keys">
+      <div><kbd>WASD</kbd> Move</div><div><kbd>Mouse</kbd> Aim</div><div><kbd>Click</kbd> Shoot</div><div><kbd>R</kbd> Reload</div>
+      <div><kbd>E</kbd> Pick up</div><div><kbd>1–4</kbd> Weapons</div><div><kbd>Q</kbd> Medkit</div><div><kbd>G</kbd> Grenade</div>
+      <div><kbd>C</kbd> Soda</div><div><kbd>M</kbd> Map</div><div><kbd>Wheel</kbd> Zoom</div><div><kbd>Esc</kbd> Pause</div>
+    </div>
+  </div>
+</div>
+
+<div id="results" class="screen">
+  <div class="results-card">
+    <div class="res-place" id="res-place">#1</div>
+    <div class="res-title" id="res-title">CHAMPION</div>
+    <div class="res-sub" id="res-sub"></div>
+    <div class="res-stats" id="res-stats"></div>
+    <div class="res-xp"><span id="res-xp-text"></span><div class="xpbar big"><span id="res-xp"></span></div></div>
+    <div class="res-actions">
+      <button class="btn play small" id="again-btn" type="button">Play again</button>
+      <button class="btn secondary" id="menu-btn" type="button">Main menu</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
