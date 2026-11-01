@@ -186,7 +186,20 @@ function setupMenus() {
   $('set-shake').addEventListener('change', (e) => { store.settings.shake = e.target.checked; save(); });
   $('set-fps').addEventListener('change', (e) => { store.settings.fps = e.target.checked; save(); $('fps').textContent = ''; });
   $('set-name').addEventListener('input', (e) => { store.profile.name = e.target.value.trim().slice(0, 14) || 'Player'; save(); renderChip(); });
-  $('reset-stats').addEventListener('click', () => { if (confirm('Reset all statistics and level?')) { resetStats(); renderStats(); renderChip(); } });
+  // Two-step reset built into the page (browser confirm dialogs are not
+  // available everywhere the game is embedded).
+  let resetArmed = null;
+  $('reset-stats').addEventListener('click', () => {
+    const b = $('reset-stats');
+    if (!resetArmed) {
+      b.textContent = 'Tap again to reset';
+      resetArmed = setTimeout(() => { resetArmed = null; b.textContent = 'Reset'; }, 3000);
+      return;
+    }
+    clearTimeout(resetArmed); resetArmed = null;
+    b.textContent = 'Reset';
+    resetStats(); renderStats(); renderChip();
+  });
   audio.setVolumes({ master: store.settings.master, music: store.settings.music, sfx: store.settings.sfx });
 
   $('play-btn').addEventListener('click', () => { audio.unlock(); audio.click(); goLobby(); });
