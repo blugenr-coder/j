@@ -189,6 +189,8 @@ export class Match {
         if (p) { f.x = p[0]; f.z = p[1]; }
       }
       this.fx.burst(f.x, 0.2, f.z, 10, '#e8e0cf', 3, 0.15, 0.6, -4);
+      const brain = this.brains.get(f);
+      if (brain) brain.landedAt = this.now;
       if (f.isPlayer) this.hud.banner('Landed!', 'Grab a weapon fast');
     }
   }

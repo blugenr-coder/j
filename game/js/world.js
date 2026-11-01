@@ -340,7 +340,7 @@ export class World {
     this.boxes.add(b.x, 0.04, b.z, b.w - 0.1, 0.08, b.d - 0.1, b.floor || '#c89f74');
     // roof (separate mesh so it can fade when the player walks in)
     const roofColor = b.roof || '#e05a4f';
-    const roofM = new THREE.MeshStandardMaterial({ color: roofColor, flatShading: true, roughness: 0.8, transparent: true, opacity: 1 });
+    const roofM = new THREE.MeshStandardMaterial({ color: roofColor, flatShading: true, roughness: 0.8, transparent: false, opacity: 1 });
     const roof = new THREE.Group();
     if (b.roofType === 'gable') {
       const shape = new THREE.Shape();
@@ -356,14 +356,14 @@ export class World {
       m.scale.set(b.w + 0.4, 0.35, b.d + 0.4);
       m.castShadow = true;
       roof.add(m);
-      const lipM = new THREE.MeshStandardMaterial({ color: b.trim || '#d8d2c4', flatShading: true, transparent: true });
+      const lipM = new THREE.MeshStandardMaterial({ color: b.trim || '#d8d2c4', flatShading: true });
       for (const [sx, sz, px, pz] of [[b.w + 0.4, 0.3, 0, b.d / 2], [b.w + 0.4, 0.3, 0, -b.d / 2], [0.3, b.d + 0.4, b.w / 2, 0], [0.3, b.d + 0.4, -b.w / 2, 0]]) {
         const lip = new THREE.Mesh(geo.box, lipM);
         lip.scale.set(sx, 0.5, sz); lip.position.set(px, 0.3, pz);
         roof.add(lip);
       }
       if (b.w > 8) { // AC unit
-        const ac = new THREE.Mesh(geo.box, mat('#b8bec8'));
+        const ac = new THREE.Mesh(geo.box, new THREE.MeshStandardMaterial({ color: '#b8bec8', flatShading: true }));
         ac.scale.set(1.4, 0.8, 1.2); ac.position.set(b.w * 0.2, 0.55, -b.d * 0.15);
         roof.add(ac);
       }
@@ -621,8 +621,8 @@ export class World {
     this.building({ x: cx + 12, z: cz + 12, w: 16, d: 12, h: 4, wall: '#c9a27a', roof: '#4a5a6a', trim: '#8a6a4a', doors: ['W', 'N'], furniture: 'machines', roofType: 'flat', loot: 4 });
     // chimneys landmark
     for (const [x, z] of [[cx + 14, cz - 14], [cx + 19, cz - 14]]) {
-      this.cyls.add(x, 7, z, 1.3, 14, 1.3, '#d9d4cc');
-      for (let y = 2; y < 14; y += 4) this.cyls.add(x, y, z, 1.36, 1.2, 1.36, '#e04a3f');
+      this.cyls.add(x, 5, z, 1.2, 10, 1.2, '#d9d4cc');
+      for (let y = 2; y < 10; y += 3.5) this.cyls.add(x, y, z, 1.26, 1.1, 1.26, '#e04a3f');
       this.physics.addCircle(x, z, 1.4, { tag: 'chimney' });
       this.reserve(x - 2, z - 2, x + 2, z + 2);
     }
@@ -938,7 +938,12 @@ export class World {
       if (Math.abs(r.fade - target) < 0.001) continue;
       r.fade += (target - r.fade) * Math.min(1, dt * 8);
       if (Math.abs(r.fade - target) < 0.01) r.fade = target;
-      for (const m of r.mats) { m.opacity = r.fade; m.depthWrite = r.fade > 0.95; }
+      for (const m of r.mats) {
+        // Opaque while fully shown, so roofs occlude in the opaque pass (the
+        // player silhouette relies on that); transparent only while fading.
+        m.transparent = r.fade < 0.99;
+        m.opacity = r.fade; m.depthWrite = r.fade > 0.95;
+      }
       r.roof.visible = r.fade > 0.02;
     }
   }

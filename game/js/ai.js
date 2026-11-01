@@ -21,10 +21,15 @@ export class BotBrain {
     this.rng = rng;
     this.intent = { mx: 0, mz: 0, aimX: 0, aimZ: 0 };
     // drop: pick a landing spot (a POI most of the time)
-    const poi = POIS[Math.floor(rng() * POIS.length)];
-    const spread = 22;
-    this.landX = poi.x + (rng() * 2 - 1) * spread;
-    this.landZ = poi.z + (rng() * 2 - 1) * spread;
+    if (rng() < 0.6) {
+      const poi = POIS[Math.floor(rng() * POIS.length)];
+      this.landX = poi.x + (rng() * 2 - 1) * 26;
+      this.landZ = poi.z + (rng() * 2 - 1) * 26;
+    } else {
+      // quieter drop somewhere on the island
+      const a = rng() * Math.PI * 2, d = Math.sqrt(rng()) * 135;
+      this.landX = Math.cos(a) * d; this.landZ = Math.sin(a) * d;
+    }
     this.jumpAt = -1;
     this.target = null; this.seenAt = 0; this.lastSeenX = 0; this.lastSeenZ = 0; this.lastSeenT = -99;
     this.perceiveT = rng() * 0.3;
@@ -143,11 +148,20 @@ export class BotBrain {
     }
     let tgt = this.target && this.target.alive && this.target.onGround ? this.target : null;
     if (!tgt) this.target = null;
-    // Without a gun, only brawl when cornered; otherwise keep looting.
-    if (tgt && !f.hasGun()) {
+    let fleeFrom = null;
+    if (tgt) {
       const d = dist(f.x, f.z, tgt.x, tgt.z);
       const retaliate = tgt === this.alertSrc && m.now - f.lastHurt < 3;
-      if (!(d < 3 && (retaliate || (this.brawler && !tgt.hasGun())))) tgt = null;
+      if (!f.hasGun()) {
+        // Without a gun, only brawl when cornered; run from armed enemies.
+        if (!(d < 3 && (retaliate || (this.brawler && !tgt.hasGun())))) {
+          if (tgt.hasGun() && d < 16) fleeFrom = tgt;
+          tgt = null;
+        }
+      } else if (this.landedAt !== undefined && m.now - this.landedAt < 22 && !retaliate && d > 9) {
+        // fresh off the drop everyone is busy looting: only close threats count
+        tgt = null;
+      }
     }
 
     // ---- zone pressure
@@ -253,6 +267,12 @@ export class BotBrain {
         this.setGoal(goal[0], goal[1]);
         [moveX, moveZ] = this.followPath();
         if (moveX || moveZ) { aimX = f.x + moveX * 5; aimZ = f.z + moveZ * 5; }
+      }
+      if (fleeFrom) {
+        const dx = f.x - fleeFrom.x, dz = f.z - fleeFrom.z, l = Math.hypot(dx, dz) || 1;
+        moveX = moveX * 0.4 + (dx / l) * 0.9; moveZ = moveZ * 0.4 + (dz / l) * 0.9;
+        if (!m.nav.isFree(f.x + moveX * 1.5, f.z + moveZ * 1.5)) { moveX = -dz / l; moveZ = dx / l; }
+        it.heal = false;
       }
       // loot pickup
       if (this.lootTarget) {

@@ -62,7 +62,7 @@ let world, nav, fx, hud, input;
 let match = null;
 let mode = 'loading'; // loading | menu | lobby | match
 let paused = false;
-let zoom = 25;
+let zoom = 28;
 const camPos = new THREE.Vector3(0, 60, 60);
 const camLook = new THREE.Vector3();
 let showcase = null;
@@ -312,7 +312,7 @@ function startMatch() {
   hud.show(true);
   $('killfeed').innerHTML = '';
   input.enabled = true;
-  zoom = 25;
+  zoom = 28;
   audio.music(null);
   audio.ambience(true);
   hud.banner('Get ready!', 'Jump out over a spot you like');

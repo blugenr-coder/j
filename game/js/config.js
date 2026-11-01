@@ -13,37 +13,37 @@ export const WEAPONS = {
     recoil: 0, prefRange: 1.4, shape: [],
   },
   pistol: {
-    id: 'pistol', name: 'Pip Pistol', ammo: 'light', dmg: 19, rate: 4.2, mag: 12, reload: 1.1,
+    id: 'pistol', name: 'Pip Pistol', ammo: 'light', dmg: 15, rate: 4.2, mag: 12, reload: 1.1,
     spread: 0.035, range: 32, speed: 75, pellets: 1, auto: false, recoil: 0.025, prefRange: 12,
     sound: { freq: 900, decay: 0.09, noise: 0.6, boom: 0.3 },
     shape: [[0, 0, 0.42, 0.16], [0.08, -0.26, 0.1, 0.26], [0.42, 0.04, 0.12, 0.08]],
   },
   smg: {
-    id: 'smg', name: 'Buzzsaw SMG', ammo: 'light', dmg: 12, rate: 11.5, mag: 30, reload: 1.6,
+    id: 'smg', name: 'Buzzsaw SMG', ammo: 'light', dmg: 8.5, rate: 11.5, mag: 30, reload: 1.6,
     spread: 0.085, range: 26, speed: 72, pellets: 1, auto: true, recoil: 0.02, prefRange: 9,
     sound: { freq: 1300, decay: 0.06, noise: 0.7, boom: 0.2 },
     shape: [[0, 0, 0.62, 0.2], [0.18, -0.34, 0.1, 0.34], [-0.2, 0.02, 0.2, 0.12], [0.62, 0.06, 0.18, 0.08]],
   },
   ar: {
-    id: 'ar', name: 'Striker AR', ammo: 'medium', dmg: 20, rate: 7.4, mag: 30, reload: 2.0,
+    id: 'ar', name: 'Striker AR', ammo: 'medium', dmg: 13, rate: 7.4, mag: 30, reload: 2.0,
     spread: 0.04, range: 44, speed: 90, pellets: 1, auto: true, recoil: 0.03, prefRange: 18,
     sound: { freq: 600, decay: 0.13, noise: 0.8, boom: 0.5 },
     shape: [[0, 0, 0.85, 0.2], [0.85, 0.06, 0.45, 0.08], [-0.36, -0.04, 0.36, 0.2], [0.4, -0.3, 0.13, 0.3], [0.25, 0.2, 0.3, 0.08]],
   },
   shotgun: {
-    id: 'shotgun', name: 'Boomstick', ammo: 'shells', dmg: 11, rate: 1.15, mag: 5, reload: 2.3,
-    spread: 0.2, range: 15, speed: 60, pellets: 8, auto: false, recoil: 0.09, prefRange: 6,
+    id: 'shotgun', name: 'Boomstick', ammo: 'shells', dmg: 8, rate: 1.1, mag: 5, reload: 2.3,
+    spread: 0.2, range: 15, speed: 60, pellets: 7, auto: false, recoil: 0.09, prefRange: 6,
     sound: { freq: 260, decay: 0.28, noise: 1.0, boom: 1.0 },
     shape: [[0, 0, 0.7, 0.2], [0.7, 0.04, 0.55, 0.12], [-0.4, -0.06, 0.4, 0.22], [0.55, -0.12, 0.35, 0.1]],
   },
   sniper: {
-    id: 'sniper', name: 'Longshot', ammo: 'heavy', dmg: 82, rate: 0.75, mag: 5, reload: 2.6,
+    id: 'sniper', name: 'Longshot', ammo: 'heavy', dmg: 72, rate: 0.75, mag: 5, reload: 2.6,
     spread: 0.004, range: 85, speed: 170, pellets: 1, auto: false, recoil: 0.12, prefRange: 32,
     sound: { freq: 380, decay: 0.35, noise: 0.9, boom: 1.2 },
     shape: [[0, 0, 0.95, 0.18], [0.95, 0.05, 0.8, 0.07], [-0.45, -0.06, 0.45, 0.22], [0.2, 0.2, 0.5, 0.13], [0.35, -0.24, 0.12, 0.24]],
   },
   hmg: {
-    id: 'hmg', name: 'Thumper HMG', ammo: 'medium', dmg: 16, rate: 12.5, mag: 75, reload: 3.6,
+    id: 'hmg', name: 'Thumper HMG', ammo: 'medium', dmg: 10.5, rate: 12.5, mag: 75, reload: 3.6,
     spread: 0.1, range: 38, speed: 82, pellets: 1, auto: true, recoil: 0.025, prefRange: 15, moveMul: 0.82,
     sound: { freq: 480, decay: 0.12, noise: 0.9, boom: 0.7 },
     shape: [[0, -0.04, 1.0, 0.28], [1.0, 0.04, 0.5, 0.12], [-0.3, -0.06, 0.3, 0.24], [0.3, -0.34, 0.34, 0.3], [0.1, 0.24, 0.5, 0.06]],
@@ -114,9 +114,9 @@ export const MODES = {
 };
 
 export const DIFFICULTY = {
-  easy: { reaction: 0.9, aimError: 0.3, view: 24, strafe: 0.5, lead: 0, heal: 0.3, accuracyGain: 0.25 },
-  normal: { reaction: 0.42, aimError: 0.13, view: 30, strafe: 0.8, lead: 0.5, heal: 0.4, accuracyGain: 0.45 },
-  hard: { reaction: 0.26, aimError: 0.09, view: 36, strafe: 1, lead: 1, heal: 0.5, accuracyGain: 0.6 },
+  easy: { reaction: 0.9, aimError: 0.3, view: 18, strafe: 0.5, lead: 0, heal: 0.3, accuracyGain: 0.25 },
+  normal: { reaction: 0.42, aimError: 0.13, view: 22, strafe: 0.8, lead: 0.5, heal: 0.4, accuracyGain: 0.45 },
+  hard: { reaction: 0.26, aimError: 0.09, view: 26, strafe: 1, lead: 1, heal: 0.5, accuracyGain: 0.6 },
 };
 
 const NAME_A = ['Sneaky', 'Turbo', 'Lucky', 'Fuzzy', 'Crispy', 'Mighty', 'Salty', 'Zippy', 'Grumpy', 'Cosmic', 'Wobbly', 'Rapid', 'Sunny', 'Spicy', 'Frosty', 'Rusty', 'Noisy', 'Silent', 'Jolly', 'Bouncy'];

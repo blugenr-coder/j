@@ -47,6 +47,7 @@ export class Fighter {
       match.scene.add(this.bar);
     }
     this.model.visible = false;
+    if (this.isPlayer) addSilhouette(this.model);
   }
 
   dispose() {
@@ -316,6 +317,22 @@ export class Fighter {
         this.bar.userData.armor.visible = this.armor > 0;
       }
     }
+  }
+}
+
+// Flat silhouette drawn only where the player is hidden behind something
+// (depthFunc GreaterDepth), so you never lose yourself behind a building.
+// Order matters: world (0) -> silhouette (1) -> player body (2), so the
+// body's own parts never count as occluders for its silhouette.
+const silMat = new THREE.MeshBasicMaterial({ color: '#ffd23f', depthFunc: THREE.GreaterDepth, depthWrite: false });
+function addSilhouette(model) {
+  const meshes = [];
+  model.traverse((o) => { if (o.isMesh && o !== model.userData.flash) meshes.push(o); });
+  for (const m of meshes) {
+    m.renderOrder = 2;
+    const sil = new THREE.Mesh(m.geometry, silMat);
+    sil.renderOrder = 1;
+    m.add(sil);
   }
 }
 
