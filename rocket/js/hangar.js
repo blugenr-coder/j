@@ -243,7 +243,7 @@ export class Hangar {
     const run = Input.keys.has('ShiftLeft') ? 1.7 : 1;
     const sp = 4.2 * run * (this.held ? 1 / (1 + this.held.def.mass / 2500) : 1);
     const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
-    const tx = (fx * ax.y + -fz * -ax.x) * sp, tz = (fz * ax.y + fx * -ax.x) * sp;
+    const tx = (fx * ax.y - fz * ax.x) * sp, tz = (fz * ax.y + fx * ax.x) * sp;
     const acc = 1 - Math.exp(-dt * 10);
     P.vx += (tx - P.vx) * acc; P.vz += (tz - P.vz) * acc;
     this.movePlayer(P.vx * dt, P.vz * dt);
