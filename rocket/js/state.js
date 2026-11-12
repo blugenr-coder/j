@@ -138,7 +138,12 @@ export const S = {
     } catch { /* storage unavailable: play continues unsaved */ }
   },
   load() {
-    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.started) { Object.assign(this, d); this.inventory = this.inventory.filter(p => PART[p.id]); return true; } } catch { }
+    try { const d = JSON.parse(localStorage.getItem(KEY)); if (d && d.started) {
+        Object.assign(this, d); this.inventory = this.inventory.filter(p => PART[p.id]);
+        // saves from before the physics update: the starter design needs fins to fly straight
+        for (const bp of this.blueprints) if (bp.name.startsWith('Starter hopper') && !bp.ids.includes('fins')) { const i = bp.ids.lastIndexOf('eng_sparrow'); if (i >= 0) bp.ids.splice(i, 0, 'fins'); }
+        return true;
+      } } catch { }
     return false;
   },
   wipe() { try { localStorage.removeItem(KEY); } catch { } },
