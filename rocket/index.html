@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0e0f10">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Padworks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- ============ HANGAR HUD ============ -->
+<div id="hud-hangar" class="hud">
+  <div class="plate tl">
+    <div class="plate-top"><span id="lvl-code">CONTRACT 01</span><span id="lvl-attempt">FIRST ATTEMPT</span></div>
+    <div id="lvl-name">FIRST HOP</div>
+    <div class="funds-row"><span class="lbl">FUNDS</span><span id="funds">$0</span></div>
+    <ul id="obj-list"></ul>
+    <div id="pad-info">PAD EMPTY</div>
+  </div>
+  <div class="tr-btns">
+    <button id="btn-term" title="Terminal (T)">TERMINAL<small>T</small></button>
+    <button id="btn-sound" class="sq" title="Sound">SND</button>
+    <button id="btn-menu" class="sq" title="Menu (Esc)">≡</button>
+  </div>
+  <div id="crosshair"><i></i></div>
+  <div id="prompt"></div>
+  <div id="toasts"></div>
+  <div class="click-to-play">CLICK TO LOOK AROUND · WASD MOVE · E GRAB/PLACE/USE · Q THROW · T TERMINAL</div>
+  <div class="m-ctl">
+    <button id="btn-throw">THROW</button>
+    <button id="btn-primary">—</button>
+  </div>
+  <div id="stick"><div id="knob"></div></div>
+</div>
+
+<!-- ============ FLIGHT HUD ============ -->
+<div id="hud-flight" class="hud">
+  <div class="inst tl">
+    <div class="inst-head"><span id="t-time">T+0:00</span><span id="t-zone">ON PAD</span></div>
+    <div class="big-read"><label>ALT</label><span id="t-alt">0 m</span></div>
+    <div class="reads">
+      <div><label>SPD</label><span id="t-spd">0</span></div>
+      <div><label>V/S</label><span id="t-vs">0</span></div>
+      <div><label>H/S</label><span id="t-hs">0</span></div>
+      <div><label>APO</label><span id="t-apo">—</span></div>
+      <div><label>PERI</label><span id="t-pe">—</span></div>
+      <div><label>PITCH</label><span id="t-pitch">0°</span></div>
+    </div>
+    <div id="att">
+      <div class="att-ring"></div><div class="att-sky"></div>
+      <div id="att-pro"><i></i></div>
+      <div id="att-rocket"><i></i></div>
+      <span class="att-n">UP</span>
+    </div>
+  </div>
+
+  <div class="sys tr">
+    <div class="bar"><label>STAGE FUEL</label><div class="track"><div id="b-fuel" class="fill"></div></div><span id="b-fuel-v"></span></div>
+    <div class="bar"><label>TOTAL FUEL</label><div class="track"><div id="b-tfuel" class="fill"></div></div><span id="b-tfuel-v"></span></div>
+    <div class="bar"><label>HEAT</label><div class="track"><div id="b-heat" class="fill"></div></div><span id="b-heat-v"></span></div>
+    <div class="bar"><label>HULL</label><div class="track"><div id="b-hull" class="fill"></div></div><span id="b-hull-v"></span></div>
+    <div class="sys-foot"><span id="f-land"></span><span id="f-repairs"></span></div>
+    <ul id="f-quests"></ul>
+  </div>
+
+  <div id="ev">
+    <div class="ev-tag"><span id="ev-tag">MASTER CAUTION</span><span id="ev-prog"></span></div>
+    <div class="ev-time"><i id="ev-time"></i></div>
+    <h3 id="ev-title"></h3>
+    <p id="ev-text"></p>
+    <div id="ev-zone"><i id="ev-zone-ok"></i><b id="ev-needle"></b></div>
+    <div id="ev-choices"></div>
+    <button id="ev-act" class="ev-card">ACT</button>
+  </div>
+
+  <div id="gpws">SINK RATE · PULL UP</div>
+  <div id="f-log"></div>
+
+  <div class="f-left">
+    <div id="throttle"><div id="thr-fill"></div><span class="thr-lbl">THR</span><span id="thr-v">100</span></div>
+    <div class="rot">
+      <button id="rot-l">◀</button><button id="rot-r">▶</button>
+    </div>
+  </div>
+  <div class="f-right">
+    <div id="f-actions"></div>
+    <div class="f-row">
+      <button id="f-warp-dn" class="sq">−</button><span id="f-warp">1×</span><button id="f-warp-up" class="sq">+</button>
+      <button id="f-cam" class="sq">CAM</button>
+    </div>
+    <div class="f-row">
+      <button id="f-chute">CHUTE</button>
+      <button id="f-stage" class="pri">IGNITE</button>
+    </div>
+    <button id="f-abort" class="tiny">ABORT</button>
+  </div>
+  <div class="keys-hint">A/D ROTATE · W/S THROTTLE · Z/X FULL/CUT · SPACE STAGE · P CHUTE · , . WARP · E EVENT · 1-3 CHOOSE · DRAG/WHEEL CAMERA</div>
+</div>
+
+<!-- ============ TERMINAL ============ -->
+<div id="terminal">
+  <div class="term-frame">
+    <header class="term-head">
+      <div class="brand"><b>PADWORKS</b><span>PROCUREMENT &amp; DESIGN TERMINAL v2.6</span></div>
+      <div class="term-funds"><span>FUNDS</span><b id="term-funds">$0</b></div>
+      <button id="term-close">CLOSE ✕</button>
+    </header>
+    <nav id="term-tabs">
+      <button data-tab="contract"><i>01</i>Contract</button>
+      <button data-tab="blueprints"><i>02</i>Blueprints</button>
+      <button data-tab="market"><i>03</i>New parts</button>
+      <button data-tab="used"><i>04</i>Used market</button>
+      <button data-tab="resell"><i>05</i>Resell</button>
+    </nav>
+    <main id="term-body"></main>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div id="modal"><div id="modal-box"></div></div>
+
+<div id="menu">
+  <div class="menu-box">
+    <div class="logo">
+      <span class="logo-pn">PW-01 / GOVERNMENT CONTRACTOR</span>
+      <h1>PADWORKS</h1>
+      <p>Build rockets on a public budget. Fly the contract. Bring it home.</p>
+    </div>
+    <div class="menu-btns">
+      <button id="m-resume" class="pri" style="display:none">RESUME</button>
+      <button id="m-continue" class="pri" style="display:none">CONTINUE PROGRAM</button>
+      <button id="m-new">NEW PROGRAM</button>
+      <button id="m-help">HOW IT WORKS</button>
+    </div>
+    <div class="menu-foot">Progress saves on this device · Works with touch or keyboard &amp; mouse</div>
+  </div>
+</div>
+
+<div id="help">
+  <div class="help-box">
+    <h2>OPERATING MANUAL</h2>
+    <ol>
+      <li><b>Read the contract</b> at the terminal. Each contract has required objectives, a bonus, and a budget.</li>
+      <li><b>Design a blueprint.</b> Stack parts top to bottom. The review panel flags build flaws: engines firing into parts, fins mounted too high, buried parachutes, misplaced heat shields. Flaws have real effects in flight.</li>
+      <li><b>Buy parts</b> new, or cheaper and worn on the used market. Deliveries drop into the yellow DELIVERY bay.</li>
+      <li><b>Build it with your hands.</b> Grab parts and place them on the pad, bottom first. The hologram shows the next part. The crane can auto-assemble if it is running.</li>
+      <li><b>Launch</b> at the red console. Stage to ignite, steer, handle failures as they happen.</li>
+      <li><b>Land.</b> Parachutes need speed under 300 m/s. Legs raise the safe touchdown speed. Coming back from orbit without a heat shield at the bottom is fatal.</li>
+      <li>Success unlocks the next contract and a larger grant. Failure means repeating it on a reduced grant. Recovered parts can be resold or flown again.</li>
+    </ol>
+    <div class="help-cols">
+      <div><h4>Desktop</h4><p>Click to capture the mouse. WASD move, mouse look, E grab / place / use, Q throw, T terminal, Esc menu.<br>Flight: A/D rotate, W/S throttle, Z/X full/cut, Space stage, P chute, , . time warp, E act on failures, 1-3 choose.</p></div>
+      <div><h4>Touch</h4><p>Left thumb: move stick. Right thumb: look. Context button grabs, places and uses.<br>Flight: drag the throttle, hold ◀ ▶ to rotate, drag empty space to orbit the camera.</p></div>
+    </div>
+    <button id="help-close" class="pri">UNDERSTOOD</button>
+  </div>
+</div>
+
+<noscript>Padworks needs JavaScript and WebGL.</noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
