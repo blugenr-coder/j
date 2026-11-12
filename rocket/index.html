@@ -23,6 +23,7 @@
     <div class="funds-row"><span class="lbl">FUNDS</span><span id="funds">$0</span></div>
     <ul id="obj-list"></ul>
     <div id="pad-info">PAD EMPTY</div>
+    <div id="next-step"></div>
   </div>
   <div class="tr-btns">
     <button id="btn-term" title="Terminal (T)">TERMINAL<small>T</small></button>
@@ -123,6 +124,16 @@
   </div>
 </div>
 
+<!-- ============ TUTORIAL ============ -->
+<div id="guide">
+  <div class="g-top"><span id="guide-n">STEP 1</span><button id="guide-skip">Skip tutorial</button></div>
+  <div class="g-bar"><i id="guide-prog"></i></div>
+  <h3 id="guide-title"></h3>
+  <p id="guide-text"></p>
+  <p id="guide-small"></p>
+</div>
+<div id="guide-arrow"><i></i><span></span></div>
+
 <!-- ============ MODALS ============ -->
 <div id="modal"><div id="modal-box"></div></div>
 
@@ -137,6 +148,7 @@
       <button id="m-resume" class="pri" style="display:none">RESUME</button>
       <button id="m-continue" class="pri" style="display:none">CONTINUE PROGRAM</button>
       <button id="m-new">NEW PROGRAM</button>
+      <button id="m-tut">REPLAY TUTORIAL</button>
       <button id="m-help">HOW IT WORKS</button>
     </div>
     <div class="menu-foot">Progress saves on this device · Works with touch or keyboard &amp; mouse</div>

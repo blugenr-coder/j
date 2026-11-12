@@ -7,6 +7,7 @@ import { rocketMesh, partMesh, mat, Particles } from './models.js';
 import { FlightEvents } from './events.js';
 import { Input, isTouch } from './input.js';
 import { Audio } from './audio.js';
+import { makeEnv } from './thumbs.js';
 import { S } from './state.js';
 
 const WARPS = [1, 2, 4, 10, 50, 100];
@@ -46,6 +47,7 @@ export class Flight {
     this.sun = new THREE.DirectionalLight(0xfff4e0, 2.4); this.sun.position.set(-0.5, 0.8, 0.6).multiplyScalar(100); this.scene.add(this.sun);
     this.amb = new THREE.HemisphereLight(0xbcd8ff, 0x3a3020, 0.6); this.scene.add(this.amb);
 
+    this.scene.environment = makeEnv(renderer);
     this.planet = new THREE.Group(); this.scene.add(this.planet);
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(R - 40, 160, 80), new THREE.MeshStandardMaterial({ map: planetTex(), roughness: 1, metalness: 0 }));
     sphere.rotation.x = Math.PI / 2; this.planet.add(sphere); this.sphere = sphere;
@@ -68,8 +70,8 @@ export class Flight {
     const site = new THREE.Group(); site.position.set(0, R, 0);
     const pad = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 1.2, 32), mat(0x6b6b6b, { roughness: 0.9 })); pad.position.y = -0.6; site.add(pad);
     const tw = mat(0xb45309, { metalness: 0.4 });
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(2, 34, 2), tw); tower.position.set(-7, 17, 0); site.add(tower);
-    for (let y = 4; y < 34; y += 6) { const arm = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 0.6), tw); arm.position.set(-4.5, y, 0); site.add(arm); }
+    const tower = new THREE.Mesh(new THREE.BoxGeometry(2, 34, 2), tw); tower.position.set(0, 17, -8); site.add(tower);
+    for (let y = 4; y < 34; y += 6) { const arm = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 0.6), tw); arm.position.set(0, y, -5.5); arm.rotation.y = Math.PI / 2; site.add(arm); }
     const bldg = new THREE.Mesh(new THREE.BoxGeometry(40, 18, 30), mat(0x52525b)); bldg.position.set(80, 9, -60); site.add(bldg);
     const bldg2 = new THREE.Mesh(new THREE.BoxGeometry(14, 30, 14), mat(0xe5e7eb)); bldg2.position.set(-60, 15, -90); site.add(bldg2);
     for (let i = 0; i < 40; i++) { const tr = new THREE.Mesh(new THREE.ConeGeometry(2 + Math.random() * 2, 6 + Math.random() * 6, 6), mat(0x2f4f2a, { roughness: 1 })); const a = Math.random() * 6.28, d = 60 + Math.random() * 300; tr.position.set(Math.cos(a) * d, 4, Math.sin(a) * d); site.add(tr); }
@@ -117,6 +119,7 @@ export class Flight {
     if (S.flags.cat) v.catBonus = true;
     this.events = new FlightEvents(v, S.level);
     if (S.visit?.windy) this.events.rate *= 1.4;
+    if (this.ui.game.guide?.active) this.events.cool = 1e9;  // no random failures during the tutorial
     this.level = S.lvl();
     this.quests = this.level.quests.map(q => ({ ...q, done: false, failed: false }));
     this.bonus = (this.level.bonus || []).map(q => ({ ...q, done: false }));

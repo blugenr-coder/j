@@ -21,9 +21,22 @@ export const Input = {
     addEventListener('mousemove', e => { if (this.locked) { this.look.x += e.movementX; this.look.y += e.movementY; } });
     canvas.addEventListener('mousedown', e => {
       if (isTouch) return;
-      if (!this.locked && this.wantLock) { canvas.requestPointerLock?.(); return; }
-      if (this.locked) this.pressed.add(e.button === 2 ? 'Mouse2' : 'Mouse0');
+      if (this.locked) { this.pressed.add(e.button === 2 ? 'Mouse2' : 'Mouse0'); return; }
+      this.mdrag = { x: e.clientX, y: e.clientY, moved: 0, button: e.button };
+      if (this.wantLock && !this.lockFailed) { try { const r = canvas.requestPointerLock?.(); r?.catch?.(() => { this.lockFailed = true; }); } catch { this.lockFailed = true; } }
     });
+    // without pointer lock: drag to look, plain click acts as a click
+    addEventListener('mousemove', e => {
+      if (!this.mdrag || this.locked || this.mode !== 'hangar') return;
+      const dx = e.clientX - this.mdrag.x, dy = e.clientY - this.mdrag.y;
+      this.look.x += dx; this.look.y += dy; this.mdrag.moved += Math.abs(dx) + Math.abs(dy);
+      this.mdrag.x = e.clientX; this.mdrag.y = e.clientY;
+    });
+    addEventListener('mouseup', () => {
+      if (this.mdrag && !this.locked && this.lockFailed && this.mdrag.moved < 5 && this.mode === 'hangar') this.pressed.add(this.mdrag.button === 2 ? 'Mouse2' : 'Mouse0');
+      this.mdrag = null;
+    });
+    document.addEventListener('pointerlockerror', () => { this.lockFailed = true; });
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     document.addEventListener('pointerlockchange', () => { this.locked = document.pointerLockElement === canvas; this.onLock?.(this.locked); });
 

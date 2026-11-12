@@ -5,6 +5,7 @@ import { Flight } from './flight.js';
 import { UI } from './ui.js';
 import { Input, isTouch } from './input.js';
 import { Audio } from './audio.js';
+import { Guide } from './guide.js';
 
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isTouch, logarithmicDepthBuffer: true, powerPreference: 'high-performance' });
@@ -21,6 +22,7 @@ const game = {
     flight.stop(); flight.cleanup();
     this.mode = 'hangar'; S.resetVisit();
     ui.enterHangar(); hangar.enter();
+    if (guide.active && S.level > 0) guide.finish(false);
     eventTimer = 4 + Math.random() * 4; // a memo usually greets you
   },
   launch() {
@@ -34,10 +36,11 @@ const ui = new UI(game);
 const hangar = new Hangar(renderer, ui);
 const flight = new Flight(renderer, ui);
 game.hangar = hangar; game.flight = flight;
+const guide = new Guide(game, ui, hangar); game.guide = guide;
 Input.init(canvas);
 Input.onLock = locked => document.body.classList.toggle('locked', locked);
 
-let eventTimer = 0;
+let eventTimer = 0, hintT = 0;
 function resize() {
   const w = innerWidth, h = innerHeight;
   renderer.setSize(w, h, false);
@@ -47,7 +50,8 @@ addEventListener('resize', resize); resize();
 
 // menu
 const $ = id => document.getElementById(id);
-$('m-new').onclick = () => { Audio.unlock(); if (S.started && !confirm('Start a new program? Your current save is replaced.')) return; S.newGame(); game.hideMenu(); game.toHangar(); showHelp(); };
+$('m-new').onclick = () => { Audio.unlock(); if (S.started && !confirm('Start a new program? Your current save is replaced.')) return; S.newGame(); guide.restart(); game.hideMenu(); game.toHangar(); };
+$('m-tut').onclick = () => { Audio.unlock(); if (!S.started) S.newGame(); guide.restart(); game.hideMenu(); if (game.mode !== 'hangar') game.toHangar(); };
 $('m-continue').onclick = () => { Audio.unlock(); game.hideMenu(); if (game.mode !== 'hangar') game.toHangar(); };
 $('m-resume').onclick = () => { Audio.unlock(); game.hideMenu(); };
 $('m-help').onclick = () => showHelp();
@@ -61,7 +65,9 @@ function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (game.mode === 'hangar') {
     hangar.update(dt);
-    if (!ui.modalOpen()) { eventTimer -= dt; if (eventTimer <= 0) { ui.hangarEvent(); eventTimer = 70 + Math.random() * 80; } }
+    // random memos wait until the tutorial is over
+    if (!ui.modalOpen() && !guide.active) { eventTimer -= dt; if (eventTimer <= 0) { ui.hangarEvent(); eventTimer = 70 + Math.random() * 80; } }
+    hintT -= dt; if (hintT <= 0) { hintT = 0.5; ui.refreshHint(); }
     if (Input.hit('Tab') || Input.hit('KeyT')) ui.termOpen ? ui.closeTerminal() : ui.openTerminal();
     if (Input.hit('Escape') && ui.termOpen) ui.closeTerminal();
     hangar.render();
@@ -71,11 +77,12 @@ function frame(now) {
   } else {
     // menu backdrop: slow camera drift in the hangar
     hangar.player.yaw += dt * 0.05;
-    hangar.camera.rotation.set(-0.05, hangar.player.yaw, 0, 'YXZ');
-    hangar.camera.position.set(-4, 1.65, 9);
+    hangar.camera.rotation.set(0.02, Math.sin(performance.now() / 9000) * 0.6, 0, 'YXZ');
+    hangar.camera.position.set(0, 2.2, 16);
     hangar.hands.r.visible = hangar.hands.l.visible = false;
     hangar.render();
   }
+  guide.update(dt);
   if (Input.hit('Escape') && !ui.termOpen && game.mode !== 'menu') game.showMenu();
   Input.endFrame();
   requestAnimationFrame(frame);

@@ -7,6 +7,7 @@ import { HANGAR_EVENTS } from './events.js';
 import { Audio } from './audio.js';
 import { isTouch, Input } from './input.js';
 import { WARPS } from './flight.js';
+import { partThumb, rocketThumb } from './thumbs.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const h = (tag, attrs = {}, ...kids) => {
@@ -58,6 +59,9 @@ function stackSVG(ids, maxH = 340, w = 120) {
   });
   return `<svg width="${w}" height="${svgH}" viewBox="0 0 ${w} ${svgH}">${out}</svg>`;
 }
+
+const pimg = (d, worn = false) => `<img class="pimg" alt="" src="${partThumb(d, worn)}">`;
+const rimg = (ids, w, hh) => ids.length ? `<img class="rimg" alt="" src="${rocketThumb(ids, w, hh)}">` : '<div class="rimg-empty">EMPTY STACK</div>';
 
 export class UI {
   constructor(game) {
@@ -132,7 +136,13 @@ export class UI {
     ul.append(h('li', { class: 'land' }, 'Land the rocket'));
     for (const b of L.bonus || []) ul.append(h('li', { class: 'bonus' }, `${questLabel(b)} `, h('b', {}, `+${fmtMoney(b.reward)}`)));
     const st = analyse(S.flightStack().map(p => p.id));
+    this.refreshHint();
     $('#pad-info').textContent = S.pad.length ? `PAD · ${S.pad.length} PARTS · ${(st.wet / 1000).toFixed(1)} t · ΔV ${Math.round(st.totalDv)} m/s` : 'PAD EMPTY';
+  }
+  refreshHint() {
+    const g = this.game.guide, el = $('#next-step');
+    const t = g && !g.active ? g.nextHint() : '';
+    if (el.dataset.t !== t) { el.dataset.t = t; el.innerHTML = t ? `<b>NEXT STEP</b>${t}` : ''; }
   }
   setPrompt(label, action, holding) {
     const p = this.promptEl;
@@ -199,12 +209,12 @@ export class UI {
     const chips = h('div', { class: 'chips' }, ...CATS.map(c => h('button', { class: c.id === this.marketCat ? 'on' : '', onclick: () => { this.marketCat = c.id; Audio.cue('click'); this.renderTab(); } }, c.name, S.visit?.mult[c.id] ? h('i', { class: S.visit.mult[c.id] < 1 ? 'sale' : 'up' }, S.visit.mult[c.id] < 1 ? 'SALE' : '+') : null)));
     b.append(chips);
     if (out === this.marketCat) b.append(h('div', { class: 'notice bad' }, 'OUT OF STOCK THIS VISIT — check the used market.'));
-    const list = h('div', { class: 'rows' });
+    const list = h('div', { class: 'rows cards' });
     for (const d of PARTS.filter(p => p.cat === this.marketCat)) {
       const price = S.price(d.id), base = d.price;
       const can = S.cash >= price && out !== d.cat;
       list.append(h('div', { class: 'row' },
-        h('div', { class: 'ico', html: partSVG(d) }),
+        h('div', { class: 'ico', html: pimg(d) }),
         h('div', { class: 'info' }, h('div', { class: 'nm' }, d.name, h('span', { class: 'pn' }, pn(d))), h('div', { class: 'spec' }, specLine(d)), h('div', { class: 'desc' }, d.desc || '')),
         h('div', { class: 'own' }, this.owned(d.id) ? `×${this.owned(d.id)} owned` : ''),
         h('div', { class: 'price' + (price < base ? ' sale' : price > base ? ' up' : '') }, fmtMoney(price), price !== base ? h('s', {}, fmtMoney(base)) : null),
@@ -216,12 +226,12 @@ export class UI {
 
   tab_used(b) {
     b.append(h('div', { class: 'notice' }, 'Second-hand parts from other programs. Cheap, but worn parts break more often in flight and survive less damage.'));
-    const list = h('div', { class: 'rows' });
+    const list = h('div', { class: 'rows cards' });
     if (!S.used.length) list.append(h('div', { class: 'empty' }, 'Nothing listed. New listings arrive after each flight.'));
     for (const u of S.used) {
       const d = PART[u.id];
       list.append(h('div', { class: 'row' },
-        h('div', { class: 'ico', html: partSVG(d) }),
+        h('div', { class: 'ico', html: pimg(d, u.cond < 0.6) }),
         h('div', { class: 'info' }, h('div', { class: 'nm' }, d.name, h('span', { class: 'pn' }, 'USED · ' + pn(d))), h('div', { class: 'spec' }, specLine(d))),
         condBar(u.cond),
         h('div', { class: 'price' }, fmtMoney(u.price), h('s', {}, fmtMoney(d.price))),
@@ -234,12 +244,12 @@ export class UI {
   tab_resell(b) {
     const inv = S.inventory.filter(p => !S.pad.includes(p.uid)).sort((a, b) => PART[a.id].cat.localeCompare(PART[b.id].cat));
     b.append(h('div', { class: 'notice' }, 'Sell parts you are not using. Value depends on condition. Parts stacked on the pad cannot be sold.'));
-    const list = h('div', { class: 'rows' });
+    const list = h('div', { class: 'rows cards' });
     if (!inv.length) list.append(h('div', { class: 'empty' }, 'No spare parts in the hangar.'));
     for (const p of inv) {
       const d = PART[p.id], v = S.sellValue(p);
       list.append(h('div', { class: 'row' },
-        h('div', { class: 'ico', html: partSVG(d) }),
+        h('div', { class: 'ico', html: pimg(d, p.cond < 0.6) }),
         h('div', { class: 'info' }, h('div', { class: 'nm' }, d.name, h('span', { class: 'pn' }, pn(d))), h('div', { class: 'spec' }, specLine(d))),
         condBar(p.cond),
         h('div', { class: 'price' }, fmtMoney(v)),
@@ -265,12 +275,12 @@ export class UI {
     const pal = h('div', { class: 'bp-pal' }, h('h4', {}, 'Add part ', h('small', {}, this.editSel >= 0 ? 'inserts above selection' : 'adds to top')));
     for (const c of CATS) {
       pal.append(h('div', { class: 'pal-cat' }, c.name));
-      for (const d of PARTS.filter(p => p.cat === c.id)) pal.append(h('button', { class: 'pal-item', onclick: () => { Audio.cue('click'); const at = this.editSel >= 0 ? this.editSel : 0; ids.splice(at, 0, d.id); if (this.editSel >= 0) this.editSel++; this.renderTab(); } }, h('span', { class: 'ico', html: partSVG(d, 26, 26) }), h('span', {}, d.name), h('em', {}, fmtMoney(S.price(d.id)))));
+      for (const d of PARTS.filter(p => p.cat === c.id)) pal.append(h('button', { class: 'pal-item', onclick: () => { Audio.cue('click'); const at = this.editSel >= 0 ? this.editSel : 0; ids.splice(at, 0, d.id); if (this.editSel >= 0) this.editSel++; this.renderTab(); } }, h('span', { class: 'ico', html: pimg(d) }), h('span', {}, d.name), h('em', {}, fmtMoney(S.price(d.id)))));
     }
     // stack
     const stackCol = h('div', { class: 'bp-stack' },
       h('input', { class: 'bp-name', value: this.editName, oninput: e => { this.editName = e.target.value; } }),
-      h('div', { class: 'bp-vis', html: stackSVG(ids) }),
+      h('div', { class: 'bp-vis', html: rimg(ids, 260, 420) }),
     );
     const flawIdx = new Map(A.flaws.filter(f => f.i >= 0).map(f => [f.i, f]));
     const lst = h('ol', { class: 'bp-list' });
@@ -279,7 +289,7 @@ export class UI {
       const fl = flawIdx.get(i);
       lst.append(h('li', { class: (i === this.editSel ? 'sel ' : '') + (fl ? 'flaw' : '') + (A.stageOf[i] !== A.stageOf[i - 1] && i > 0 ? ' newstage' : ''), onclick: () => { this.editSel = this.editSel === i ? -1 : i; this.renderTab(); } },
         h('span', { class: 'stg' }, 'S' + (A.stageOf[i] + 1)),
-        h('span', { class: 'ico', html: partSVG(d, 22, 22) }), h('span', { class: 'n' }, d.name),
+        h('span', { class: 'ico', html: pimg(d) }), h('span', { class: 'n' }, d.name),
         h('span', { class: 'ctl' },
           h('button', { onclick: e => { e.stopPropagation(); if (i > 0) { [ids[i - 1], ids[i]] = [ids[i], ids[i - 1]]; this.editSel = i - 1; this.renderTab(); } } }, '▲'),
           h('button', { onclick: e => { e.stopPropagation(); if (i < ids.length - 1) { [ids[i + 1], ids[i]] = [ids[i], ids[i + 1]]; this.editSel = i + 1; this.renderTab(); } } }, '▼'),
@@ -315,7 +325,7 @@ export class UI {
       h('button', { onclick: () => this.saveBP(false) }, 'SAVE'),
       h('button', { onclick: () => this.saveBP(true) }, 'SAVE AS NEW'),
       h('button', { class: 'pri', onclick: () => { const i = this.saveBP(false, true); S.plan = i; S.save(); S.emit(); this.toast('Active blueprint set — the pad hologram shows the build order', 'good'); } }, 'SET ACTIVE'),
-      h('button', { disabled: !missing.length || missingCost > S.cash, onclick: () => { for (const id of missing) S.buy(id); Audio.cue('buy'); this.toast(`Ordered ${missing.length} parts`, 'good'); } }, missing.length ? `BUY MISSING ${fmtMoney(missingCost)}` : 'ALL PARTS OWNED'),
+      h('button', { class: 'buy-missing', disabled: !missing.length || missingCost > S.cash, onclick: () => { for (const id of missing) S.buy(id); Audio.cue('buy'); this.toast(`Ordered ${missing.length} parts`, 'good'); } }, missing.length ? `BUY MISSING ${fmtMoney(missingCost)}` : 'ALL PARTS OWNED'),
       h('button', { class: S.visit?.craneOff ? 'dim' : '', onclick: () => { const i = this.saveBP(false, true); S.plan = i; S.save(); const err = this.game.hangar.autoAssemble(); if (err) { this.toast(err, 'bad'); Audio.cue('error'); } else { this.toast('Crane assembling…', 'good'); this.closeTerminal(); } } }, 'CRANE ASSEMBLE'),
       h('button', { class: 'warn', onclick: () => { this.game.hangar.clearPad(); this.toast('Pad cleared', 'info'); } }, 'CLEAR PAD'),
       this.editIdx != null ? h('button', { class: 'ghost', onclick: () => { S.blueprints.splice(this.editIdx, 1); if (S.plan === this.editIdx) S.plan = null; else if (S.plan > this.editIdx) S.plan--; this.editIds = null; S.save(); this.renderTab(); } }, 'DELETE') : null,
@@ -372,7 +382,7 @@ export class UI {
     const box = h('div', { class: 'dlg review' },
       h('div', { class: 'rev-head' }, h('span', { class: 'code' }, 'PRE-FLIGHT REVIEW'), h('h3', {}, go ? (issues.length ? 'GO WITH RISKS' : 'ALL SYSTEMS GO') : 'NO-GO')),
       h('div', { class: 'rev-body' },
-        h('div', { class: 'rev-vis', html: stackSVG(stack.map(p => p.id), 220, 90) }),
+        h('div', { class: 'rev-vis', html: rimg(stack.map(p => p.id), 180, 300) }),
         h('div', {},
           h('dl', { class: 'kv' }, h('dt', {}, 'Parts'), h('dd', {}, stack.length), h('dt', {}, 'Mass'), h('dd', {}, (A.wet / 1000).toFixed(2) + ' t'), h('dt', {}, 'ΔV'), h('dd', {}, Math.round(A.totalDv) + ' m/s'), h('dt', {}, 'TWR'), h('dd', {}, A.stages[0] ? A.stages[0].twrSL.toFixed(2) : '—'), h('dt', {}, 'Stages'), h('dd', {}, A.stages.length)),
           issues.length ? h('ul', { class: 'flaws' }, ...issues.map(f => h('li', { class: 'sev' + f.sev }, f.text))) : h('div', { class: 'notice ok' }, 'No issues found.'))),
@@ -393,7 +403,7 @@ export class UI {
     this.lastActions = '';
     $('#f-log').innerHTML = '';
     this.lastMsgCount = 0;
-    this.toast('Press STAGE (Space) to ignite', 'info');
+    if (!this.game.guide?.active) this.toast('Press IGNITE (Space) to start the engines', 'info');
   }
 
   updateFlight(f, dt) {
