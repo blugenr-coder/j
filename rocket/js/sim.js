@@ -53,6 +53,13 @@ export class Vessel {
     this.resolved = 0;
     // event-driven modifiers
     this.mod = { steer: 1, leak: 0, sasOff: 0, spin: 0, throttleStuck: -1, stuckT: 0, hudGlitch: 0, gust: 0, legsBroken: false, chuteMul: 1 };
+    // weather for this flight: surface wind, jet stream and gusts (difficulty scales them)
+    const lvl = stack.level || 0;
+    const W = 1 + lvl * 0.12;
+    this.wind = { dir: Math.random() < 0.5 ? -1 : 1, base: (2 + Math.random() * 6) * W, jet: (12 + Math.random() * 22) * W, gust: (1.5 + Math.random() * 3) * W, ph: [Math.random() * 9, Math.random() * 9, Math.random() * 9] };
+    // every engine is mounted slightly off-axis; worn engines more so
+    for (const p of this.parts) if (p.def.engine) p.mis = (Math.random() - 0.5) * 2 * (0.004 + (1 - p.cond) * 0.03);
+    this.com = 0; this.H = 0;
     this.messages = [];     // {t,text,kind} for the HUD log
     this.dropped = [];      // separated stages, consumed by the renderer
     this.sounds = [];       // sound cues, consumed by the renderer
@@ -103,7 +110,7 @@ export class Vessel {
   sas() { return this.live().reduce((a, p) => a + (!p.destroyed && p.def.core ? p.def.core.sas : 0), 0); }
   resistElec() { let r = 1; for (const p of this.live()) if (!p.destroyed && p.def.resist?.elec) r *= p.def.resist.elec; return r; }
   armor() { let a = 0; for (const p of this.live()) if (!p.destroyed && p.def.armor) a += p.def.armor; return Math.min(0.6, a); }
-  landLimit() { if (this.mod.legsBroken) return 6; let l = 6; for (const p of this.live()) if (!p.destroyed && p.def.legs && this.fx.legsOk.has(p.uid)) l = Math.max(l, p.def.legs.limit); return l; }
+  landLimit() { if (this.mod.legsBroken) return 5; let l = 5; for (const p of this.live()) if (!p.destroyed && p.def.legs && this.fx.legsOk.has(p.uid)) l = Math.max(l, p.def.legs.limit); return l; }
   stackHeight() { return this.live().reduce((a, p) => a + p.def.h, 0); }
   maxRadius() { return this.live().reduce((a, p) => Math.max(a, p.def.r), 0.3); }
 
@@ -125,12 +132,32 @@ export class Vessel {
     return 'ascent';
   }
 
+  windAt(alt) {
+    const w = this.wind; if (alt > ATMO) return 0;
+    let v = w.base + (w.jet - w.base) * Math.min(1, Math.max(0, alt) / 11000);
+    if (alt > 15000) v *= Math.max(0, 1 - (alt - 15000) / 25000);
+    const t = this.t, ph = w.ph;
+    const gust = w.gust * (Math.sin(t * 0.7 + ph[0]) + 0.6 * Math.sin(t * 1.9 + ph[1]) + 0.35 * Math.sin(t * 4.7 + ph[2])) * (alt < 20000 ? 1 : 0.3);
+    return w.dir * v + gust;
+  }
   msg(text, kind = 'info') { this.messages.push({ t: this.t, text, kind }); if (this.messages.length > 6) this.messages.shift(); }
 
   // ----- actions -----
   stage() {
     if (this.ended) return;
-    if (!this.ignited) { this.ignited = true; this.msg('Ignition!', 'good'); this.sounds.push('ignite'); return; }
+    if (!this.ignited || (!this.liftoff && this.parts.some(p => p.hangFire))) {
+      // liquid engines can fail to light; worn ones fail more often
+      let failed = 0;
+      for (const p of this.parts) if (p.def.engine && p.stage === this.curStage && !p.gone && !p.destroyed && (!this.ignited || p.hangFire)) {
+        p.spool = 0;
+        const chance = p.def.engine.srb ? 0.02 : 0.08 + (1 - p.cond) * 0.35;
+        if (Math.random() < chance) { p.hangFire = true; p.offT = 1e9; failed++; } else { p.hangFire = false; p.offT = 0; }
+      }
+      this.ignited = true; this.sounds.push('ignite');
+      if (failed) this.msg(`${failed} engine${failed > 1 ? 's' : ''} failed to light - press IGNITE again`, 'bad');
+      else this.msg('Ignition!', 'good');
+      return;
+    }
     if (this.curStage >= this.maxStage) { this.msg('No more stages'); return; }
     if (this.mod.decouplerStuck) { this.msg('Separator jammed!', 'bad'); return; }
     const drop = this.parts.filter(p => p.stage === this.curStage && !p.gone);
@@ -210,9 +237,16 @@ export class Vessel {
       const e = p.def.engine; if (!e || p.stage !== this.curStage || !this.ignited || p.destroyed) continue;
       if (p.offT > 0) { p.offT -= dt; continue; }
       const isp = e.ispVac + (e.ispSL - e.ispVac) * Math.min(1, pAmb);
-      const thr = (e.srb ? 1 : throttle);
+      // engines do not respond instantly: spool-up after ignition and throttle lag
+      p.spool = Math.min(1, (p.spool ?? 0) + dt / (e.srb ? 0.3 : 1.4));
+      const target = e.srb ? 1 : throttle;
+      p.thrNow = (p.thrNow ?? 0) + (target - (p.thrNow ?? 0)) * (1 - Math.exp(-dt / 0.35));
+      const thr = p.thrNow * p.spool;
+      p.F = 0;
       if (thr <= 0.001) continue;
-      let F = e.thrust * 1000 * (isp / e.ispVac) * thr * p.thrustMul * (0.85 + 0.15 * p.cond);
+      // combustion roughness
+      const rough = 1 + (Math.random() - 0.5) * (0.03 + (1 - p.cond) * 0.12);
+      let F = e.thrust * 1000 * (isp / e.ispVac) * thr * p.thrustMul * (0.85 + 0.15 * p.cond) * rough;
       let mdot = F / (isp * G0);
       if (e.srb) {
         if (p.fuel <= 0) continue;
@@ -224,7 +258,7 @@ export class Vessel {
         for (const t of stageTanks) { const share = tankFuel > 0 ? t.fuel / tankFuel : 0; t.fuel = Math.max(0, t.fuel - use * share); }
         tankFuel -= use;
       }
-      p.burning = F > 0;
+      p.burning = F > 0; p.F = F;
       thrust += F; gimbal += (e.gimbal || 0) * (F > 0 ? 1 : 0);
     }
     // build flaw: an engine firing into parts below it
@@ -246,7 +280,12 @@ export class Vessel {
     if (this.chuteOn) this.chuteFrac = Math.min(1, this.chuteFrac + dt / 2.5);
     let CdA = cd * Math.PI * rm * rm + this.chuteFrac * this.chuteArea() * 1.0;
     if (this.landed) CdA = 0;
-    const drag = speed > 0 ? 0.5 * rho * speed * CdA : 0;   // F = drag*v (vector form)
+    // wind: horizontal, grows with height up to the jet stream, plus gusts
+    const wv = this.liftoff && !this.landed ? this.windAt(alt) : 0;
+    const rvx = this.vx - (-uy) * wv, rvy = this.vy - ux * wv;   // air-relative velocity
+    const air = Math.hypot(rvx, rvy);
+    const qa = 0.5 * rho * air * air;
+    const drag = air > 0 ? 0.5 * rho * air * CdA : 0;   // F = drag * v_rel (vector form)
 
     // --- gravity ---
     const g = GM / (r * r);
@@ -254,42 +293,73 @@ export class Vessel {
     // --- wind gusts (events) ---
     const gx = -uy * this.mod.gust, gy = ux * this.mod.gust;
 
-    let ax = -g * ux + (thrust * nx - drag * this.vx) / m + gx / m;
-    let ay = -g * uy + (thrust * ny - drag * this.vy) / m + gy / m;
+    let ax = -g * ux + (thrust * nx - drag * rvx) / m + gx / m;
+    let ay = -g * uy + (thrust * ny - drag * rvy) / m + gy / m;
 
-    // --- attitude ---
-    const sas = this.mod.sasOff > 0 ? 0 : this.sas();
+    // --- attitude: torques about the centre of mass, divided by the moment of inertia ---
+    let yb = 0, M = 0, My = 0; const seg = [];
+    for (let i = live.length - 1; i >= 0; i--) { const p = live[i]; const mi = p.def.mass + p.fuel + p.payload; seg.push([p, yb, mi]); M += mi; My += mi * (yb + p.def.h / 2); yb += p.def.h; }
+    const H = Math.max(0.5, yb), com = My / M;
+    let I = 0; for (const [p, y0, mi] of seg) { const d = y0 + p.def.h / 2 - com; I += mi * (d * d + p.def.h * p.def.h / 12 + p.def.r * p.def.r / 4); }
+    this.com = com; this.H = H;
+    const sasOn = this.mod.sasOff <= 0;
     if (this.mod.sasOff > 0) this.mod.sasOff -= dt;
-    const steer = live.reduce((a, p) => a + (!p.destroyed && p.def.aero?.steer ? p.def.aero.steer : 0), 0) * Math.min(1, q / 8000);
-    const auth = (0.9 * sas + 1.6 * gimbal + steer) / (0.7 + m / 3500) * this.mod.steer;
-    let alpha = this.input * Math.min(3.5, auth) * 1.6;
-    // aerodynamic weathervane: fins pull nose toward velocity, finless rockets drift away
-    if (speed > 25 && rho > 0) {
-      const vang = Math.atan2(this.vy, this.vx);
-      const aoa = wrap(vang - this.heading);
-      const stab = live.reduce((a, p) => a + (!p.destroyed && p.def.aero?.stab ? p.def.aero.stab * (this.fx.finFlip.has(p.uid) ? -0.8 : 1) : 0), 0) - 0.18 - (this.fx.topHeavy && thrust === 0 ? 0.5 : 0);
-      alpha += stab * Math.sin(aoa) * Math.min(q, 40000) / 4000 / (0.7 + m / 6000);
-      // structural stress when tumbling at high dynamic pressure
-      if (Math.abs(aoa) > 0.5 && q > 12000 && Math.abs(aoa) < Math.PI - 0.3) {
-        if (Math.random() < dt * 2) this.damageRandom(q / 3000 * dt * 8, () => true, 'aerodynamic stress');
+    const sas = sasOn ? this.sas() : 0;
+    const S = Math.PI * rm * rm;
+    let tau = 0;
+    // engines: gimbal authority and off-axis thrust
+    let gimbalT = 0;
+    for (const [p, y0] of seg) if (p.burning) {
+      const lever = com - (y0 + p.def.h * 0.75);
+      tau += p.F * Math.sin(p.mis || 0) * lever;
+      gimbalT += p.F * Math.sin(0.04 * (p.def.engine.gimbal || 0)) * Math.abs(lever);
+    }
+    const rwT = sas * 260;                                         // reaction wheels (N m)
+    const steerT = live.reduce((a2, p) => a2 + (!p.destroyed && p.def.aero?.steer ? p.def.aero.steer : 0), 0) * qa * S * H * 0.04;
+    const ctl = (gimbalT + rwT + steerT) * this.mod.steer;
+    tau += this.input * ctl;
+    // SAS only damps rotation; it does not hold your heading
+    if (this.input === 0 && sasOn) tau += Math.max(-ctl * 0.8, Math.min(ctl * 0.8, -this.omega * I * 2.2));
+    // aerodynamics: normal force on the nose (destabilising) and on fins/tail (stabilising)
+    if (air > 8 && rho > 0) {
+      const aoa = wrap(Math.atan2(rvy, rvx) - this.heading);
+      const sa = Math.sin(aoa);
+      tau += qa * S * 0.55 * sa * (com - H * 0.72);
+      for (const [p, y0] of seg) {
+        if (p.destroyed) continue;
+        let area = 0;
+        if (p.def.aero?.stab) area = p.def.aero.stab * 2.2 * p.def.r * p.def.r;
+        else if (p.def.legs) area = 0.5 * p.def.r * p.def.r;
+        else if (p.def.engine) area = 0.25 * p.def.r * p.def.r;
+        if (area) tau += qa * area * sa * (com - (y0 + p.def.h / 2));
+      }
+      tau += -this.omega * qa * S * H * H * 0.9 / Math.max(air, 15);   // pitch damping
+      // turbulence
+      tau += (Math.random() - 0.5) * qa * S * H * (0.02 + this.wind.gust * 0.003);
+      // structural stress when flying sideways at high dynamic pressure
+      if (Math.abs(aoa) > 0.5 && qa > 12000 && Math.abs(aoa) < Math.PI - 0.3) {
+        if (Math.random() < dt * 2) this.damageRandom(qa / 3000 * dt * 8, () => true, 'aerodynamic stress');
       }
     }
     // build flaw: weak joints / slender stack flex and wobble under dynamic pressure
-    if (this.fx.stress > 0 && q > 6000) {
-      alpha += (Math.random() - 0.5) * this.fx.stress * q / 6000 * 1.2;
-      if (q > 14000 && Math.random() < dt * this.fx.stress * 0.8) this.damageRandom(q / 1500 * this.fx.stress, () => true, 'structure flexing');
+    if (this.fx.stress > 0 && qa > 6000) {
+      tau += (Math.random() - 0.5) * this.fx.stress * qa * S * H * 0.25;
+      if (qa > 14000 && Math.random() < dt * this.fx.stress * 0.8) this.damageRandom(qa / 1500 * this.fx.stress, () => true, 'structure flexing');
     }
-    // a parachute hangs the rocket nose-up, opposite to the direction of travel
-    if (this.chuteFrac > 0.15 && speed > 1) {
-      const back = wrap(Math.atan2(-this.vy, -this.vx) - this.heading);
-      alpha += 6 * Math.sin(back) * this.chuteFrac;
+    // parachute: pulls the top of the rocket along the airflow, so it hangs underneath
+    if (this.chuteFrac > 0.05 && air > 1) {
+      const Fc = 0.5 * rho * air * air * this.chuteFrac * this.chuteArea();
+      const back = wrap(Math.atan2(-rvy, -rvx) - this.heading);
+      tau += Fc * (H - com) * Math.sin(back) - this.omega * I * 1.5;
     }
-    alpha += this.mod.spin;
+    let alpha = tau / I + this.mod.spin * 1.2;
+    alpha = Math.max(-15, Math.min(15, alpha));
     this.omega += alpha * dt;
-    const damp = this.input === 0 ? (0.6 + sas * 1.8) : 0.4;
-    this.omega *= Math.exp(-damp * dt);
-    if (this.chuteFrac > 0.3) this.omega *= Math.exp(-3 * dt);
+    this.omega *= Math.exp(-0.05 * dt);
+    const h0 = this.heading;
     this.heading += this.omega * dt;
+    // the rocket turns about its centre of mass, so the bottom of the stack swings
+    if (this.liftoff) { this.x -= com * (Math.cos(this.heading) - Math.cos(h0)); this.y -= com * (Math.sin(this.heading) - Math.sin(h0)); }
 
     // --- on the pad / ground ---
     if (!this.liftoff) {
@@ -331,13 +401,13 @@ export class Vessel {
     const tilt = Math.abs(this.pitch);
     // put the vessel on the surface
     const r = this.r; this.x *= R / r; this.y *= R / r;
-    if (impact > limit * 2.2 || slide > 18 || (impact > 4 && tilt > 1.2)) {
+    if (impact > limit * 2 || slide > 20 || (impact > 4 && tilt > 1.2)) {
       this.crash(`impact at ${impact.toFixed(1)} m/s`); return;
     }
     let dmg = 0;
     if (impact > limit) dmg += (impact - limit) / limit * 120;
     if (tilt > 0.45) dmg += 25 + tilt * 30;
-    if (slide > 5) dmg += (slide - 5) * 6;
+    if (slide > 7) dmg += (slide - 7) * 6;
     if (dmg > 0) {
       // the bottom of the rocket takes the hit
       const lv = this.live();

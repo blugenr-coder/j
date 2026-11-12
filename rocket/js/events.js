@@ -141,8 +141,8 @@ export const FLIGHT_EVENTS = [
 // ---------- event runner ----------
 export class FlightEvents {
   constructor(v, level) {
-    this.v = v; this.active = null; this.cool = 12;
-    this.rate = 1 / Math.max(14, 30 - level * 1.6);  // events per second when eligible
+    this.v = v; this.active = null; this.cool = 7;
+    this.rate = 1 / Math.max(8, 19 - level * 1.4);   // events per second when eligible
     this.seen = {};
   }
   update(dt) {
@@ -208,7 +208,7 @@ export class FlightEvents {
     if (!chosen && !ok && e.def.kind === 'choice') { /* fail already applied */ }
     if (ok && !e.def.positive && e.def.kind !== 'info') this.v.resolved++;
     if (!e.def.positive && e.def.kind !== 'info') { this.v.msg(ok ? `${e.def.title}: handled` : `${e.def.title}: failed`, ok ? 'good' : 'bad'); this.v.sounds.push(ok ? 'ok' : 'fail'); }
-    this.active = null; this.cool = 7 + Math.random() * 8;
+    this.active = null; this.cool = 4 + Math.random() * 7;
   }
 }
 

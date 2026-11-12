@@ -8,6 +8,8 @@ import { FlightEvents } from './events.js';
 import { Input, isTouch } from './input.js';
 import { Audio } from './audio.js';
 import { makeEnv } from './thumbs.js';
+import { buildSite, groundMaterial, makeSky, Parachute } from './launchsite.js';
+import { adapters } from './models.js';
 import { S } from './state.js';
 
 const WARPS = [1, 2, 4, 10, 50, 100];
@@ -44,7 +46,8 @@ export class Flight {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(55, 1, 0.5, 4e6);
     this.scene.add(this.camera);
-    this.sun = new THREE.DirectionalLight(0xfff4e0, 2.4); this.sun.position.set(-0.5, 0.8, 0.6).multiplyScalar(100); this.scene.add(this.sun);
+    this.sun = new THREE.DirectionalLight(0xfff4e0, 2.6); this.sun.position.set(-0.5, 0.8, 0.6).multiplyScalar(100); this.scene.add(this.sun);
+    if (!isTouch) { this.sun.castShadow = true; this.sun.shadow.mapSize.set(2048, 2048); Object.assign(this.sun.shadow.camera, { left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 400 }); this.sun.shadow.bias = -0.0004; }
     this.amb = new THREE.HemisphereLight(0xbcd8ff, 0x3a3020, 0.6); this.scene.add(this.amb);
 
     this.scene.environment = makeEnv(renderer);
@@ -68,21 +71,16 @@ export class Flight {
     this.planet.add(halo);
     // launch complex in planet coordinates (pad sits at the top of the planet, angle 90 degrees)
     const site = new THREE.Group(); site.position.set(0, R, 0);
-    const pad = new THREE.Mesh(new THREE.CylinderGeometry(12, 14, 1.2, 32), mat(0x6b6b6b, { roughness: 0.9 })); pad.position.y = -0.6; site.add(pad);
-    const tw = mat(0xb45309, { metalness: 0.4 });
-    const tower = new THREE.Mesh(new THREE.BoxGeometry(2, 34, 2), tw); tower.position.set(0, 17, -8); site.add(tower);
-    for (let y = 4; y < 34; y += 6) { const arm = new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 0.6), tw); arm.position.set(0, y, -5.5); arm.rotation.y = Math.PI / 2; site.add(arm); }
-    const bldg = new THREE.Mesh(new THREE.BoxGeometry(40, 18, 30), mat(0x52525b)); bldg.position.set(80, 9, -60); site.add(bldg);
-    const bldg2 = new THREE.Mesh(new THREE.BoxGeometry(14, 30, 14), mat(0xe5e7eb)); bldg2.position.set(-60, 15, -90); site.add(bldg2);
-    for (let i = 0; i < 40; i++) { const tr = new THREE.Mesh(new THREE.ConeGeometry(2 + Math.random() * 2, 6 + Math.random() * 6, 6), mat(0x2f4f2a, { roughness: 1 })); const a = Math.random() * 6.28, d = 60 + Math.random() * 300; tr.position.set(Math.cos(a) * d, 4, Math.sin(a) * d); site.add(tr); }
+    buildSite(site);
     this.planet.add(site); this.site = site;
     // local ground disk with real curvature (precise near the rocket)
     const dg = new THREE.CircleGeometry(40000, 96, 0, Math.PI * 2);
     const pos = dg.attributes.position;
     for (let i = 0; i < pos.count; i++) { const x = pos.getX(i), y = pos.getY(i); pos.setZ(i, -(x * x + y * y) / (2 * R)); }
     dg.computeVertexNormals();
-    this.gTex = groundTex(); this.gTex.repeat.set(160, 160);
-    this.ground = new THREE.Mesh(dg, new THREE.MeshStandardMaterial({ map: this.gTex, roughness: 1, metalness: 0, transparent: true }));
+    this.gShift = { value: 0 };
+    this.ground = new THREE.Mesh(dg, groundMaterial(this.gShift));
+    this.ground.receiveShadow = true;
     this.ground.rotation.x = -Math.PI / 2; this.scene.add(this.ground);
     // clouds
     this.clouds = new Particles(140, { additive: false, size: 1 });
@@ -96,8 +94,11 @@ export class Flight {
     this.stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false }));
     this.scene.add(this.stars);
 
+    this.sky = makeSky(this.sun.position); this.scene.add(this.sky);
+    this.chute = new Parachute(this.scene);
+    this.flameLight = new THREE.PointLight(0xff9a40, 0, 260, 1.2); this.scene.add(this.flameLight);
     this.fx = new Particles(1800, { additive: true, size: 1 });
-    this.smoke = new Particles(1400, { additive: false, size: 1 });
+    this.smoke = new Particles(2400, { additive: false, size: 1 });
     this.scene.add(this.fx.points); this.scene.add(this.smoke.points);
 
     this.cam = { yaw: 0.6, pitch: 0.12, dist: 30, shake: 0 };
@@ -113,7 +114,7 @@ export class Flight {
 
   start() {
     this.active = true; Input.mode = 'flight'; Input.wantLock = false; Input.release();
-    const stack = S.flightStack();
+    const stack = S.flightStack(); stack.level = S.level;
     const v = this.v = new Vessel(stack);
     if (S.flags.engineer) { v.repairs++; }
     if (S.flags.cat) v.catBonus = true;
@@ -152,14 +153,7 @@ export class Flight {
       pm.mesh.add(fl);
       this.flames.push({ p, fl });
     }
-    // parachute canopy
-    this.canopy = new THREE.Group();
-    const cm = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2.2), new THREE.MeshStandardMaterial({ color: 0xff5a1f, side: THREE.DoubleSide, roughness: 0.8 }));
-    const stripes = new THREE.Mesh(new THREE.SphereGeometry(1.01, 20, 10, 0, Math.PI * 2, Math.PI / 4.2, 0.12), new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
-    this.canopy.add(cm); this.canopy.add(stripes);
-    const lineM = new THREE.LineBasicMaterial({ color: 0xdddddd });
-    for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const lg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(Math.cos(a) * 0.95, 0.15, Math.sin(a) * 0.95), new THREE.Vector3(0, -1.6, 0)]); this.canopy.add(new THREE.Line(lg, lineM)); }
-    this.canopy.visible = false; g.add(this.canopy);
+
     this.scene.add(g);
   }
 
@@ -243,14 +237,14 @@ export class Flight {
     const gap = alt < 25000 ? 3000 : alt < 45000 ? 3000 - (alt - 25000) / 20000 * 2950 : 50;
     this.sphere.scale.setScalar((R - gap) / (R - 40));
     const downrange = (Math.PI / 2 - v.phi) * R;
-    this.gTex.offset.set(downrange / 40000 * 80 % 1, 0);
+    this.gShift.value = R * (v.phi - Math.PI / 2);
     // rocket attitude
     this.rocket.rotation.set(0, 0, v.pitch);
     // sky
     const k = Math.min(1, alt / ATMO);
-    const sky = new THREE.Color(0x86b8e3).lerp(new THREE.Color(0x03040a), Math.pow(k, 0.6));
-    if (v.heat > 20) sky.lerp(new THREE.Color(0xff6a2a), Math.min(0.25, (v.heat - 20) / 300));
-    this.scene.background = sky;
+    this.scene.background = null;
+    this.sky.material.uniforms.uK.value = k;
+    this.sky.position.copy(this.camera.position);
     this.stars.material.opacity = Math.max(0, (k - 0.4) * 1.6);
     this.amb.intensity = 0.25 + 0.4 * (1 - k);
     // clouds in planet frame
@@ -268,7 +262,7 @@ export class Flight {
     const nose = new THREE.Vector3(-Math.sin(v.pitch), Math.cos(v.pitch), 0);
     const vel = this.toLocal(v.x + v.vx, v.y + v.vy);  // velocity vector in local frame
     const rate = Math.min(1, simT * 3) / Math.max(1, simT / dt);
-    let anyBurn = 0;
+    let anyBurn = 0; this._lit = false;
     for (const { p, fl } of this.flames) {
       fl.visible = p.burning && !p.gone;
       if (!fl.visible) continue;
@@ -281,6 +275,17 @@ export class Flight {
       // particles from the nozzle
       const pm = this.partMeshes.get(p.uid);
       const wp = new THREE.Vector3(); pm.mesh.getWorldPosition(wp);
+      if (!this._lit) { this._lit = true; this.flameLight.position.set(wp.x, wp.y - len * 0.3, wp.z); }
+      // the launch cloud: exhaust hits the ground and rolls out sideways along the flame trench
+      if (alt < 140 && v.liftoff !== undefined) {
+        const k2 = Math.ceil(5 * thr * (1 - alt / 140));
+        for (let i = 0; i < k2; i++) {
+          const trench = Math.random() < 0.55, a = Math.random() * Math.PI * 2, sp = 18 + Math.random() * 30;
+          const vx = trench ? sp * 1.3 : Math.cos(a) * sp, vz = trench ? (Math.random() - 0.5) * 8 : Math.sin(a) * sp;
+          const gcol = 0.78 + Math.random() * 0.15;
+          this.smoke.emit([wp.x + (Math.random() - 0.5) * 3, -alt + 1.5 + Math.random() * 2, wp.z], [vx, 2 + Math.random() * 5, vz], 6 + Math.random() * 6, [gcol, gcol, gcol], [gcol * 0.95, gcol * 0.95, gcol], 4, 22 + Math.random() * 16, 0.45);
+        }
+      }
       const n = Math.ceil(6 * thr);
       for (let i = 0; i < n; i++) {
         const spread = new THREE.Vector3((Math.random() - 0.5), 0, (Math.random() - 0.5)).multiplyScalar(p.def.r);
@@ -301,16 +306,21 @@ export class Flight {
         this.fx.emit([dir.x * 2 + o.x, dir.y * 2 + o.y, o.z], [-dir.x * 60, -dir.y * 60, 0], 0.4, [1, 0.5, 0.2], [0.6, 0.1, 0.4], 2 + v.heat / 30, 5, 1);
       }
     }
-    // canopy
-    this.canopy.visible = v.chuteFrac > 0 && v.live().some(p => p.def.chute && !p.destroyed);
-    if (this.canopy.visible) {
-      const top = this.rocketTop();
-      const s = 1 + v.chuteFrac * Math.sqrt(v.chuteArea() / 3) * 0.9 * v.mod.chuteMul;
-      this.canopy.position.set(Math.sin(performance.now() / 700) * 0.2, top + 1.2 + s * 1.6, 0);
-      this.canopy.scale.set(s, s * (0.6 + 0.4 * v.chuteFrac), s);
-      // keep the canopy upright-ish against the airflow
-      this.canopy.rotation.z = -v.pitch * 0.7;
+    // parachute: real size, hanging along the airflow above the rocket
+    {
+      const live = v.live();
+      const show = v.chuteFrac > 0 && live.some(p => p.def.chute && !p.destroyed) && !v.crashed;
+      const H = this.rocket.userData.height;
+      const attach = new THREE.Vector3(-Math.sin(v.pitch) * H, Math.cos(v.pitch) * H, 0);
+      const wv = v.windAt(alt), r0 = v.r, ux = v.x / r0, uy = v.y / r0;
+      const rvx = v.vx + uy * wv, rvy = v.vy - ux * wv;
+      let dir = this.toLocal(v.x - rvx, v.y - rvy);
+      if (dir.length() < 1 || v.landed) dir = new THREE.Vector3(0, 1, 0); else dir.normalize();
+      const D = this.chute.update(dt, show, attach, dir, Math.max(1, v.chuteArea()), v.chuteFrac, !!v.landed, -alt);
+      this.chuteD = show ? D : 0;
+      this.chuteDir = dir;
     }
+    this.flameLight.intensity = this._lit ? (60 + Math.random() * 25) * anyBurn * (0.3 + 0.7 * pAmb) : 0;
     // world-anchored particles move opposite to the rocket
     const shift = [disp.x, disp.y, 0];
     this.fx.update(dt, null);
@@ -338,6 +348,7 @@ export class Flight {
     if (isTouch && !this.ui.anyFlightTouch) { c.yaw -= Input.look.x * 0.006; c.pitch += Input.look.y * 0.005; }
     const H = this.rocket.userData.height;
     const center = new THREE.Vector3(0, H / 2, 0).applyEuler(this.rocket.rotation);
+    if (this.chuteD) { center.addScaledVector(this.chuteDir, this.chuteD * 0.45); c.dist += (Math.max(c.dist, this.chuteD * 2.1) - c.dist) * Math.min(1, dt * 1.5); }
     const cp = new THREE.Vector3(Math.sin(c.yaw) * Math.cos(c.pitch), Math.sin(c.pitch), Math.cos(c.yaw) * Math.cos(c.pitch)).multiplyScalar(c.dist).add(center);
     // don't go under the ground
     if (cp.y < -alt + 2) cp.y = -alt + 2;
@@ -357,7 +368,9 @@ export class Flight {
       const g = rocketMesh(d.parts.map(p => ({ def: PART[p.id], uid: p.uid })));
       // remove those parts from the live rocket mesh, and shift the rest down
       for (const p of d.parts) { const pm = this.partMeshes.get(p.uid); if (pm) pm.mesh.parent.remove(pm.mesh); }
-      this.rocket.children.forEach(ch => { if (ch !== this.canopy) ch.position.y -= d.dh; });
+      this.rocket.children.forEach(ch => { if (!ch.userData.adapters) ch.position.y -= d.dh; });
+      const old = this.rocket.children.find(ch => ch.userData.adapters); if (old) this.rocket.remove(old);
+      const ad = adapters(v.live().slice().reverse().map(p => p.def)); ad.userData.adapters = true; this.rocket.add(ad);
       this.rocket.userData.height -= d.dh;
       this.scene.add(g);
       const push = 3;
@@ -385,7 +398,6 @@ export class Flight {
       pm.mesh.position.copy(wp); this.scene.add(pm.mesh);
       this.flying = this.flying || []; this.flying.push({ m: pm.mesh, v: d, av: new THREE.Vector3().randomDirection().multiplyScalar(4) });
     }
-    this.canopy.visible = false;
     this.cam.shake = 2;
   }
 
@@ -456,7 +468,7 @@ export class Flight {
     for (const q of [...this.quests, ...this.bonus]) if (!q.done && !q.failed && landed && this.questMet(q, true)) q.done = true;
     const allDone = this.quests.every(q => q.done);
     const success = landed && allDone;
-    const survivors = landed ? v.live().filter(p => !p.destroyed).map(p => ({ uid: p.uid, cond: Math.max(0.05, Math.round(Math.min(p.cond - 0.06 - Math.random() * 0.06, p.cond * (0.4 + 0.6 * p.hp / p.maxHp)) * 100) / 100) })) : [];
+    const survivors = landed ? v.live().filter(p => !p.destroyed).map(p => ({ uid: p.uid, cond: Math.max(0.05, Math.round(Math.min(p.cond - 0.1 - Math.random() * 0.12, p.cond * (0.4 + 0.6 * p.hp / p.maxHp)) * 100) / 100) })) : [];
     const reason = v.crashed ? v.crashed.reason : !allDone ? 'Landed, but contract objectives were not completed' : 'Mission accomplished';
     const r = { success, landed, crashed: !!v.crashed, survivors, bonusCash: v.bonusCash || 0, bonusDone: this.bonus.filter(b => b.done).map(b => b.reward), reason, rocketValue: this.rocketValue };
     const stats = { maxAlt: v.maxAlt, maxSpeed: v.maxSpeed, air: v.airT, hull: landed ? v.landed.hull : 0, impact: landed ? v.landed.impact : null, resolved: v.resolved, dist: landed ? v.landed.dist : null };

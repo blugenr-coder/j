@@ -68,7 +68,7 @@ export const S = {
     this.used = [];
     for (let i = 0; i < n; i++) {
       const d = pool[Math.floor(Math.random() * pool.length)];
-      const cond = Math.round((0.25 + Math.random() * 0.7) * 100) / 100;
+      const cond = Math.round((0.2 + Math.random() * 0.6) * 100) / 100;
       const price = Math.round(d.price * (0.25 + cond * 0.55) * (1 - discount) / 50) * 50;
       this.used.push({ uid: newUid(), id: d.id, cond, price });
     }
@@ -110,7 +110,7 @@ export const S = {
     } else {
       this.attempt++;
       // trust drops: a reduced re-try grant, more so if you boasted to the press
-      const frac = (r.crashed ? 0.55 : 0.7) - (this.visit?.hype ? 0.15 : 0);
+      const frac = (r.crashed ? 0.45 : 0.6) - (this.visit?.hype ? 0.15 : 0);
       const g = Math.round(lvl.grant * frac / 500) * 500;
       this.cash += g; out.lines.push(['Re-try grant (reduced trust)', g]);
       // bailout so the game can never soft-lock
@@ -126,7 +126,7 @@ export const S = {
 
   newGame() {
     Object.assign(this, { level: 0, cash: getLevel(0).grant, attempt: 1, inventory: [], pad: [], blueprints: [], plan: null, partMods: {}, flags: {}, stats: { launches: 0, wins: 0, crashes: 0, spent: 0, earned: 0, best: 0 }, history: [], started: true });
-    this.blueprints.push({ name: 'Starter hopper (example)', ids: ['core_probe', 'chute_s', 'tank_s', 'eng_sparrow'] });
+    this.blueprints.push({ name: 'Starter hopper (example)', ids: ['core_probe', 'chute_s', 'tank_s', 'fins', 'eng_sparrow'] });
     this.plan = 0;
     this.refreshUsed();
     this.save(); this.emit();

@@ -71,9 +71,9 @@ export class Guide {
     if (mode === 'flight') {
       const f = this.game.flight, v = f.v; if (!v) return null;
       if (v.ended) return null;
-      if (!v.ignited) return { n: 8, total, title: 'Ignite the engine', text: T('Press <b>IGNITE</b> or the <kbd>Space</kbd> key. The rocket lifts off on its own.', 'Tap the orange <b>IGNITE</b> button.'), el: '#f-stage' };
+      if (!v.ignited) return { n: 8, total, title: 'Ignite the engine', text: T('Press <b>IGNITE</b> or the <kbd>Space</kbd> key. Engines take a second to spool up.', 'Tap the orange <b>IGNITE</b> button. Engines take a second to spool up.'), el: '#f-stage', small: 'If an engine fails to light, the button says RETRY IGNITION: press it again.' };
       const burning = v.live().some(p => p.burning);
-      if (burning || v.vVert > 0) return { n: 9, total, title: 'Climb', text: `Goal: pass <b>1 km</b> (you are at ${Math.round(v.alt)} m). It flies straight up by itself. If it leans, correct with ${T('<kbd>A</kbd> / <kbd>D</kbd>', 'the <b>◀ ▶</b> buttons')}. When the fuel runs out it keeps coasting up for a while.`, small: 'Watch the checklist on the right: objectives turn green when done.' };
+      if (burning || v.vVert > 0) return { n: 9, total, title: 'Climb', text: `Goal: pass <b>1 km</b> (you are at ${Math.round(v.alt)} m). Wind and slightly crooked engines push it off course: keep it upright with ${T('<kbd>A</kbd> / <kbd>D</kbd>', 'the <b>◀ ▶</b> buttons')}. Small taps work best: it keeps turning after you let go. Watch PITCH on the left (0° = straight up).`, small: 'When the fuel runs out it keeps coasting up for a while. Objectives on the right turn green when done.' };
       if (!v.chuteOn) {
         const ok = v.speed < 300;
         return { n: 10, total, title: 'Open the parachute', text: ok ? `You are falling. Open the parachute now: ${T('press <b>CHUTE</b> or <kbd>P</kbd>', 'tap <b>CHUTE</b>')}.` : 'Too fast for the parachute (over 300 m/s it tears). Wait a moment…', el: ok ? '#f-chute' : null };

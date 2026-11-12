@@ -20,7 +20,7 @@ function stripes() {
   return stripeTex;
 }
 
-const SEG = 28;
+const SEG = 40;
 const V2 = (x, y) => new THREE.Vector2(x, y);
 const lathe = (pts, seg = SEG) => new THREE.LatheGeometry(pts.map(([x, y]) => V2(Math.max(0.001, x), y)), seg);
 
@@ -245,6 +245,29 @@ export function partMesh(def, cond = 1) {
   return g;
 }
 
+// Interstage fairings: where two body sections of different width meet, a conical
+// adapter skins the joint like on a real rocket. defs bottom -> top.
+const BODY = new Set(['tank', 'srb', 'decoupler', 'ring', 'battery', 'box', 'pod', 'sat', 'chute', 'probe']);
+export function adapters(defs) {
+  const g = new THREE.Group();
+  let y = 0;
+  const m = mat(0xd9dce1, { roughness: 0.4, metalness: 0.35 });
+  for (let i = 0; i < defs.length - 1; i++) {
+    const a = defs[i], b = defs[i + 1]; y += a.h;
+    if (!BODY.has(a.shape) || !BODY.has(b.shape)) continue;
+    const ra = a.r, rb = b.r;
+    if (Math.abs(ra - rb) < 0.08) continue;
+    const len = Math.min(Math.abs(ra - rb) * 1.4 + 0.15, (ra > rb ? b.h : a.h) * 0.7);
+    // the cone sits on the narrower part, flaring out to the wider one
+    const geo = ra > rb ? new THREE.CylinderGeometry(rb * 1.01, ra * 1.005, len, SEG, 1, true) : new THREE.CylinderGeometry(rb * 1.005, ra * 1.01, len, SEG, 1, true);
+    const o = new THREE.Mesh(geo, m); o.position.y = ra > rb ? y + len / 2 : y - len / 2; o.castShadow = true; o.receiveShadow = true;
+    g.add(o);
+    const band = new THREE.Mesh(new THREE.TorusGeometry(Math.max(ra, rb) * 1.005, 0.025, 6, SEG), mat(0x7a7f87, { metalness: 0.85, roughness: 0.35 }));
+    band.rotation.x = Math.PI / 2; band.position.y = y; g.add(band);
+  }
+  return g;
+}
+
 // Rocket assembly: parts top->bottom, stacked from y=0 upward. Returns group with userData.parts [{mesh, y}].
 export function rocketMesh(stack) {
   const g = new THREE.Group();
@@ -255,7 +278,8 @@ export function rocketMesh(stack) {
     m.position.y = y; g.add(m); list.unshift({ mesh: m, y, uid: s.uid });
     y += (s.def || s).h;
   }
-  g.userData.parts = list; g.userData.height = y;
+  const ad = adapters(stack.slice().reverse().map(s => s.def || s)); ad.userData.adapters = true; g.add(ad);
+  g.userData.parts = list; g.userData.height = y; g.userData.adapters = ad;
   return g;
 }
 

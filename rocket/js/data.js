@@ -49,7 +49,7 @@ export const PARTS = [
   { id: 'robo_mech', name: 'Robo-Mechanic', cat: 'util', price: 15000, mass: 90, h: 0.5, r: 0.6, shape: 'box', color: 0x0ea5e9, repair: 3, hp: 60, desc: 'Auto-fixes three in-flight failures.' },
 
   // ---------- recovery ----------
-  { id: 'chute_s', name: 'Mk1 Parachute', cat: 'recovery', price: 1800, mass: 50, h: 0.5, r: 0.45, shape: 'chute', color: 0xef4444, chute: { area: 180 }, hp: 40, desc: 'Lands about 400 kg gently. Do not open above 300 m/s.' },
+  { id: 'chute_s', name: 'Mk1 Parachute', cat: 'recovery', price: 1800, mass: 50, h: 0.5, r: 0.45, shape: 'chute', color: 0xef4444, chute: { area: 230 }, hp: 40, desc: 'Lands about 400 kg gently. Do not open above 300 m/s.' },
   { id: 'chute_m', name: 'Mk2 Parachute', cat: 'recovery', price: 5200, mass: 130, h: 0.6, r: 0.7, shape: 'chute', color: 0xf97316, chute: { area: 650 }, hp: 60, desc: 'Lands about 1.4 t gently.' },
   { id: 'chute_l', name: 'Mk3 Heavy Parachute', cat: 'recovery', price: 14000, mass: 320, h: 0.8, r: 1.1, shape: 'chute', color: 0xeab308, chute: { area: 2200 }, hp: 90, desc: 'Lands about 5 t gently.' },
   { id: 'legs', name: 'Landing Legs', cat: 'recovery', price: 2500, mass: 90, h: 0.6, r: 0.7, shape: 'legs', color: 0x9ca3af, legs: { limit: 11 }, hp: 70, desc: 'Survive touchdowns up to 11 m/s (6 m/s without). Put at the bottom.' },
@@ -121,23 +121,23 @@ export function questNeeds(q) {
 const LEVELS = [
   { name: 'First Hop', grant: 15000, brief: 'The ministry wants proof you can build something that flies. Get it off the ground, then bring it back in one piece.',
     quests: [{ type: 'alt', v: 1000 }], bonus: [{ type: 'alt', v: 5000, reward: 3000 }] },
-  { name: 'Sound Barrier', grant: 25000, brief: 'Go supersonic and climb. A good landing near the pad earns a little extra.',
+  { name: 'Sound Barrier', grant: 22000, brief: 'Go supersonic and climb. A good landing near the pad earns a little extra.',
     quests: [{ type: 'speed', v: 343 }, { type: 'alt', v: 8000 }], bonus: [{ type: 'near', v: 3000, reward: 5000 }] },
-  { name: 'Weather Watch', grant: 40000, brief: 'The weather service is paying for pressure data from the mid atmosphere.',
+  { name: 'Weather Watch', grant: 34000, brief: 'The weather service is paying for pressure data from the mid atmosphere.',
     quests: [{ type: 'sci', k: 'baro', min: 5000, max: 12000 }, { type: 'alt', v: 20000 }], bonus: [{ type: 'sci', k: 'thermo', min: 18000, max: 30000, reward: 6000 }] },
-  { name: 'Edge of Space', grant: 60000, brief: 'Cross the 45 km line into space and photograph the planet on the way.',
+  { name: 'Edge of Space', grant: 52000, brief: 'Cross the 45 km line into space and photograph the planet on the way.',
     quests: [{ type: 'alt', v: 45000 }, { type: 'sci', k: 'photo', min: 35000, max: 1e9 }], bonus: [{ type: 'air', v: 240, reward: 8000 }] },
-  { name: 'Payload Courier', grant: 85000, brief: 'A university has a satellite. It only needs a sub-orbital release above 55 km.',
+  { name: 'Payload Courier', grant: 74000, brief: 'A university has a satellite. It only needs a sub-orbital release above 55 km.',
     quests: [{ type: 'deploy', k: 'cube', min: 55000 }, { type: 'speed', v: 1000 }], bonus: [{ type: 'hull', v: 80, reward: 10000 }] },
-  { name: 'First Orbit', grant: 120000, brief: 'Orbit. Then come home. Re-entry from orbit is hot: plan for it.',
+  { name: 'First Orbit', grant: 105000, brief: 'Orbit. Then come home. Re-entry from orbit is hot: plan for it.',
     quests: [{ type: 'orbit', v: SPACE_ALT }], bonus: [{ type: 'apo', v: 100000, reward: 15000 }] },
-  { name: 'Eyes in the Sky', grant: 170000, brief: 'Put a CubeSat into a stable orbit and send back orbital photos.',
+  { name: 'Eyes in the Sky', grant: 150000, brief: 'Put a CubeSat into a stable orbit and send back orbital photos.',
     quests: [{ type: 'deploy', k: 'cube', orbit: true }, { type: 'sci', k: 'photo', orbit: true }], bonus: [{ type: 'near', v: 20000, reward: 20000 }] },
-  { name: 'Crewed Flight', grant: 240000, brief: 'A human goes up. A human comes back. Nothing else matters.',
+  { name: 'Crewed Flight', grant: 210000, brief: 'A human goes up. A human comes back. Nothing else matters.',
     quests: [{ type: 'crew' }, { type: 'orbit', v: SPACE_ALT }], bonus: [{ type: 'sci', k: 'sample', min: 20000, max: 35000, reward: 25000 }] },
-  { name: 'High Ground', grant: 330000, brief: 'The telecom consortium wants a ComSat in a high, clean orbit.',
+  { name: 'High Ground', grant: 290000, brief: 'The telecom consortium wants a ComSat in a high, clean orbit.',
     quests: [{ type: 'deploy', k: 'com', orbit: true }, { type: 'apo', v: 300000 }], bonus: [{ type: 'events', v: 3, reward: 30000 }] },
-  { name: 'Moonshot Rehearsal', grant: 450000, brief: 'Crewed flight to 1,500 km and back. This is the dress rehearsal for leaving the planet.',
+  { name: 'Moonshot Rehearsal', grant: 400000, brief: 'Crewed flight to 1,500 km and back. This is the dress rehearsal for leaving the planet.',
     quests: [{ type: 'crew' }, { type: 'alt', v: 1500000 }], bonus: [{ type: 'fuel', v: 5, reward: 50000 }] },
 ];
 
@@ -186,7 +186,7 @@ export function getLevel(n) {
   return {
     n, generated: true,
     name: `Contract ${n + 1}: ${GEN_NAMES[(n * 5) % GEN_NAMES.length]}`,
-    grant: Math.round(450000 * Math.pow(1.35, k) / 1000) * 1000,
+    grant: Math.round(400000 * Math.pow(1.3, k) / 1000) * 1000,
     brief: `Government contract tier ${n + 1}. Harder targets, bigger budget. Failures are noticed.`,
     quests, bonus: [{ ...b, reward: Math.round(40000 * scale / 1000) * 1000 }],
   };

@@ -65,8 +65,19 @@ block module imports there.
 
 2D trajectory around a round planet (radius 300 km, so orbit fits a mobile session),
 with inverse-square gravity, an exponential atmosphere, drag, Isp that varies with air
-pressure, mass that drops as fuel burns, staging, aerodynamic stability, re-entry
-heating with an ablative shield, and a part-by-part damage model. The 3D view uses a
+pressure, mass that drops as fuel burns, staging, re-entry heating with an ablative
+shield, and a part-by-part damage model.
+
+Attitude is torque-based: the centre of mass and moment of inertia are computed from
+the actual parts and remaining fuel, so long, heavy rockets turn slowly. Steering
+comes from engine gimbal (only while thrusting), reaction wheels in command parts, and
+grid fins. Aerodynamic normal force acts on the nose (destabilising) and on the fins
+(stabilising, if they sit below the centre of mass), so stability emerges from the
+build. The weather changes on every flight: surface wind, a jet stream at altitude,
+gusts and turbulence. Every engine is slightly misaligned (worn ones more so), engines
+spool up and lag the throttle, can fail to ignite, and the rocket rotates about its
+centre of mass. Parachutes are drawn at their real size and pull the top of the
+rocket along the airflow, so it swings underneath them like a pendulum. The 3D view uses a
 floating origin, so rendering stays precise at orbital distances.
 
 `js/sim.js` contains no rendering code and can be run headless in Node for balance testing.

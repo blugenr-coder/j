@@ -2,7 +2,7 @@
 import * as THREE from '../vendor/three.module.min.js';
 import { PART } from './data.js';
 import { S } from './state.js';
-import { partMesh, makeHand, poseHand, mat, rocketMesh } from './models.js';
+import { partMesh, makeHand, poseHand, mat, rocketMesh, adapters } from './models.js';
 import { makeEnv } from './thumbs.js';
 import { getLevel } from './data.js';
 import { Input, isTouch } from './input.js';
@@ -372,6 +372,8 @@ export class Hangar {
   }
 
   buildHolo() {
+    if (this.padAdapters) this.padGroup.remove(this.padAdapters);
+    this.padAdapters = adapters(S.padStack().map(p => PART[p.id])); this.padGroup.add(this.padAdapters);
     this.holo.clear();
     const bp = S.blueprints[S.plan];
     this.nextPlanId = null;

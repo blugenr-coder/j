@@ -196,7 +196,7 @@ export class UI {
           h('dt', {}, 'Grant'), h('dd', {}, fmtMoney(L.grant)),
           h('dt', {}, 'Available'), h('dd', {}, fmtMoney(S.cash)),
           h('dt', {}, 'Next grant'), h('dd', {}, fmtMoney(S.lvl().n + 1 < 999 ? (import_getLevel(L.n + 1).grant) : 0)),
-          h('dt', {}, 'Failure'), h('dd', {}, 'Repeat with 55–70% grant'))),
+          h('dt', {}, 'Failure'), h('dd', {}, 'Repeat with 45–60% grant'))),
       ),
       h('div', { class: 'rules' }, h('h4', {}, 'Flight rules'),
         h('p', {}, 'Complete every required objective, then land. A rocket that lands with damage still counts. A crash, or landing without the objectives, means repeating the contract with a smaller re-try grant. Recovered parts come back to storage worn; resell them or fly them again (worn parts fail more often).')),
@@ -438,7 +438,7 @@ export class UI {
     $('#att-pro').style.opacity = v.speed > 5 ? 1 : 0.2;
     $('#t-pitch').textContent = Math.round(v.pitch * 180 / Math.PI) + '°';
     // stage + misc
-    $('#f-stage').innerHTML = !v.ignited ? 'IGNITE<small>SPACE</small>' : v.curStage < v.maxStage ? `STAGE ${v.curStage + 2}<small>SPACE</small>` : 'NO STAGES<small>—</small>';
+    $('#f-stage').innerHTML = !v.ignited ? 'IGNITE<small>SPACE</small>' : (!v.liftoff && v.parts.some(p => p.hangFire)) ? 'RETRY IGNITION<small>SPACE</small>' : v.curStage < v.maxStage ? `STAGE ${v.curStage + 2}<small>SPACE</small>` : 'NO STAGES<small>—</small>';
     $('#f-stage').classList.toggle('dim', v.ignited && v.curStage >= v.maxStage);
     const hasChute = v.live().some(p => p.def.chute && !p.destroyed);
     $('#f-chute').classList.toggle('dim', !hasChute || v.chuteOn);
